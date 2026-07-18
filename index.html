@@ -40,7 +40,7 @@
   <div class="pill" id="reset">↺ reiniciar</div>
 </div>
 <div id="memory"></div>
-<div id="hint">Toca izquierda / centro / derecha para saltar · arrastra para andar sigiloso<br>Dos dedos = supersalto · teclado: flechas, Shift+←→ sigiloso, Shift+↑ supersalto</div>
+<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · arrastra al lado para andar sigiloso<br>También: taps por zonas, dos dedos = supersalto · teclado: flechas + Shift</div>
 <script>
 'use strict';
 
@@ -192,20 +192,33 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (!pressStart || activePointers.size !== 1) return;
-  const dx = e.clientX - pressStart.x;
-  if (Math.abs(dx) > 22) {
+  const dx = e.clientX - pressStart.x, dy = e.clientY - pressStart.y;
+  // clearly horizontal drag = sneak; anything upward is a jump swipe
+  if (Math.abs(dx) > 22 && Math.abs(dx) > Math.abs(dy) * 1.4) {
     sneakTouchDir = Math.sign(dx);
-    pressT = null; // a drag is a sneak, not a jump
+    pressT = null; // a drag is a sneak, not a tap-jump
     if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
   }
 });
 function releasePointer(e) {
   activePointers.delete(e.pointerId);
+  const start = pressStart;
   if (activePointers.size === 0) { sneakTouchDir = 0; pressStart = null; }
   if (pressT === null) return;
-  const big = performance.now() - pressT > 350;
-  doJump(pressZone, big);
+  const heldMs = performance.now() - pressT;
   pressT = null;
+  // swipe up / up-left / up-right = directional jump; long or fast = super jump
+  if (start && e.clientX !== undefined) {
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (dy < -30) {
+      const dir = dx > 36 ? 1 : dx < -36 ? -1 : 0;
+      const big = -dy > 130 || (heldMs < 180 && -dy > 70); // long swipe or quick flick
+      doJump(dir, big);
+      return;
+    }
+  }
+  // plain tap: zone jump (long press = super jump)
+  doJump(pressZone, heldMs > 350);
 }
 canvas.addEventListener('pointerup', releasePointer);
 canvas.addEventListener('pointercancel', releasePointer);
