@@ -407,45 +407,75 @@ function drawCat() {
   const sy = cat.squash, sx = 2 - cat.squash; // conserve "volume"
   ctx.scale(cat.facing * sx, sy);
 
-  ctx.fillStyle = C.cat;
+  const air = cat.state === 'air';
+  const hang = cat.state === 'hang';
+  const sway = Math.sin(t * 2.2) * 8;
 
-  // tail: animated curve
-  ctx.strokeStyle = C.cat; ctx.lineWidth = 9; ctx.lineCap = 'round';
+  ctx.fillStyle = C.cat;
+  ctx.strokeStyle = C.cat;
+  ctx.lineCap = 'round';
+
+  // ---- tail: long, thick, sweeps behind and curls up (reference pose) ----
+  ctx.lineWidth = 10;
   ctx.beginPath();
-  ctx.moveTo(-cat.w * 0.4, -10);
-  const tw = Math.sin(t * 3) * 12;
-  ctx.bezierCurveTo(-cat.w * 0.9, -14 + tw, -cat.w * 1.0, -46 + tw, -cat.w * 0.72, -58 - tw * 0.5);
+  if (air || hang) {
+    ctx.moveTo(-14, -12);
+    ctx.bezierCurveTo(-38, -4 + sway, -52, -28 + sway, -44, -52 - sway * 0.5);
+  } else {
+    ctx.moveTo(-4, -4);
+    ctx.bezierCurveTo(-32, 4, -48, -6 + sway * 0.4, -44, -34 + sway);
+    ctx.bezierCurveTo(-41, -54 + sway, -30, -60 + sway, -25, -51 + sway * 0.7);
+  }
   ctx.stroke();
 
-  // body (liquid blob)
-  ctx.beginPath();
-  ctx.ellipse(0, -cat.h * 0.42, cat.w * 0.5, cat.h * 0.46, 0, 0, 7);
-  ctx.fill();
+  let hx, hy, hr; // head center + radius, for eyes/ears
+  if (air || hang) {
+    // stretched liquid blob, head leading
+    ctx.beginPath();
+    ctx.ellipse(0, -cat.h * 0.45, cat.w * 0.46, cat.h * 0.5, -0.15, 0, 7);
+    ctx.fill();
+    hx = cat.w * 0.2; hy = hang ? -cat.h * 1.05 : -cat.h * 0.95; hr = cat.w * 0.3;
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill();
+  } else {
+    // ---- sitting silhouette: wide haunches tapering up to the head ----
+    hx = 3; hy = -60; hr = 15.5;
+    ctx.beginPath();
+    ctx.moveTo(-21, 0);                                  // base left
+    ctx.bezierCurveTo(-25, -18, -19, -34, -10, -44);     // rounded back
+    ctx.bezierCurveTo(-7, -48, -8, -52, -8, -55);        // neck (back)
+    ctx.bezierCurveTo(-8, -70, 14, -70, 14, -55);        // over the head
+    ctx.bezierCurveTo(14, -50, 13, -46, 15, -40);        // neck (front)
+    ctx.bezierCurveTo(21, -28, 22, -14, 20, 0);          // chest to base
+    ctx.closePath(); ctx.fill();
+    // haunch + head as circles to keep the blob smooth
+    ctx.beginPath(); ctx.ellipse(-2, -13, 20, 14, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill();
+    // front paw hint
+    ctx.beginPath(); ctx.ellipse(10, -2, 8, 4, 0, 0, 7); ctx.fill();
+  }
 
-  // head
-  const hy = cat.state === 'hang' ? -cat.h * 1.05 : -cat.h * 0.92;
-  ctx.beginPath(); ctx.arc(cat.w * 0.18, hy, cat.w * 0.3, 0, 7); ctx.fill();
-
-  // ears
+  // ---- ears: tall, pointed, slightly flared (reference) ----
+  const flat = air ? 6 : 0; // ears back a touch mid-air
   ctx.beginPath();
-  ctx.moveTo(cat.w * 0.0, hy - cat.w * 0.18);
-  ctx.lineTo(cat.w * 0.02, hy - cat.w * 0.52);
-  ctx.lineTo(cat.w * 0.2, hy - cat.w * 0.26);
+  ctx.moveTo(hx - hr * 0.75, hy - hr * 0.45);
+  ctx.quadraticCurveTo(hx - hr * 1.15, hy - hr * 1.6 + flat, hx - hr * 0.85, hy - hr * 2.1 + flat);
+  ctx.quadraticCurveTo(hx - hr * 0.35, hy - hr * 1.35, hx - hr * 0.1, hy - hr * 0.9);
   ctx.closePath(); ctx.fill();
   ctx.beginPath();
-  ctx.moveTo(cat.w * 0.26, hy - cat.w * 0.26);
-  ctx.lineTo(cat.w * 0.42, hy - cat.w * 0.5);
-  ctx.lineTo(cat.w * 0.4, hy - cat.w * 0.14);
+  ctx.moveTo(hx + hr * 0.85, hy - hr * 0.45);
+  ctx.quadraticCurveTo(hx + hr * 1.25, hy - hr * 1.6 + flat, hx + hr * 0.95, hy - hr * 2.1 + flat);
+  ctx.quadraticCurveTo(hx + hr * 0.45, hy - hr * 1.35, hx + hr * 0.2, hy - hr * 0.9);
   ctx.closePath(); ctx.fill();
 
-  // eyes (big white rings like the reference)
-  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.15 : 1;
-  ctx.strokeStyle = C.cream; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.ellipse(cat.w * 0.08, hy - 2, 5.5, 5.5 * blink, 0, 0, 7); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(cat.w * 0.3, hy - 2, 5.5, 5.5 * blink, 0, 0, 7); ctx.stroke();
+  // ---- eyes: big round white rings, almost touching (reference) ----
+  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.12 : 1;
+  const er = hr * 0.36;
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.6;
+  ctx.beginPath(); ctx.ellipse(hx - hr * 0.5, hy - hr * 0.02, er, er * blink, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, hy - hr * 0.02, er, er * blink, 0, 0, 7); ctx.stroke();
 
   // front paws when hanging
-  if (cat.state === 'hang') {
+  if (hang) {
     ctx.fillStyle = C.cat;
     ctx.beginPath(); ctx.arc(cat.w * 0.34, -cat.h * 1.28, 6, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(cat.w * 0.14, -cat.h * 1.3, 6, 0, 7); ctx.fill();
