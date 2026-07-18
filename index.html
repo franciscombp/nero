@@ -40,7 +40,7 @@
   <div class="pill" id="reset">↺ reiniciar</div>
 </div>
 <div id="memory"></div>
-<div id="hint">Toca izquierda / centro / derecha para saltar<br>(o usa las flechas del teclado)</div>
+<div id="hint">Toca izquierda / centro / derecha para saltar<br>Dos dedos = supersalto · (o flechas del teclado, Shift+↑ = supersalto)</div>
 <script>
 'use strict';
 
@@ -106,7 +106,8 @@ const cat = {
   landT: 0
 };
 const GRAV = 2400;
-const JUMP_VX = 340, JUMP_VY = 780, BIG_VY = 980;
+// jump heights: normal v²/2g ≈ 188px (clears the 170px chair gap), big ≈ 352px
+const JUMP_VX = 360, JUMP_VY = 950, BIG_VY = 1300;
 
 // ---------- Objects / narrative ----------
 const memories = [
@@ -158,20 +159,31 @@ function doJump(dir, big) {
   if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
 }
 
-// touch: left / center / right thirds; long press = big jump
+// touch: left / center / right thirds; two fingers OR long press = big jump
 let pressT = null, pressZone = 0;
+const activePointers = new Set();
 canvas.addEventListener('pointerdown', e => {
+  activePointers.add(e.pointerId);
+  if (activePointers.size >= 2) {
+    // second finger: instant super jump in the direction of the first press
+    doJump(pressZone, true);
+    pressT = null;
+    return;
+  }
   const x = e.clientX;
   pressZone = x < W/3 ? -1 : (x > 2*W/3 ? 1 : 0);
   pressT = performance.now();
   if (cat.onGround && cat.state !== 'hang') { cat.state = 'charge'; cat.squash = 0.8; }
 });
-canvas.addEventListener('pointerup', () => {
+function releasePointer(e) {
+  activePointers.delete(e.pointerId);
   if (pressT === null) return;
   const big = performance.now() - pressT > 350;
   doJump(pressZone, big);
   pressT = null;
-});
+}
+canvas.addEventListener('pointerup', releasePointer);
+canvas.addEventListener('pointercancel', releasePointer);
 
 window.addEventListener('keydown', e => {
   if (e.repeat) return;
@@ -211,11 +223,12 @@ function stepCat(dt) {
       cat.onGround = true;
       break;
     }
-    // ledge grab: airborne, moving toward a ledge, near its top edge
-    if (!cat.onGround && cat.vy > 100 && p.kind !== 'floor') {
-      const nearL = Math.abs((cat.x + cat.w/2) - p.x) < 16 && cat.vx > 0;
-      const nearR = Math.abs((cat.x - cat.w/2) - (p.x + p.w)) < 16 && cat.vx < 0;
-      if ((nearL || nearR) && cat.y > p.y + 6 && cat.y < p.y + 70) {
+    // ledge grab: airborne near a ledge's top edge (any horizontal motion)
+    if (!cat.onGround && cat.vy > -80 && p.kind !== 'floor') {
+      const front = cat.x + cat.w/2, back = cat.x - cat.w/2;
+      const nearL = front > p.x - 26 && front < p.x + 14;
+      const nearR = back < p.x + p.w + 26 && back > p.x + p.w - 14;
+      if ((nearL || nearR) && cat.y > p.y + 4 && cat.y < p.y + 90) {
         cat.state = 'hang'; cat.hangPlat = p; cat.hangSide = nearL ? 1 : -1;
         cat.x = nearL ? p.x - cat.w*0.25 : p.x + p.w + cat.w*0.25;
         cat.y = p.y + 34; cat.vx = 0; cat.vy = 0;
