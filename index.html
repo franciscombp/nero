@@ -40,7 +40,7 @@
   <div class="pill" id="reset">↺ reiniciar</div>
 </div>
 <div id="memory"></div>
-<div id="hint">Toca izquierda / centro / derecha para saltar<br>Dos dedos = supersalto · (o flechas del teclado, Shift+↑ = supersalto)</div>
+<div id="hint">Toca izquierda / centro / derecha para saltar · arrastra para andar sigiloso<br>Dos dedos = supersalto · teclado: flechas, Shift+←→ sigiloso, Shift+↑ supersalto</div>
 <script>
 'use strict';
 
@@ -98,8 +98,8 @@ const cat = {
   x: 140, y: FLOOR_Y, vx: 0, vy: 0,
   w: 44, h: 40,
   onGround: true, facing: 1,
-  state: 'idle',        // idle | charge | air | hang | land
-  stateT: 0,
+  state: 'idle',        // idle | charge | air | hang | land | sneak
+  stateT: 0, landAge: 99, combo: 0,
   squash: 1,            // vertical scale for liquid feel
   tailT: 0,
   hangPlat: null, hangSide: 1,
@@ -145,22 +145,36 @@ function collect(id) {
 }
 
 function doJump(dir, big) {
-  if (cat.state === 'hang') { // climb up from hang
+  if (cat.state === 'hang') {
+    if (dir === -cat.hangSide) {
+      // wall-jump combo: leap away from the ledge, higher and farther
+      cat.state = 'air'; cat.onGround = false; cat.hangPlat = null;
+      cat.vy = -BIG_VY * 0.85; cat.vx = dir * JUMP_VX * 1.35;
+      cat.facing = dir; cat.squash = 1.3;
+      return;
+    }
+    // climb up from hang
     cat.y = cat.hangPlat.y; cat.x += cat.hangSide * 20;
     cat.vy = -420; cat.vx = 0; cat.state = 'air'; cat.onGround = false; cat.hangPlat = null;
     return;
   }
   if (!cat.onGround) return;
+  // bunny-hop combo: chaining jumps right after landing builds extra height
+  if (cat.landAge < 0.22) cat.combo = Math.min(cat.combo + 1, 3);
+  else cat.combo = 0;
+  const boost = 1 + 0.12 * cat.combo;
   cat.onGround = false; cat.state = 'air';
-  cat.vy = -(big ? BIG_VY : JUMP_VY);
+  cat.vy = -(big ? BIG_VY : JUMP_VY) * boost;
   cat.vx = dir * JUMP_VX;
   if (dir !== 0) cat.facing = dir;
-  cat.squash = 1.25; // stretch on takeoff
+  cat.squash = 1.25 + 0.05 * cat.combo; // stretch more on combo takeoff
   if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
 }
 
-// touch: left / center / right thirds; two fingers OR long press = big jump
-let pressT = null, pressZone = 0;
+// touch: left / center / right thirds; two fingers OR long press = big jump;
+// drag/swipe sideways = sneak-walk while the finger stays down
+let pressT = null, pressZone = 0, pressStart = null;
+let sneakTouchDir = 0;
 const activePointers = new Set();
 canvas.addEventListener('pointerdown', e => {
   activePointers.add(e.pointerId);
@@ -173,10 +187,21 @@ canvas.addEventListener('pointerdown', e => {
   const x = e.clientX;
   pressZone = x < W/3 ? -1 : (x > 2*W/3 ? 1 : 0);
   pressT = performance.now();
+  pressStart = { x: e.clientX, y: e.clientY };
   if (cat.onGround && cat.state !== 'hang') { cat.state = 'charge'; cat.squash = 0.8; }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!pressStart || activePointers.size !== 1) return;
+  const dx = e.clientX - pressStart.x;
+  if (Math.abs(dx) > 22) {
+    sneakTouchDir = Math.sign(dx);
+    pressT = null; // a drag is a sneak, not a jump
+    if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
+  }
 });
 function releasePointer(e) {
   activePointers.delete(e.pointerId);
+  if (activePointers.size === 0) { sneakTouchDir = 0; pressStart = null; }
   if (pressT === null) return;
   const big = performance.now() - pressT > 350;
   doJump(pressZone, big);
@@ -185,12 +210,22 @@ function releasePointer(e) {
 canvas.addEventListener('pointerup', releasePointer);
 canvas.addEventListener('pointercancel', releasePointer);
 
+// keyboard: Shift + arrow = sneak-walk instead of jumping
+const held = { left: false, right: false, shift: false };
 window.addEventListener('keydown', e => {
+  if (e.key === 'Shift') held.shift = true;
+  if (e.key === 'ArrowLeft') held.left = true;
+  if (e.key === 'ArrowRight') held.right = true;
   if (e.repeat) return;
-  if (e.key === 'ArrowLeft') doJump(-1, false);
-  else if (e.key === 'ArrowRight') doJump(1, false);
+  if (e.key === 'ArrowLeft') { if (!e.shiftKey) doJump(-1, false); }
+  else if (e.key === 'ArrowRight') { if (!e.shiftKey) doJump(1, false); }
   else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
   else if (e.key === 'r' || e.key === 'R') resetGame();
+});
+window.addEventListener('keyup', e => {
+  if (e.key === 'Shift') held.shift = false;
+  if (e.key === 'ArrowLeft') held.left = false;
+  if (e.key === 'ArrowRight') held.right = false;
 });
 document.getElementById('reset').addEventListener('click', resetGame);
 
@@ -219,7 +254,7 @@ function stepCat(dt) {
     if (cat.vy >= 0 && prevY <= p.y + 1 && cat.y >= p.y &&
         cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w) {
       cat.y = p.y; cat.vy = 0; cat.vx = 0;
-      if (!cat.onGround) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; }
+      if (!cat.onGround) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; cat.landAge = 0; }
       cat.onGround = true;
       break;
     }
@@ -239,11 +274,28 @@ function stepCat(dt) {
   }
 
   if (cat.onGround) {
+    cat.landAge += dt;
     if (cat.state === 'land') {
       cat.landT += dt;
       if (cat.landT > 0.18) cat.state = 'idle';
     } else if (cat.state !== 'charge') cat.state = 'idle';
-  } else if (cat.state !== 'charge') cat.state = 'air';
+  } else {
+    cat.landAge = 99;
+    if (cat.state !== 'charge') cat.state = 'air';
+  }
+
+  // sneak-walk: drag on touch, Shift+arrow on keyboard
+  const sneakDir = sneakTouchDir || (held.shift ? (held.right ? 1 : 0) - (held.left ? 1 : 0) : 0);
+  if (cat.onGround && sneakDir !== 0) {
+    cat.x += sneakDir * 115 * dt;
+    cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
+    cat.facing = sneakDir;
+    cat.state = 'sneak';
+    // walked past the edge? start falling
+    const supported = platforms.some(p =>
+      cat.y === p.y && cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w);
+    if (!supported) { cat.onGround = false; cat.state = 'air'; }
+  }
 
   // fell off world safety
   if (cat.y > WORLD_H + 200) { cat.x = 140; cat.y = FLOOR_Y; cat.vy = 0; cat.vx = 0; }
@@ -422,49 +474,95 @@ function drawCat() {
 
   const air = cat.state === 'air';
   const hang = cat.state === 'hang';
+  const sneak = cat.state === 'sneak';
   const sway = Math.sin(t * 2.2) * 8;
 
   ctx.fillStyle = C.cat;
   ctx.strokeStyle = C.cat;
   ctx.lineCap = 'round';
 
-  // ---- tail: long, thick, sweeps behind and curls up (reference pose) ----
-  ctx.lineWidth = 10;
-  ctx.beginPath();
-  if (air || hang) {
+  let hx, hy, hr; // head center + radius, for eyes/ears
+  if (hang) {
+    // ---- hanging: paws hooked over the lip, body dangling, peeking up ----
+    // ledge lip sits at y = -34 in local coords (see grab logic)
+    hx = 10; hy = -22; hr = 13.5;
+    // dangling tail, swinging
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(-4, -4);
+    ctx.bezierCurveTo(-8, 12 + sway * 0.4, -22, 20 + sway * 0.8, -19, 4 + sway);
+    ctx.stroke();
+    // body: soft teardrop hanging from the forelegs
+    ctx.beginPath();
+    ctx.moveTo(15, -33);
+    ctx.bezierCurveTo(23, -20, 19, -2, 6, 1);
+    ctx.bezierCurveTo(-6, 4, -14, -7, -10, -21);
+    ctx.bezierCurveTo(-8, -29, -2, -34, 5, -35);
+    ctx.closePath(); ctx.fill();
+    // forelegs stretched up and forward onto the ledge
+    ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(23, -39); ctx.lineTo(14, -27); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(13, -41); ctx.lineTo(7, -29); ctx.stroke();
+    // paws gripping clearly on top of the lip, ahead of the head
+    ctx.beginPath(); ctx.arc(25, -40, 5.5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(14, -42, 5.5, 0, 7); ctx.fill();
+    // head below the paws, tilted up
+    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.94, -0.12, 0, 7); ctx.fill();
+  } else if (sneak) {
+    // ---- sneaking: low, long, head forward, gentle prowl bob ----
+    ctx.translate(0, Math.sin(t * 13) * 1.3);
+    hx = 22; hy = -19; hr = 11;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(-22, -10);
+    ctx.bezierCurveTo(-36, -7 + sway * 0.4, -44, -16 + sway, -39, -27 + sway * 0.8);
+    ctx.stroke();
+    // low stretched body, back slightly arched
+    ctx.beginPath();
+    ctx.moveTo(-26, 0);
+    ctx.bezierCurveTo(-30, -14, -18, -23, -2, -22);
+    ctx.bezierCurveTo(8, -22, 14, -24, 18, -25);
+    ctx.bezierCurveTo(20, -14, 16, -3, 8, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-4, -10, 24, 10, 0.06, 0, 7); ctx.fill();
+    // head low and forward
+    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.9, 0.12, 0, 7); ctx.fill();
+  } else if (air) {
+    // ---- airborne: stretched arc, head leading, hindquarters trailing ----
+    ctx.lineWidth = 10;
+    ctx.beginPath();
     ctx.moveTo(-14, -12);
     ctx.bezierCurveTo(-38, -4 + sway, -52, -28 + sway, -44, -52 - sway * 0.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-4, -cat.h * 0.4, cat.w * 0.42, cat.h * 0.38, -0.28, 0, 7);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(6, -cat.h * 0.62, cat.w * 0.33, cat.h * 0.4, -0.1, 0, 7);
+    ctx.fill();
+    hx = cat.w * 0.22; hy = -cat.h * 0.95; hr = cat.w * 0.29;
+    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.95, -0.1, 0, 7); ctx.fill();
   } else {
+    // ---- sitting: organic silhouette, S-curved back, asymmetric rump ----
+    hx = 3; hy = -59; hr = 15;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
     ctx.moveTo(-4, -4);
     ctx.bezierCurveTo(-32, 4, -48, -6 + sway * 0.4, -44, -34 + sway);
     ctx.bezierCurveTo(-41, -54 + sway, -30, -60 + sway, -25, -51 + sway * 0.7);
-  }
-  ctx.stroke();
-
-  let hx, hy, hr; // head center + radius, for eyes/ears
-  if (air || hang) {
-    // stretched liquid blob, head leading
+    ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(0, -cat.h * 0.45, cat.w * 0.46, cat.h * 0.5, -0.15, 0, 7);
-    ctx.fill();
-    hx = cat.w * 0.2; hy = hang ? -cat.h * 1.05 : -cat.h * 0.95; hr = cat.w * 0.3;
-    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill();
-  } else {
-    // ---- sitting silhouette: wide haunches tapering up to the head ----
-    hx = 3; hy = -60; hr = 15.5;
-    ctx.beginPath();
-    ctx.moveTo(-21, 0);                                  // base left
-    ctx.bezierCurveTo(-25, -18, -19, -34, -10, -44);     // rounded back
-    ctx.bezierCurveTo(-7, -48, -8, -52, -8, -55);        // neck (back)
-    ctx.bezierCurveTo(-8, -70, 14, -70, 14, -55);        // over the head
-    ctx.bezierCurveTo(14, -50, 13, -46, 15, -40);        // neck (front)
-    ctx.bezierCurveTo(21, -28, 22, -14, 20, 0);          // chest to base
+    ctx.moveTo(-22, 0);                                  // base left, flared
+    ctx.bezierCurveTo(-27, -13, -23, -27, -13, -38);     // round rump
+    ctx.bezierCurveTo(-9, -43, -10, -50, -8, -55);       // waist dips in (S-curve)
+    ctx.bezierCurveTo(-7, -71, 13, -72, 14, -57);        // crown, slightly tilted
+    ctx.bezierCurveTo(15, -51, 12, -46, 14, -40);        // jaw into neck
+    ctx.bezierCurveTo(19, -29, 21, -14, 18, 0);          // chest slope, narrower base
     ctx.closePath(); ctx.fill();
-    // haunch + head as circles to keep the blob smooth
-    ctx.beginPath(); ctx.ellipse(-2, -13, 20, 14, 0, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, 7); ctx.fill();
+    // haunch, tilted so the mass reads organic rather than circular
+    ctx.beginPath(); ctx.ellipse(-4, -12, 19, 13, -0.1, 0, 7); ctx.fill();
     // front paw hint
-    ctx.beginPath(); ctx.ellipse(10, -2, 8, 4, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(9, -2, 8, 4, 0, 0, 7); ctx.fill();
   }
 
   // ---- ears: tall, pointed, slightly flared (reference) ----
@@ -484,15 +582,8 @@ function drawCat() {
   const blink = (Math.sin(t * 0.7) > 0.995) ? 0.12 : 1;
   const er = hr * 0.36;
   ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.6;
-  ctx.beginPath(); ctx.ellipse(hx - hr * 0.5, hy - hr * 0.02, er, er * blink, 0, 0, 7); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, hy - hr * 0.02, er, er * blink, 0, 0, 7); ctx.stroke();
-
-  // front paws when hanging
-  if (hang) {
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.arc(cat.w * 0.34, -cat.h * 1.28, 6, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(cat.w * 0.14, -cat.h * 1.3, 6, 0, 7); ctx.fill();
-  }
+  ctx.beginPath(); ctx.ellipse(hx - hr * 0.5, hy + hr * 0.14, er, er * blink, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, hy + hr * 0.14, er, er * blink, 0, 0, 7); ctx.stroke();
 
   ctx.restore();
 }

@@ -18,10 +18,16 @@ npx serve .
 | Salto a la izquierda | Tap tercio izquierdo | ← |
 | Salto vertical / trepar | Tap tercio central | ↑ o Espacio |
 | Salto a la derecha | Tap tercio derecho | → |
-| Salto potente | Pulsación larga | Shift + ↑ |
+| Salto potente | Dos dedos o pulsación larga | Shift + ↑ |
+| Andar sigiloso | Arrastrar el dedo a un lado | Shift + ← / → |
 | Reiniciar | Botón ↺ | R |
 
-Si el gato queda colgado de un borde (agarre), cualquier salto lo hace trepar.
+### Movimiento avanzado (combos)
+
+- **Agarre**: si el gato queda colgado de un borde, saltar hacia arriba o hacia el borde lo hace trepar.
+- **Salto de pared**: colgado de un borde, saltar en dirección *contraria* lo lanza más alto y más lejos.
+- **Encadenado**: saltar justo al aterrizar (ventana de ~0,2 s) acumula impulso — hasta 3 saltos encadenados, cada uno ~12 % más alto.
+- **Sigilo**: el andar agachado sirve para acomodarse con precisión antes de un salto difícil.
 
 ## Contenido del MVP
 
