@@ -1,7 +1,19 @@
-# Nero · Gato en casa 🐈‍⬛
+# Nero · una historia de gato 🐈‍⬛
 
-Prototipo MVP de un juego de exploración doméstica protagonizado por un gato negro "líquido".
+Juego de exploración doméstica en **tres actos**, protagonizado por un gato negro "líquido".
 Todo el juego vive en un solo archivo: `index.html` (canvas + JavaScript vanilla, sin dependencias).
+
+## La historia
+
+La familia salió temprano y la casa parece vacía. Nero recorre tres habitaciones
+recogiendo los recuerdos que la familia deja en las cosas (9 en total, 3 por acto):
+
+- **Acto I · La cocina** (mañana) — la taza del abuelo, la monstera de mamá, la ventana al camino de la escuela.
+- **Acto II · La sala** (tarde) — la manta del sofá, el retrato de la playa, la puerta entreabierta del pasillo.
+- **Acto III · El cuarto** (noche) — el ratón de trapo, el móvil de estrellas, y la cama alta donde todo termina bien.
+
+Cada acto tiene su propia luz (paleta pastel de mañana, tarde y noche), su mobiliario
+y su meta. Pantalla de título, tarjetas de acto y final con recuento de recuerdos.
 
 ## Cómo jugar
 
