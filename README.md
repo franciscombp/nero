@@ -15,19 +15,30 @@ npx serve .
 
 | Acción | Touch | Teclado |
 |---|---|---|
-| Salto a la izquierda | Tap tercio izquierdo | ← |
-| Salto vertical / trepar | Tap tercio central | ↑ o Espacio |
-| Salto a la derecha | Tap tercio derecho | → |
-| Salto potente | Dos dedos o pulsación larga | Shift + ↑ |
+| Saltar | Swipe ↑ / ↖ / ↗ | ← ↑ → o Espacio |
+| Supersalto | Swipe largo o rápido · dos dedos | Shift + ↑ |
+| Salto dirigido | Tap sobre un mueble al alcance | — |
+| Bajar / caída rápida | Swipe ↓ | ↓ |
 | Andar sigiloso | Arrastrar el dedo a un lado | Shift + ← / → |
 | Reiniciar | Botón ↺ | R |
+
+El **tap sobre un mueble** calcula la parábola exacta para aterrizar ahí; si el punto
+no está al alcance, el gato da un salto normal hacia esa dirección.
 
 ### Movimiento avanzado (combos)
 
 - **Agarre**: si el gato queda colgado de un borde, saltar hacia arriba o hacia el borde lo hace trepar.
 - **Salto de pared**: colgado de un borde, saltar en dirección *contraria* lo lanza más alto y más lejos.
+- **Paredes laterales**: al chocar con una pared en el aire, el gato se agarra y se desliza despacio; desde ahí puede saltar impulsándose.
 - **Encadenado**: saltar justo al aterrizar (ventana de ~0,2 s) acumula impulso — hasta 3 saltos encadenados, cada uno ~12 % más alto.
 - **Sigilo**: el andar agachado sirve para acomodarse con precisión antes de un salto difícil.
+- El techo es sólido: no se puede salir de la habitación por arriba.
+
+### Juguetes de la casa
+
+- 🧶 Un ovillo de lana en el suelo que rueda (y rebota) cuando lo empujas.
+- 📚 Tres libros en una repisa que puedes tirar al pasar.
+- 🖼️ Cuadros, alfombra y techo de madera que enmarcan la habitación.
 
 ## Contenido del MVP
 

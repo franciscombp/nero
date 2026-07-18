@@ -40,7 +40,7 @@
   <div class="pill" id="reset">↺ reiniciar</div>
 </div>
 <div id="memory"></div>
-<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · arrastra al lado para andar sigiloso<br>También: taps por zonas, dos dedos = supersalto · teclado: flechas + Shift</div>
+<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
 <script>
 'use strict';
 
@@ -82,15 +82,15 @@ const FLOOR_Y = WORLD_H - 60;   // top surface of floor
 // Platforms: {x, y (top surface), w, h, label}
 const platforms = [
   { x: 0,   y: FLOOR_Y, w: WORLD_W, h: 60, kind:'floor' },
-  { x: 90,  y: FLOOR_Y - 170, w: 150, h: 16, kind:'chair' },
-  { x: 330, y: FLOOR_Y - 300, w: 300, h: 22, kind:'table' },
+  { x: 90,  y: FLOOR_Y - 145, w: 150, h: 16, kind:'chair' },
+  { x: 330, y: FLOOR_Y - 290, w: 300, h: 22, kind:'table' },
   { x: 700, y: FLOOR_Y - 430, w: 200, h: 26, kind:'counter' },
-  { x: 480, y: FLOOR_Y - 590, w: 170, h: 14, kind:'shelf' },
-  { x: 150, y: FLOOR_Y - 740, w: 190, h: 14, kind:'shelf' },
-  { x: 470, y: FLOOR_Y - 910, w: 180, h: 14, kind:'shelf' },
-  { x: 130, y: FLOOR_Y - 1080, w: 160, h: 14, kind:'shelf' },
-  { x: 430, y: FLOOR_Y - 1250, w: 220, h: 18, kind:'top' },   // repisa alta con planta
-  { x: 60,  y: FLOOR_Y - 1420, w: 250, h: 20, kind:'window' } // ventana = salida
+  { x: 480, y: FLOOR_Y - 580, w: 170, h: 14, kind:'shelf' },
+  { x: 150, y: FLOOR_Y - 730, w: 190, h: 14, kind:'shelf' },
+  { x: 470, y: FLOOR_Y - 880, w: 180, h: 14, kind:'shelf' },
+  { x: 130, y: FLOOR_Y - 1030, w: 160, h: 14, kind:'shelf' },
+  { x: 430, y: FLOOR_Y - 1190, w: 220, h: 18, kind:'top' },   // repisa alta con planta
+  { x: 60,  y: FLOOR_Y - 1350, w: 250, h: 20, kind:'window' } // ventana = salida
 ];
 
 // ---------- Cat ----------
@@ -106,8 +106,9 @@ const cat = {
   landT: 0
 };
 const GRAV = 2400;
-// jump heights: normal v²/2g ≈ 188px (clears the 170px chair gap), big ≈ 352px
-const JUMP_VX = 360, JUMP_VY = 950, BIG_VY = 1300;
+// jump heights: normal v²/2g ≈ 161px, big ≈ 276px — platform gaps are 130-160px
+const JUMP_VX = 330, JUMP_VY = 880, BIG_VY = 1150;
+const CEILING_Y = 80;
 
 // ---------- Objects / narrative ----------
 const memories = [
@@ -118,6 +119,46 @@ const memories = [
 let found = {};
 
 const mug = { x: 760, y: FLOOR_Y - 430, vx:0, vy:0, falling:false, broken:false, r:14, wob:0 };
+
+// yarn ball on the floor: rolls away when the cat bumps it
+const yarn = { x: 580, y: FLOOR_Y - 12, r: 12, vx: 0, rot: 0 };
+// books standing on the second shelf: nudge them off for fun
+const BOOK_SHELF = 5; // platforms index
+const books = [
+  { ox: 190, w: 13, h: 36, c: '#C4623A', down: false, x: 0, y: 0, vx: 0, vy: 0, rot: 0, rest: false },
+  { ox: 208, w: 11, h: 30, c: '#9BA37E', down: false, x: 0, y: 0, vx: 0, vy: 0, rot: 0, rest: false },
+  { ox: 224, w: 13, h: 33, c: '#D9982F', down: false, x: 0, y: 0, vx: 0, vy: 0, rot: 0, rest: false }
+];
+
+function stepProps(dt) {
+  // yarn rolls when bumped, with friction and wall bounces
+  if (Math.abs(cat.y - FLOOR_Y) < 40 && Math.abs(cat.x - yarn.x) < 40) {
+    yarn.vx = (yarn.x > cat.x ? 1 : -1) * 240;
+  }
+  yarn.x += yarn.vx * dt;
+  yarn.rot += yarn.vx * dt / yarn.r;
+  yarn.vx *= Math.pow(0.35, dt);
+  if (yarn.x < yarn.r + 6)          { yarn.x = yarn.r + 6; yarn.vx *= -0.6; }
+  if (yarn.x > WORLD_W - yarn.r - 6){ yarn.x = WORLD_W - yarn.r - 6; yarn.vx *= -0.6; }
+
+  // books topple off their shelf when the cat walks into them
+  const shelf = platforms[BOOK_SHELF];
+  for (const b of books) {
+    if (!b.down) {
+      const bx = shelf.x + b.ox;
+      if (cat.y === shelf.y && Math.abs(cat.x - bx) < 28) {
+        b.down = true;
+        b.x = bx; b.y = shelf.y;
+        b.vx = (bx > cat.x ? 1 : -1) * 90; b.vy = -60;
+      }
+    } else if (!b.rest) {
+      b.vy += GRAV * 0.8 * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.rot += b.vx * 0.02 * dt * 60;
+      if (b.y >= FLOOR_Y - 4) { b.y = FLOOR_Y - 4; b.rest = true; b.rot = (b.vx > 0 ? 1 : -1) * 1.5; }
+    }
+  }
+}
 
 let gameWon = false, winT = 0;
 
@@ -144,7 +185,57 @@ function collect(id) {
   showMemory(memories.find(m => m.id === id).text);
 }
 
+// targeted jump: aim a ballistic arc at a platform top near the tapped point.
+// Returns false when the spot is out of reach so the caller can fall back.
+function tryTargetJump(wx, wy) {
+  if (!cat.onGround) return false;
+  let best = null;
+  for (const p of platforms) {
+    if (Math.abs(p.y - wy) > 70) continue;
+    const tx = Math.max(p.x + 14, Math.min(p.x + p.w - 14, wx));
+    if (Math.abs(tx - wx) > 70) continue;
+    if (p.y === cat.y && Math.abs(tx - cat.x) < 30) continue; // already there
+    const d = Math.hypot(tx - cat.x, p.y - cat.y);
+    if (!best || d < best.d) best = { tx, ty: p.y, d };
+  }
+  if (!best) return false;
+  const rise = Math.max(cat.y - best.ty, 0) + 40;      // apex 40px above the target
+  const vy = -Math.sqrt(2 * GRAV * rise);
+  if (-vy > BIG_VY * 1.2) return false;                // too high even for a super jump
+  const disc = vy * vy + 2 * GRAV * (best.ty - cat.y);
+  if (disc < 0) return false;
+  const t = (-vy + Math.sqrt(disc)) / GRAV;            // time to descend onto the target
+  const vx = (best.tx - cat.x) / t;
+  if (Math.abs(vx) > 430) return false;                // too far sideways
+  cat.onGround = false; cat.state = 'air';
+  cat.vy = vy; cat.vx = vx;
+  if (Math.abs(vx) > 20) cat.facing = Math.sign(vx);
+  cat.squash = 1.25;
+  if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
+  return true;
+}
+
+// drop down: fall through the platform under the cat (or fast-fall mid-air)
+function doDrop() {
+  if (cat.state === 'hang') { cat.state = 'air'; cat.hangPlat = null; cat.vy = 100; return; }
+  if (cat.onGround) {
+    const p = platforms.find(p => cat.y === p.y);
+    if (!p || p.kind === 'floor') return;
+    cat.y += 3; cat.vy = 180; cat.onGround = false; cat.state = 'air';
+    cat.squash = 1.15;
+  } else {
+    cat.vy += 500; // fast-fall
+  }
+}
+
 function doJump(dir, big) {
+  if (cat.state === 'slide' && !cat.onGround) {
+    // wall-jump off a side wall, always away from it
+    const away = -cat.slideSide;
+    cat.vx = away * JUMP_VX * 1.2; cat.vy = -JUMP_VY;
+    cat.facing = away; cat.state = 'air'; cat.squash = 1.25;
+    return;
+  }
   if (cat.state === 'hang') {
     if (dir === -cat.hangSide) {
       // wall-jump combo: leap away from the ledge, higher and farther
@@ -216,9 +307,17 @@ function releasePointer(e) {
       doJump(dir, big);
       return;
     }
+    if (dy > 30 && Math.abs(dy) > Math.abs(dx)) { // swipe down = drop / fast-fall
+      doDrop();
+      return;
+    }
   }
-  // plain tap: zone jump (long press = super jump)
-  doJump(pressZone, heldMs > 350);
+  // plain tap: try a targeted jump to the tapped spot, else hop toward it
+  const wx = cam.x + e.clientX / cam.scale, wy = cam.y + e.clientY / cam.scale;
+  if (!tryTargetJump(wx, wy)) {
+    const dir = Math.abs(wx - cat.x) > 40 ? Math.sign(wx - cat.x) : 0;
+    doJump(dir, heldMs > 350);
+  }
 }
 canvas.addEventListener('pointerup', releasePointer);
 canvas.addEventListener('pointercancel', releasePointer);
@@ -233,6 +332,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { if (!e.shiftKey) doJump(-1, false); }
   else if (e.key === 'ArrowRight') { if (!e.shiftKey) doJump(1, false); }
   else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
+  else if (e.key === 'ArrowDown') doDrop();
   else if (e.key === 'r' || e.key === 'R') resetGame();
 });
 window.addEventListener('keyup', e => {
@@ -246,6 +346,8 @@ function resetGame() {
   cat.x = 140; cat.y = FLOOR_Y; cat.vx = 0; cat.vy = 0;
   cat.onGround = true; cat.state = 'idle'; cat.squash = 1; cat.hangPlat = null;
   mug.x = 760; mug.y = FLOOR_Y - 430; mug.vx = 0; mug.vy = 0; mug.falling = false; mug.broken = false;
+  yarn.x = 580; yarn.vx = 0; yarn.rot = 0;
+  for (const b of books) { b.down = false; b.rest = false; b.rot = 0; b.vx = 0; b.vy = 0; }
   found = {}; gameWon = false; winT = 0;
   updateProgress();
   uiMemory.classList.remove('show');
@@ -261,13 +363,15 @@ function stepCat(dt) {
   cat.y += cat.vy * dt;
   cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
 
+  const wasGrounded = cat.onGround;
   cat.onGround = false;
   for (const p of platforms) {
     // land on top: was above surface, now below, falling, horizontally overlapping
     if (cat.vy >= 0 && prevY <= p.y + 1 && cat.y >= p.y &&
         cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w) {
       cat.y = p.y; cat.vy = 0; cat.vx = 0;
-      if (!cat.onGround) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; cat.landAge = 0; }
+      // landing effects only on the air -> ground transition
+      if (!wasGrounded) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; cat.landAge = 0; }
       cat.onGround = true;
       break;
     }
@@ -295,6 +399,23 @@ function stepCat(dt) {
   } else {
     cat.landAge = 99;
     if (cat.state !== 'charge') cat.state = 'air';
+  }
+
+  // wall cling: airborne against a side wall -> grab on and slide down slowly
+  if (!cat.onGround && cat.state !== 'hang') {
+    const atL = cat.x <= cat.w/2 + 1, atR = cat.x >= WORLD_W - cat.w/2 - 1;
+    if ((atL || atR) && cat.vy > -100) {
+      cat.state = 'slide';
+      cat.slideSide = atL ? -1 : 1;
+      cat.facing = cat.slideSide;          // face the wall
+      if (cat.vy > 120) cat.vy = 120;      // claws scrape: slow controlled slide
+    }
+  }
+
+  // ceiling: the room has a lid
+  if (cat.y - cat.h < CEILING_Y) {
+    cat.y = CEILING_Y + cat.h;
+    if (cat.vy < 0) cat.vy = 0;
   }
 
   // sneak-walk: drag on touch, Shift+arrow on keyboard
@@ -390,7 +511,72 @@ function drawBackground() {
   ctx.fillStyle = C.blush;
   ctx.beginPath(); ctx.arc(40, FLOOR_Y - 950, 55, -Math.PI/2, Math.PI/2); ctx.fill();
 
+  // ceiling lid
+  ctx.fillStyle = C.woodDk;
+  ctx.fillRect(0, CEILING_Y - 26, WORLD_W, 26);
+  ctx.fillStyle = C.terra;
+  ctx.fillRect(0, CEILING_Y - 4, WORLD_W, 8);
+
+  // rug under the table
+  ctx.fillStyle = C.terra;
+  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 160, 18, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = C.cream;
+  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 120, 13, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = C.mustard;
+  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 78, 9, 0, 0, 7); ctx.fill();
+
+  // picture frames on the wall
+  const frame = (x, y, w, h, col) => {
+    ctx.fillStyle = C.woodDk; ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+    ctx.fillStyle = col; ctx.fillRect(x, y, w, h);
+  };
+  frame(600, FLOOR_Y - 720, 60, 78, C.blush);   // retrato
+  ctx.fillStyle = C.cat;
+  ctx.beginPath(); ctx.arc(630, FLOOR_Y - 672, 14, 0, 7); ctx.fill(); // gato del retrato
+  ctx.beginPath(); ctx.ellipse(630, FLOOR_Y - 654, 17, 10, 0, 0, 7); ctx.fill();
+  frame(310, FLOOR_Y - 1120, 70, 52, C.sage);   // paisaje
+  ctx.fillStyle = C.mustard;
+  ctx.beginPath(); ctx.arc(345, FLOOR_Y - 1098, 10, 0, 7); ctx.fill();
+
   ctx.restore();
+}
+
+function drawProps() {
+  // yarn ball
+  ctx.save();
+  ctx.translate(yarn.x, yarn.y); ctx.rotate(yarn.rot);
+  ctx.fillStyle = C.mustard;
+  ctx.beginPath(); ctx.arc(0, 0, yarn.r, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(138,90,48,.55)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, yarn.r * 0.72, 0.4, 2.6); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, yarn.r * 0.72, 3.3, 5.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-yarn.r * 0.8, -yarn.r * 0.3);
+  ctx.quadraticCurveTo(0, yarn.r * 0.9, yarn.r * 0.8, yarn.r * 0.2); ctx.stroke();
+  ctx.restore();
+  // loose thread when it has rolled
+  if (Math.abs(yarn.rot) > 0.5) {
+    ctx.strokeStyle = C.mustard; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(yarn.x - yarn.r, FLOOR_Y - 2);
+    ctx.quadraticCurveTo(yarn.x - 30, FLOOR_Y - 8, yarn.x - 52, FLOOR_Y - 2);
+    ctx.stroke();
+  }
+
+  // books
+  const shelf = platforms[BOOK_SHELF];
+  for (const b of books) {
+    ctx.save();
+    if (!b.down) {
+      ctx.translate(shelf.x + b.ox, shelf.y);
+      ctx.rotate(Math.sin(cat.tailT * 1.3 + b.ox) * 0.02);
+    } else {
+      ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+    }
+    ctx.fillStyle = b.c;
+    ctx.fillRect(-b.w/2, -b.h, b.w, b.h);
+    ctx.fillStyle = 'rgba(246,239,226,.8)';
+    ctx.fillRect(-b.w/2, -b.h, b.w, 4);
+    ctx.restore();
+  }
 }
 
 function drawPlatform(p) {
@@ -473,6 +659,78 @@ function drawMug() {
   ctx.restore();
 }
 
+// --- cat drawing helpers -------------------------------------------------
+function catTail(pts, w) {
+  // two chained bezier segments with tapering width and a rounded tip
+  const [a, c1, c2, m, c3, c4, tip] = pts;
+  ctx.strokeStyle = C.cat; ctx.lineCap = 'round';
+  ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]);
+  ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], m[0], m[1]);
+  ctx.stroke();
+  ctx.lineWidth = w * 0.62;
+  ctx.beginPath(); ctx.moveTo(m[0], m[1]);
+  ctx.bezierCurveTo(c3[0], c3[1], c4[0], c4[1], tip[0], tip[1]);
+  ctx.stroke();
+  ctx.fillStyle = C.cat;
+  ctx.beginPath(); ctx.arc(tip[0], tip[1], w * 0.36, 0, 7); ctx.fill();
+}
+
+function catEars(hx, hy, hr, flat) {
+  ctx.fillStyle = C.cat;
+  ctx.beginPath();
+  ctx.moveTo(hx - hr * 0.78, hy - hr * 0.4);
+  ctx.quadraticCurveTo(hx - hr * 1.2, hy - hr * 1.55 + flat, hx - hr * 0.84, hy - hr * 2.2 + flat);
+  ctx.quadraticCurveTo(hx - hr * 0.32, hy - hr * 1.32, hx - hr * 0.05, hy - hr * 0.9);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(hx + hr * 0.88, hy - hr * 0.4);
+  ctx.quadraticCurveTo(hx + hr * 1.3, hy - hr * 1.55 + flat, hx + hr * 0.94, hy - hr * 2.2 + flat);
+  ctx.quadraticCurveTo(hx + hr * 0.42, hy - hr * 1.32, hx + hr * 0.15, hy - hr * 0.9);
+  ctx.closePath(); ctx.fill();
+  // inner-ear accent, barely lighter than the coat
+  ctx.fillStyle = '#453B31';
+  ctx.beginPath();
+  ctx.moveTo(hx - hr * 0.58, hy - hr * 0.78);
+  ctx.lineTo(hx - hr * 0.8, hy - hr * 1.75 + flat);
+  ctx.lineTo(hx - hr * 0.3, hy - hr * 1.05);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(hx + hr * 0.68, hy - hr * 0.78);
+  ctx.lineTo(hx + hr * 0.9, hy - hr * 1.75 + flat);
+  ctx.lineTo(hx + hr * 0.4, hy - hr * 1.05);
+  ctx.closePath(); ctx.fill();
+}
+
+function catFace(hx, hy, hr, t, lookUp) {
+  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.12 : 1;
+  const ey = hy + hr * 0.14 - (lookUp ? hr * 0.14 : 0);
+  const er = hr * 0.35;
+  // white ring eyes with a live little pupil
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(hx - hr * 0.48, ey, er, er * blink, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, ey, er, er * blink, 0, 0, 7); ctx.stroke();
+  if (blink === 1) {
+    const px = hr * 0.08, py = lookUp ? -hr * 0.1 : hr * 0.05;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath(); ctx.arc(hx - hr * 0.48 + px, ey + py, hr * 0.12, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + hr * 0.55 + px, ey + py, hr * 0.12, 0, 7); ctx.fill();
+  }
+  // blush nose
+  ctx.fillStyle = C.blush;
+  ctx.beginPath();
+  ctx.moveTo(hx - hr * 0.04, ey + hr * 0.46);
+  ctx.lineTo(hx + hr * 0.16, ey + hr * 0.46);
+  ctx.lineTo(hx + hr * 0.06, ey + hr * 0.62);
+  ctx.closePath(); ctx.fill();
+  // whiskers, faint so the silhouette stays graphic
+  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(hx - hr * 0.8, ey + hr * 0.42); ctx.lineTo(hx - hr * 1.55, ey + hr * 0.26); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx - hr * 0.8, ey + hr * 0.56); ctx.lineTo(hx - hr * 1.5, ey + hr * 0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, ey + hr * 0.42); ctx.lineTo(hx + hr * 1.65, ey + hr * 0.26); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, ey + hr * 0.56); ctx.lineTo(hx + hr * 1.6, ey + hr * 0.6); ctx.stroke();
+}
+
 function drawCat() {
   const t = cat.tailT;
   ctx.save();
@@ -488,24 +746,21 @@ function drawCat() {
   const air = cat.state === 'air';
   const hang = cat.state === 'hang';
   const sneak = cat.state === 'sneak';
+  const slide = cat.state === 'slide';
   const sway = Math.sin(t * 2.2) * 8;
 
   ctx.fillStyle = C.cat;
   ctx.strokeStyle = C.cat;
   ctx.lineCap = 'round';
 
-  let hx, hy, hr; // head center + radius, for eyes/ears
+  let hx, hy, hr; // head center + radius, for ears/face
   if (hang) {
     // ---- hanging: paws hooked over the lip, body dangling, peeking up ----
-    // ledge lip sits at y = -34 in local coords (see grab logic)
     hx = 10; hy = -22; hr = 13.5;
-    // dangling tail, swinging
-    ctx.lineWidth = 9;
-    ctx.beginPath();
-    ctx.moveTo(-4, -4);
-    ctx.bezierCurveTo(-8, 12 + sway * 0.4, -22, 20 + sway * 0.8, -19, 4 + sway);
-    ctx.stroke();
+    catTail([[-4,-4],[-8,10+sway*0.4],[-20,16+sway*0.8],[-19,4+sway],
+             [-18,-4+sway],[-13,-8+sway*0.8],[-10,-3+sway*0.7]], 9);
     // body: soft teardrop hanging from the forelegs
+    ctx.fillStyle = C.cat;
     ctx.beginPath();
     ctx.moveTo(15, -33);
     ctx.bezierCurveTo(23, -20, 19, -2, 6, 1);
@@ -513,24 +768,44 @@ function drawCat() {
     ctx.bezierCurveTo(-8, -29, -2, -34, 5, -35);
     ctx.closePath(); ctx.fill();
     // forelegs stretched up and forward onto the ledge
-    ctx.lineWidth = 8;
+    ctx.strokeStyle = C.cat; ctx.lineWidth = 8;
     ctx.beginPath(); ctx.moveTo(23, -39); ctx.lineTo(14, -27); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(13, -41); ctx.lineTo(7, -29); ctx.stroke();
-    // paws gripping clearly on top of the lip, ahead of the head
+    // paws gripping over the lip, with tiny toes
+    ctx.fillStyle = C.cat;
     ctx.beginPath(); ctx.arc(25, -40, 5.5, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(14, -42, 5.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(237,227,212,.45)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(23.5, -44); ctx.lineTo(23.5, -40); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(26.5, -44); ctx.lineTo(26.5, -40); ctx.stroke();
     // head below the paws, tilted up
+    ctx.fillStyle = C.cat;
     ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.94, -0.12, 0, 7); ctx.fill();
+  } else if (slide) {
+    // ---- wall slide: pressed against the wall, claws hooked, easing down ----
+    hx = 6; hy = -50; hr = 13;
+    catTail([[-8,-8],[-20,-2+sway*0.5],[-30,-14+sway],[-26,-28+sway*0.7],
+             [-23,-38+sway*0.5],[-16,-44+sway*0.4],[-12,-38+sway*0.3]], 9);
+    // vertical body hugging the wall
+    ctx.fillStyle = C.cat;
+    ctx.beginPath(); ctx.ellipse(3, -26, 12.5, 23, 0.1, 0, 7); ctx.fill();
+    // legs braced on the wall
+    ctx.strokeStyle = C.cat; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(8, -42); ctx.lineTo(17, -46); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(7, -14); ctx.lineTo(16, -16); ctx.stroke();
+    ctx.fillStyle = C.cat;
+    ctx.beginPath(); ctx.arc(18, -47, 5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(17, -17, 5, 0, 7); ctx.fill();
+    // head looking up to where it wants to go
+    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.94, -0.15, 0, 7); ctx.fill();
   } else if (sneak) {
     // ---- sneaking: low, long, head forward, gentle prowl bob ----
     ctx.translate(0, Math.sin(t * 13) * 1.3);
     hx = 22; hy = -19; hr = 11;
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(-22, -10);
-    ctx.bezierCurveTo(-36, -7 + sway * 0.4, -44, -16 + sway, -39, -27 + sway * 0.8);
-    ctx.stroke();
+    catTail([[-22,-10],[-34,-8+sway*0.4],[-42,-14+sway*0.8],[-40,-22+sway],
+             [-38,-28+sway],[-32,-31+sway*0.9],[-28,-27+sway*0.8]], 8);
     // low stretched body, back slightly arched
+    ctx.fillStyle = C.cat;
     ctx.beginPath();
     ctx.moveTo(-26, 0);
     ctx.bezierCurveTo(-30, -14, -18, -23, -2, -22);
@@ -541,29 +816,30 @@ function drawCat() {
     // head low and forward
     ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.9, 0.12, 0, 7); ctx.fill();
   } else if (air) {
-    // ---- airborne: stretched arc, head leading, hindquarters trailing ----
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.moveTo(-14, -12);
-    ctx.bezierCurveTo(-38, -4 + sway, -52, -28 + sway, -44, -52 - sway * 0.5);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(-4, -cat.h * 0.4, cat.w * 0.42, cat.h * 0.38, -0.28, 0, 7);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(6, -cat.h * 0.62, cat.w * 0.33, cat.h * 0.4, -0.1, 0, 7);
-    ctx.fill();
-    hx = cat.w * 0.22; hy = -cat.h * 0.95; hr = cat.w * 0.29;
-    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.95, -0.1, 0, 7); ctx.fill();
+    // ---- airborne: arched leap, front legs reaching for the landing ----
+    hx = 12; hy = -42; hr = 12.5;
+    catTail([[-14,-10],[-30,-2+sway],[-46,-14+sway],[-46,-32+sway*0.6],
+             [-46,-44+sway*0.4],[-38,-52+sway*0.3],[-32,-47+sway*0.3]], 10);
+    ctx.fillStyle = C.cat;
+    ctx.beginPath(); ctx.ellipse(-4, -22, 20, 14, -0.32, 0, 7); ctx.fill();  // arched torso
+    ctx.beginPath(); ctx.ellipse(7, -32, 13, 12, -0.15, 0, 7); ctx.fill();   // shoulders
+    // front legs reaching out
+    ctx.strokeStyle = C.cat; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(12, -26); ctx.lineTo(24, -12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, -24); ctx.lineTo(17, -9); ctx.stroke();
+    ctx.fillStyle = C.cat;
+    ctx.beginPath(); ctx.arc(25, -11, 4.5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(18, -8, 4.5, 0, 7); ctx.fill();
+    // hind leg tucked under
+    ctx.beginPath(); ctx.ellipse(-15, -12, 9, 7, 0.5, 0, 7); ctx.fill();
+    // head leading the jump
+    ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.95, -0.12, 0, 7); ctx.fill();
   } else {
     // ---- sitting: organic silhouette, S-curved back, asymmetric rump ----
     hx = 3; hy = -59; hr = 15;
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.moveTo(-4, -4);
-    ctx.bezierCurveTo(-32, 4, -48, -6 + sway * 0.4, -44, -34 + sway);
-    ctx.bezierCurveTo(-41, -54 + sway, -30, -60 + sway, -25, -51 + sway * 0.7);
-    ctx.stroke();
+    catTail([[-6,-4],[-30,4],[-46,-2+sway*0.4],[-44,-26+sway],
+             [-43,-46+sway],[-32,-58+sway],[-23,-50+sway*0.7]], 11);
+    ctx.fillStyle = C.cat;
     ctx.beginPath();
     ctx.moveTo(-22, 0);                                  // base left, flared
     ctx.bezierCurveTo(-27, -13, -23, -27, -13, -38);     // round rump
@@ -574,29 +850,19 @@ function drawCat() {
     ctx.closePath(); ctx.fill();
     // haunch, tilted so the mass reads organic rather than circular
     ctx.beginPath(); ctx.ellipse(-4, -12, 19, 13, -0.1, 0, 7); ctx.fill();
-    // front paw hint
-    ctx.beginPath(); ctx.ellipse(9, -2, 8, 4, 0, 0, 7); ctx.fill();
+    // chest fluff
+    ctx.beginPath(); ctx.ellipse(13, -26, 6, 9, 0.3, 0, 7); ctx.fill();
+    // front paws side by side, tiny toe notches
+    ctx.beginPath(); ctx.ellipse(5, -2, 7, 4.5, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(15, -2, 6.5, 4, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(237,227,212,.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(5, -0.5); ctx.lineTo(5, 1.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(15, -0.5); ctx.lineTo(15, 1.5); ctx.stroke();
   }
 
-  // ---- ears: tall, pointed, slightly flared (reference) ----
-  const flat = air ? 6 : 0; // ears back a touch mid-air
-  ctx.beginPath();
-  ctx.moveTo(hx - hr * 0.75, hy - hr * 0.45);
-  ctx.quadraticCurveTo(hx - hr * 1.15, hy - hr * 1.6 + flat, hx - hr * 0.85, hy - hr * 2.1 + flat);
-  ctx.quadraticCurveTo(hx - hr * 0.35, hy - hr * 1.35, hx - hr * 0.1, hy - hr * 0.9);
-  ctx.closePath(); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(hx + hr * 0.85, hy - hr * 0.45);
-  ctx.quadraticCurveTo(hx + hr * 1.25, hy - hr * 1.6 + flat, hx + hr * 0.95, hy - hr * 2.1 + flat);
-  ctx.quadraticCurveTo(hx + hr * 0.45, hy - hr * 1.35, hx + hr * 0.2, hy - hr * 0.9);
-  ctx.closePath(); ctx.fill();
-
-  // ---- eyes: big round white rings, almost touching (reference) ----
-  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.12 : 1;
-  const er = hr * 0.36;
-  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.6;
-  ctx.beginPath(); ctx.ellipse(hx - hr * 0.5, hy + hr * 0.14, er, er * blink, 0, 0, 7); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, hy + hr * 0.14, er, er * blink, 0, 0, 7); ctx.stroke();
+  const flat = air ? 6 : (sneak ? 8 : 0); // ears back mid-air / flattened prowling
+  catEars(hx, hy, hr, flat);
+  catFace(hx, hy, hr, t, hang || slide || air);
 
   ctx.restore();
 }
@@ -624,6 +890,7 @@ function frame(now) {
   if (!gameWon) {
     stepCat(dt);
     stepMug(dt);
+    stepProps(dt);
   }
   stepCam(dt);
 
@@ -636,6 +903,7 @@ function frame(now) {
   const top = platforms.find(p => p.kind === 'top');
   drawPlant(top.x + top.w - 55, top.y);
   drawMug();
+  drawProps();
   drawCat();
 
   ctx.restore();
