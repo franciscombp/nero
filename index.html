@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Nero · Gato en casa</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#EDE3D4; touch-action:none; -webkit-user-select:none; user-select:none; }
+  #game { display:block; width:100vw; height:100dvh; }
+  #ui {
+    position:fixed; top:0; left:0; right:0; padding:12px 16px; display:flex;
+    justify-content:space-between; align-items:center; pointer-events:none;
+    font-family:Georgia, 'Times New Roman', serif; color:#3A342B;
+  }
+  #ui .pill {
+    background:rgba(237,227,212,.85); border:2px solid #3A342B; border-radius:999px;
+    padding:6px 14px; font-size:14px; letter-spacing:.5px;
+  }
+  #reset { pointer-events:auto; cursor:pointer; }
+  #memory {
+    position:fixed; left:50%; bottom:12dvh; transform:translateX(-50%) translateY(20px);
+    max-width:min(80vw, 420px); background:#F6EFE2; border:2px solid #3A342B; border-radius:14px;
+    padding:16px 20px; font-family:Georgia, serif; font-size:16px; line-height:1.5; color:#3A342B;
+    box-shadow:0 6px 0 rgba(58,52,43,.25); opacity:0; transition:opacity .5s, transform .5s;
+    pointer-events:none; text-align:center;
+  }
+  #memory.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #memory b { color:#C4623A; }
+  #hint {
+    position:fixed; left:50%; bottom:4dvh; transform:translateX(-50%);
+    font-family:Georgia, serif; font-size:13px; color:#8A7C66; text-align:center;
+    pointer-events:none; transition:opacity 1s;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui">
+  <div class="pill" id="progress">🐾 0 / 3 recuerdos</div>
+  <div class="pill" id="reset">↺ reiniciar</div>
+</div>
+<div id="memory"></div>
+<div id="hint">Toca izquierda / centro / derecha para saltar<br>(o usa las flechas del teclado)</div>
+<script>
+'use strict';
+
+// ---------- Setup ----------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize); resize();
+
+// Palette (boho / warm)
+const C = {
+  bg:      '#EDE3D4',
+  bgDeep:  '#E4D6C0',
+  ink:     '#2A251D',
+  cat:     '#1E1B16',
+  terra:   '#C4623A',
+  mustard: '#D9982F',
+  sand:    '#E0B98A',
+  blush:   '#DFA88C',
+  sage:    '#9BA37E',
+  wood:    '#A9713F',
+  woodDk:  '#8A5A30',
+  cream:   '#F6EFE2',
+  shadow:  'rgba(58,52,43,.18)'
+};
+
+// ---------- World ----------
+// World coords: x grows right, y grows DOWN. Floor at y = 0 baseline (worldH).
+const WORLD_W = 900;
+const WORLD_H = 1750;           // tall kitchen wall, we climb upward
+const FLOOR_Y = WORLD_H - 60;   // top surface of floor
+
+// Platforms: {x, y (top surface), w, h, label}
+const platforms = [
+  { x: 0,   y: FLOOR_Y, w: WORLD_W, h: 60, kind:'floor' },
+  { x: 90,  y: FLOOR_Y - 170, w: 150, h: 16, kind:'chair' },
+  { x: 330, y: FLOOR_Y - 300, w: 300, h: 22, kind:'table' },
+  { x: 700, y: FLOOR_Y - 430, w: 200, h: 26, kind:'counter' },
+  { x: 480, y: FLOOR_Y - 590, w: 170, h: 14, kind:'shelf' },
+  { x: 150, y: FLOOR_Y - 740, w: 190, h: 14, kind:'shelf' },
+  { x: 470, y: FLOOR_Y - 910, w: 180, h: 14, kind:'shelf' },
+  { x: 130, y: FLOOR_Y - 1080, w: 160, h: 14, kind:'shelf' },
+  { x: 430, y: FLOOR_Y - 1250, w: 220, h: 18, kind:'top' },   // repisa alta con planta
+  { x: 60,  y: FLOOR_Y - 1420, w: 250, h: 20, kind:'window' } // ventana = salida
+];
+
+// ---------- Cat ----------
+const cat = {
+  x: 140, y: FLOOR_Y, vx: 0, vy: 0,
+  w: 44, h: 40,
+  onGround: true, facing: 1,
+  state: 'idle',        // idle | charge | air | hang | land
+  stateT: 0,
+  squash: 1,            // vertical scale for liquid feel
+  tailT: 0,
+  hangPlat: null, hangSide: 1,
+  landT: 0
+};
+const GRAV = 2400;
+const JUMP_VX = 340, JUMP_VY = 780, BIG_VY = 980;
+
+// ---------- Objects / narrative ----------
+const memories = [
+  { id:'taza',   text:'La taza favorita del abuelo. Nadie la usa desde hace años…<br><b>pero nadie se atreve a guardarla.</b>' },
+  { id:'planta', text:'La monstera que mamá riega cada domingo.<br><b>«No la toques, Nero», dice siempre. Demasiado tarde.</b>' },
+  { id:'foto',   text:'Detrás de la ventana, el patio donde jugaban los niños.<br><b>La casa entera cabe en esta luz de tarde.</b>' }
+];
+let found = {};
+
+const mug = { x: 760, y: FLOOR_Y - 430, vx:0, vy:0, falling:false, broken:false, r:14, wob:0 };
+
+let gameWon = false, winT = 0;
+
+// ---------- Input ----------
+const uiMemory = document.getElementById('memory');
+const uiProgress = document.getElementById('progress');
+const uiHint = document.getElementById('hint');
+let hintShown = true;
+
+function showMemory(html) {
+  uiMemory.innerHTML = html;
+  uiMemory.classList.add('show');
+  clearTimeout(uiMemory._t);
+  uiMemory._t = setTimeout(() => uiMemory.classList.remove('show'), 4200);
+}
+function updateProgress() {
+  const n = Object.keys(found).length;
+  uiProgress.textContent = `🐾 ${n} / ${memories.length} recuerdos`;
+}
+function collect(id) {
+  if (found[id]) return;
+  found[id] = true;
+  updateProgress();
+  showMemory(memories.find(m => m.id === id).text);
+}
+
+function doJump(dir, big) {
+  if (cat.state === 'hang') { // climb up from hang
+    cat.y = cat.hangPlat.y; cat.x += cat.hangSide * 20;
+    cat.vy = -420; cat.vx = 0; cat.state = 'air'; cat.onGround = false; cat.hangPlat = null;
+    return;
+  }
+  if (!cat.onGround) return;
+  cat.onGround = false; cat.state = 'air';
+  cat.vy = -(big ? BIG_VY : JUMP_VY);
+  cat.vx = dir * JUMP_VX;
+  if (dir !== 0) cat.facing = dir;
+  cat.squash = 1.25; // stretch on takeoff
+  if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
+}
+
+// touch: left / center / right thirds; long press = big jump
+let pressT = null, pressZone = 0;
+canvas.addEventListener('pointerdown', e => {
+  const x = e.clientX;
+  pressZone = x < W/3 ? -1 : (x > 2*W/3 ? 1 : 0);
+  pressT = performance.now();
+  if (cat.onGround && cat.state !== 'hang') { cat.state = 'charge'; cat.squash = 0.8; }
+});
+canvas.addEventListener('pointerup', () => {
+  if (pressT === null) return;
+  const big = performance.now() - pressT > 350;
+  doJump(pressZone, big);
+  pressT = null;
+});
+
+window.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  if (e.key === 'ArrowLeft') doJump(-1, false);
+  else if (e.key === 'ArrowRight') doJump(1, false);
+  else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
+  else if (e.key === 'r' || e.key === 'R') resetGame();
+});
+document.getElementById('reset').addEventListener('click', resetGame);
+
+function resetGame() {
+  cat.x = 140; cat.y = FLOOR_Y; cat.vx = 0; cat.vy = 0;
+  cat.onGround = true; cat.state = 'idle'; cat.squash = 1; cat.hangPlat = null;
+  mug.x = 760; mug.y = FLOOR_Y - 430; mug.vx = 0; mug.vy = 0; mug.falling = false; mug.broken = false;
+  found = {}; gameWon = false; winT = 0;
+  updateProgress();
+  uiMemory.classList.remove('show');
+}
+
+// ---------- Physics ----------
+function stepCat(dt) {
+  if (cat.state === 'hang') { cat.tailT += dt; return; }
+
+  const prevY = cat.y;
+  cat.vy += GRAV * dt;
+  cat.x += cat.vx * dt;
+  cat.y += cat.vy * dt;
+  cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
+
+  cat.onGround = false;
+  for (const p of platforms) {
+    // land on top: was above surface, now below, falling, horizontally overlapping
+    if (cat.vy >= 0 && prevY <= p.y + 1 && cat.y >= p.y &&
+        cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w) {
+      cat.y = p.y; cat.vy = 0; cat.vx = 0;
+      if (!cat.onGround) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; }
+      cat.onGround = true;
+      break;
+    }
+    // ledge grab: airborne, moving toward a ledge, near its top edge
+    if (!cat.onGround && cat.vy > 100 && p.kind !== 'floor') {
+      const nearL = Math.abs((cat.x + cat.w/2) - p.x) < 16 && cat.vx > 0;
+      const nearR = Math.abs((cat.x - cat.w/2) - (p.x + p.w)) < 16 && cat.vx < 0;
+      if ((nearL || nearR) && cat.y > p.y + 6 && cat.y < p.y + 70) {
+        cat.state = 'hang'; cat.hangPlat = p; cat.hangSide = nearL ? 1 : -1;
+        cat.x = nearL ? p.x - cat.w*0.25 : p.x + p.w + cat.w*0.25;
+        cat.y = p.y + 34; cat.vx = 0; cat.vy = 0;
+        cat.facing = cat.hangSide;
+        return;
+      }
+    }
+  }
+
+  if (cat.onGround) {
+    if (cat.state === 'land') {
+      cat.landT += dt;
+      if (cat.landT > 0.18) cat.state = 'idle';
+    } else if (cat.state !== 'charge') cat.state = 'idle';
+  } else if (cat.state !== 'charge') cat.state = 'air';
+
+  // fell off world safety
+  if (cat.y > WORLD_H + 200) { cat.x = 140; cat.y = FLOOR_Y; cat.vy = 0; cat.vx = 0; }
+
+  // squash relaxes toward 1 (liquid feel)
+  cat.squash += (1 - cat.squash) * Math.min(1, dt * 10);
+  cat.tailT += dt;
+
+  // interactions
+  // mug: push it off the counter
+  if (!mug.broken && !mug.falling &&
+      Math.abs(cat.x - mug.x) < 40 && Math.abs(cat.y - mug.y) < 50) {
+    mug.falling = true; mug.vx = (mug.x > cat.x ? 1 : -1) * 120; mug.vy = -80;
+  }
+  // plant on top shelf
+  const top = platforms.find(p => p.kind === 'top');
+  if (cat.onGround && cat.y === top.y && cat.x > top.x && cat.x < top.x + top.w) collect('planta');
+  // window = final memory + win
+  const win = platforms.find(p => p.kind === 'window');
+  if (cat.onGround && cat.y === win.y && cat.x > win.x && cat.x < win.x + win.w) {
+    collect('foto');
+    if (!gameWon && Object.keys(found).length === memories.length) gameWon = true;
+  }
+}
+
+function stepMug(dt) {
+  if (!mug.falling || mug.broken) { mug.wob += dt; return; }
+  mug.vy += GRAV * 0.8 * dt;
+  mug.x += mug.vx * dt; mug.y += mug.vy * dt;
+  if (mug.y >= FLOOR_Y - 4) {
+    mug.y = FLOOR_Y - 4; mug.broken = true; mug.falling = false;
+    collect('taza');
+  }
+}
+
+// ---------- Camera ----------
+const cam = { x: 0, y: 0, scale: 1 };
+function stepCam(dt) {
+  cam.scale = Math.max(W / WORLD_W, 0.8);
+  const targetX = Math.max(0, Math.min(WORLD_W - W / cam.scale, cat.x - (W / cam.scale) / 2));
+  const targetY = Math.max(0, Math.min(WORLD_H - H / cam.scale, cat.y - (H / cam.scale) * 0.62));
+  cam.x += (targetX - cam.x) * Math.min(1, dt * 5);
+  cam.y += (targetY - cam.y) * Math.min(1, dt * 4);
+}
+
+// ---------- Drawing ----------
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+function drawBackground() {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.scale(cam.scale, cam.scale);
+  ctx.translate(-cam.x, -cam.y);
+
+  // wall band
+  ctx.fillStyle = C.bgDeep;
+  ctx.fillRect(0, FLOOR_Y - 480, WORLD_W, 480);
+
+  // sun (parallax-ish, fixed in world)
+  ctx.fillStyle = C.cream;
+  ctx.beginPath(); ctx.arc(160, FLOOR_Y - 1560, 70, 0, 7); ctx.fill();
+
+  // boho arcs top-right
+  const ax = 700, ay = FLOOR_Y - 1520;
+  const arcs = [[110, C.blush], [88, C.mustard], [66, C.terra]];
+  for (const [r, col] of arcs) {
+    ctx.beginPath(); ctx.arc(ax, ay, r, Math.PI, 0);
+    ctx.lineWidth = 20; ctx.strokeStyle = col; ctx.stroke();
+  }
+
+  // half-circle wall decor
+  ctx.fillStyle = C.sand;
+  ctx.beginPath(); ctx.arc(820, FLOOR_Y - 700, 60, Math.PI/2, -Math.PI/2); ctx.fill();
+  ctx.fillStyle = C.blush;
+  ctx.beginPath(); ctx.arc(40, FLOOR_Y - 950, 55, -Math.PI/2, Math.PI/2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPlatform(p) {
+  if (p.kind === 'floor') {
+    ctx.fillStyle = C.wood; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = C.woodDk; ctx.fillRect(p.x, p.y, p.w, 8);
+    return;
+  }
+  if (p.kind === 'chair') {
+    ctx.fillStyle = C.terra;
+    rr(p.x, p.y, p.w, p.h, 6); ctx.fill();
+    ctx.fillStyle = C.woodDk;
+    ctx.fillRect(p.x + 14, p.y + p.h, 10, FLOOR_Y - p.y - p.h);
+    ctx.fillRect(p.x + p.w - 24, p.y + p.h, 10, FLOOR_Y - p.y - p.h);
+    return;
+  }
+  if (p.kind === 'table') {
+    ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 8); ctx.fill();
+    ctx.fillStyle = C.woodDk;
+    ctx.fillRect(p.x + 20, p.y + p.h, 14, FLOOR_Y - p.y - p.h);
+    ctx.fillRect(p.x + p.w - 34, p.y + p.h, 14, FLOOR_Y - p.y - p.h);
+    // mantel
+    ctx.fillStyle = C.cream; ctx.fillRect(p.x + 60, p.y - 2, 90, 6);
+    return;
+  }
+  if (p.kind === 'counter') {
+    ctx.fillStyle = C.sage; rr(p.x, p.y, p.w, p.h, 6); ctx.fill();
+    ctx.fillStyle = C.woodDk; ctx.fillRect(p.x + 8, p.y + p.h, p.w - 16, FLOOR_Y - p.y - p.h);
+    ctx.fillStyle = 'rgba(246,239,226,.25)';
+    ctx.fillRect(p.x + 24, p.y + p.h + 20, 60, 90);
+    return;
+  }
+  if (p.kind === 'window') {
+    // window frame behind the sill
+    ctx.fillStyle = C.cream; rr(p.x + 20, p.y - 190, p.w - 40, 180, 90); ctx.fill();
+    ctx.strokeStyle = C.woodDk; ctx.lineWidth = 8;
+    rr(p.x + 20, p.y - 190, p.w - 40, 180, 90); ctx.stroke();
+    ctx.fillStyle = C.mustard;
+    ctx.beginPath(); ctx.arc(p.x + p.w/2, p.y - 100, 34, 0, 7); ctx.fill();
+    ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
+    return;
+  }
+  // shelves / top
+  ctx.fillStyle = p.kind === 'top' ? C.terra : C.wood;
+  rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
+  ctx.fillStyle = C.shadow;
+  ctx.fillRect(p.x + 6, p.y + p.h, p.w - 12, 6);
+}
+
+function drawPlant(x, baseY) {
+  // vase (mustard, like reference)
+  ctx.fillStyle = C.mustard;
+  rr(x - 26, baseY - 78, 52, 78, 18); ctx.fill();
+  // leaves
+  ctx.fillStyle = C.cat;
+  ctx.save(); ctx.translate(x, baseY - 78);
+  for (const [ang, len] of [[-1.9, 70], [-2.4, 58], [-1.2, 66], [-0.7, 52], [-1.6, 84]]) {
+    ctx.save(); ctx.rotate(ang + Math.sin(performance.now()/900 + len) * 0.03);
+    ctx.beginPath(); ctx.ellipse(len * 0.6, 0, len * 0.55, 12, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawMug() {
+  if (mug.broken) {
+    ctx.fillStyle = C.terra;
+    ctx.beginPath(); ctx.moveTo(mug.x - 16, mug.y);
+    ctx.lineTo(mug.x - 6, mug.y - 10); ctx.lineTo(mug.x + 2, mug.y);
+    ctx.lineTo(mug.x + 10, mug.y - 8); ctx.lineTo(mug.x + 18, mug.y);
+    ctx.closePath(); ctx.fill();
+    return;
+  }
+  const wob = mug.falling ? Math.sin(mug.wob * 20) * 0.4 : 0;
+  ctx.save(); ctx.translate(mug.x, mug.y); ctx.rotate(wob);
+  ctx.fillStyle = C.terra;
+  rr(-mug.r, -mug.r * 1.6, mug.r * 2, mug.r * 1.6, 4); ctx.fill();
+  ctx.strokeStyle = C.terra; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(mug.r + 4, -mug.r * 0.8, 7, -1.2, 1.2); ctx.stroke();
+  ctx.restore();
+}
+
+function drawCat() {
+  const t = cat.tailT;
+  ctx.save();
+  ctx.translate(cat.x, cat.y);
+
+  // shadow
+  ctx.fillStyle = C.shadow;
+  ctx.beginPath(); ctx.ellipse(0, 2, cat.w * 0.55, 6, 0, 0, 7); ctx.fill();
+
+  const sy = cat.squash, sx = 2 - cat.squash; // conserve "volume"
+  ctx.scale(cat.facing * sx, sy);
+
+  ctx.fillStyle = C.cat;
+
+  // tail: animated curve
+  ctx.strokeStyle = C.cat; ctx.lineWidth = 9; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-cat.w * 0.4, -10);
+  const tw = Math.sin(t * 3) * 12;
+  ctx.bezierCurveTo(-cat.w * 0.9, -14 + tw, -cat.w * 1.0, -46 + tw, -cat.w * 0.72, -58 - tw * 0.5);
+  ctx.stroke();
+
+  // body (liquid blob)
+  ctx.beginPath();
+  ctx.ellipse(0, -cat.h * 0.42, cat.w * 0.5, cat.h * 0.46, 0, 0, 7);
+  ctx.fill();
+
+  // head
+  const hy = cat.state === 'hang' ? -cat.h * 1.05 : -cat.h * 0.92;
+  ctx.beginPath(); ctx.arc(cat.w * 0.18, hy, cat.w * 0.3, 0, 7); ctx.fill();
+
+  // ears
+  ctx.beginPath();
+  ctx.moveTo(cat.w * 0.0, hy - cat.w * 0.18);
+  ctx.lineTo(cat.w * 0.02, hy - cat.w * 0.52);
+  ctx.lineTo(cat.w * 0.2, hy - cat.w * 0.26);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cat.w * 0.26, hy - cat.w * 0.26);
+  ctx.lineTo(cat.w * 0.42, hy - cat.w * 0.5);
+  ctx.lineTo(cat.w * 0.4, hy - cat.w * 0.14);
+  ctx.closePath(); ctx.fill();
+
+  // eyes (big white rings like the reference)
+  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.15 : 1;
+  ctx.strokeStyle = C.cream; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(cat.w * 0.08, hy - 2, 5.5, 5.5 * blink, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cat.w * 0.3, hy - 2, 5.5, 5.5 * blink, 0, 0, 7); ctx.stroke();
+
+  // front paws when hanging
+  if (cat.state === 'hang') {
+    ctx.fillStyle = C.cat;
+    ctx.beginPath(); ctx.arc(cat.w * 0.34, -cat.h * 1.28, 6, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(cat.w * 0.14, -cat.h * 1.3, 6, 0, 7); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawWin() {
+  winT += 1/60;
+  ctx.fillStyle = 'rgba(42,37,29,' + Math.min(0.75, winT * 0.4) + ')';
+  ctx.fillRect(0, 0, W, H);
+  if (winT > 0.8) {
+    ctx.fillStyle = C.cream;
+    ctx.font = '28px Georgia, serif'; ctx.textAlign = 'center';
+    ctx.fillText('Nero conoce esta casa de memoria.', W/2, H/2 - 20);
+    ctx.font = '17px Georgia, serif';
+    ctx.fillStyle = C.sand;
+    ctx.fillText('Encontraste los 3 recuerdos · toca ↺ para volver a jugar', W/2, H/2 + 20);
+  }
+}
+
+// ---------- Main loop ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000);
+  last = now;
+
+  if (!gameWon) {
+    stepCat(dt);
+    stepMug(dt);
+  }
+  stepCam(dt);
+
+  drawBackground();
+  ctx.save();
+  ctx.scale(cam.scale, cam.scale);
+  ctx.translate(-cam.x, -cam.y);
+
+  for (const p of platforms) drawPlatform(p);
+  const top = platforms.find(p => p.kind === 'top');
+  drawPlant(top.x + top.w - 55, top.y);
+  drawMug();
+  drawCat();
+
+  ctx.restore();
+
+  if (gameWon) drawWin();
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
