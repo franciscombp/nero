@@ -93,7 +93,12 @@ export function createPushable(data) {
     durability: data.durability || null,
     maxDurability: data.durability || null,
     broken: false,
-    lastDamageT: 0
+    lastDamageT: 0,
+    canTip: data.canTip || false,
+    tipThreshold: data.tipThreshold || 1.5,
+    tilt: 0,
+    tiltVel: 0,
+    tipped: false
   };
 }
 
