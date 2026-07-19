@@ -151,17 +151,23 @@ export function checkKnockTrigger(cat, knock) {
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   // Custom goals (origin story)
   if (goalKind === 'custom_caja_escape') {
-    return cat.y < 650;
+    // Escape the box: reach the top platform (y=600)
+    const topPlat = platforms[4];
+    return topPlat && cat.onGround && cat.y === topPlat.y &&
+           cat.x > topPlat.x && cat.x < topPlat.x + topPlat.w;
   }
   if (goalKind === 'custom_truck_bed') {
+    // Truck bed: reach platform 5 (the truck)
     const truckBed = platforms[5];
-    return truckBed && cat.y === truckBed.y &&
+    return truckBed && cat.onGround && cat.y === truckBed.y &&
            cat.x > truckBed.x && cat.x < truckBed.x + truckBed.w;
   }
   if (goalKind === 'custom_driver_pickup') {
+    // Driver pickup: automatic (handled by cinematic)
     return true;
   }
   if (goalKind === 'custom_first_connection') {
+    // Kitchen: collect 4 memories to complete
     if (!levelState) return false;
     const memoriesCount = levelState.memories.filter(m =>
       levelState.found[m.id]
@@ -169,8 +175,9 @@ export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
     return memoriesCount >= 4;
   }
   if (goalKind === 'custom_sofa_rest') {
+    // Sofa: reach the sofa where owner sits
     const sofa = platforms[1];
-    return sofa && cat.y === sofa.y &&
+    return sofa && cat.onGround && cat.y === sofa.y &&
            cat.x > sofa.x && cat.x < sofa.x + sofa.w;
   }
 
