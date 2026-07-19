@@ -207,7 +207,8 @@ export function createPhysics(config) {
 
         // Each jump adds torque proportional to jump height
         // Cat vy is negative when jumping up, positive when falling
-        const jumpForce = Math.max(0, -cat.vy * 0.006);
+        // Reduce by 100x: 0.006 → 0.00006
+        const jumpForce = Math.max(0, -cat.vy * 0.00006);
         obj.tiltVel += jumpForce;
 
         // Apply damping (NO passive gravity - only jumps matter)
@@ -217,11 +218,12 @@ export function createPhysics(config) {
         obj.tilt += obj.tiltVel;
         obj.tilt = Math.max(0, Math.min(Math.PI/2 + 0.3, obj.tilt)); // Cap at ~105 degrees
 
-        // Debug every 30 frames
+        // Debug: log tilt every 60 frames (1 sec at 60fps)
         if (window.frameCount === undefined) window.frameCount = 0;
         window.frameCount++;
-        if (window.frameCount % 30 === 0) {
-          console.log(`🎲 Box tilt: ${(obj.tilt * 180 / Math.PI).toFixed(1)}°, cat.vy: ${cat.vy.toFixed(0)}, jumpForce: ${jumpForce.toFixed(4)}`);
+        if (window.frameCount % 60 === 0) {
+          const tiltPercent = Math.min(100, Math.round((obj.tilt / (Math.PI / 2)) * 100));
+          console.log(`🎲 Box tilt: ${tiltPercent}%, angle: ${(obj.tilt * 180 / Math.PI).toFixed(1)}°`);
         }
 
         // When box tips past threshold, it's ready to escape
