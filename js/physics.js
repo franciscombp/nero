@@ -184,6 +184,18 @@ export function createPhysics(config) {
   }
 
   function stepPushables(pushables, cat, platforms, dt, currentLevel) {
+    // Debug initialization (first time only)
+    if (!window.DEBUG_STEP_PUSHABLES) {
+      window.DEBUG_STEP_PUSHABLES = true;
+      console.log('📦 stepPushables initialized');
+      console.log('   insideBox:', currentLevel?.mechanics?.insideBox);
+      console.log('   pushables:', pushables);
+      if (pushables[0]) {
+        console.log('   pushables[0].canTip:', pushables[0].canTip);
+        console.log('   pushables[0].tipThreshold:', pushables[0].tipThreshold);
+      }
+    }
+
     for (const obj of pushables) {
       if (obj.broken) continue;
 

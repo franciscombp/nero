@@ -488,7 +488,6 @@ async function main() {
     renderer.drawKnock(levelState.knock);
     renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
     if (levelState.pushables && levelState.pushables.length > 0) {
-      console.log('🎲 Drawing', levelState.pushables.length, 'pushables:', levelState.pushables);
       renderer.drawPushables(levelState.pushables, currentLevel?.mechanics?.insideBox);
     }
     // Don't draw cat if inside box
