@@ -1,13 +1,11 @@
 {
   "title": {
+    "kicker": "una historia de gato en tres actos",
     "title": "N E R O",
-    "body": "La familia salió temprano y la casa parece vacía. Pero una casa nunca está vacía: está llena de los que viven en ella.",
-    "highlight": "Nero va a demostrarlo, saltando."
+    "body": "La familia salió temprano y la casa parece vacía. Pero una casa nunca está vacía: está llena de los que viven en ella. Nero va a demostrarlo, saltando."
   },
   "ui": {
-    "hint": "Desliza ↑ ↖ ↗ para saltar · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso",
-    "sceneComplete": "La escena quedó en calma. El siguiente acto ya está preparado.",
-    "nextScene": "Sigue avanzando para reunir la historia completa.",
+    "hint": "Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso",
     "final": "Nero se acurruca en la cama alta y oye las llaves en la puerta. La casa nunca estuvo vacía: estaba llena de ellos."
   }
 }

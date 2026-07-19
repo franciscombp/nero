@@ -4,67 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Nero · una historia de gato</title>
-<style>
-  :root {
-    --ink:#4A4139; --card:#FBF6EE; --accent:#E8967E; --soft:#F3C5B4;
-  }
-  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#F4ECE3; touch-action:none; -webkit-user-select:none; user-select:none; font-family:Georgia,'Times New Roman',serif; }
-  #game { display:block; width:100vw; height:100dvh; }
-
-  #hud {
-    position:fixed; top:0; left:0; right:0; padding:10px 14px; display:flex;
-    justify-content:space-between; align-items:center; gap:8px; pointer-events:none;
-    color:var(--ink); transition:opacity .4s;
-  }
-  .pill {
-    background:rgba(251,246,238,.9); border:1.5px solid rgba(74,65,57,.35); border-radius:999px;
-    padding:6px 14px; font-size:13.5px; letter-spacing:.4px; box-shadow:0 2px 0 rgba(74,65,57,.08);
-  }
-  #paws { letter-spacing:2px; }
-  #paws .p { opacity:.25; }
-  #paws .p.on { opacity:1; }
-  #reset { pointer-events:auto; cursor:pointer; }
-
-  #memory {
-    position:fixed; left:50%; bottom:11dvh; transform:translateX(-50%) translateY(16px);
-    max-width:min(82vw,430px); background:var(--card); border:1.5px solid rgba(74,65,57,.3);
-    border-radius:16px; padding:15px 20px; font-size:15.5px; line-height:1.55; color:var(--ink);
-    box-shadow:0 8px 24px rgba(74,65,57,.16); opacity:0; transition:opacity .5s, transform .5s;
-    pointer-events:none; text-align:center;
-  }
-  #memory.show { opacity:1; transform:translateX(-50%) translateY(0); }
-  #memory b { color:var(--accent); }
-
-  #hint {
-    position:fixed; left:50%; bottom:3.5dvh; transform:translateX(-50%); width:max-content; max-width:90vw;
-    font-size:12.5px; color:rgba(74,65,57,.6); text-align:center; pointer-events:none; transition:opacity 1s;
-  }
-
-  /* overlay: title / act cards / ending */
-  #overlay {
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(74,65,57,.28); backdrop-filter:blur(3px);
-    opacity:0; pointer-events:none; transition:opacity .5s; z-index:10;
-  }
-  #overlay.show { opacity:1; pointer-events:auto; }
-  #ocard {
-    background:var(--card); border-radius:22px; padding:34px 30px 26px; max-width:min(84vw,400px);
-    text-align:center; color:var(--ink); box-shadow:0 18px 50px rgba(74,65,57,.3);
-    transform:translateY(8px); transition:transform .5s;
-  }
-  #overlay.show #ocard { transform:translateY(0); }
-  #ocard .kicker { font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
-  #ocard h1 { margin:0 0 6px; font-size:34px; letter-spacing:6px; font-weight:normal; }
-  #ocard h2 { margin:0 0 12px; font-size:21px; font-weight:normal; }
-  #ocard p { margin:0 0 20px; font-size:15px; line-height:1.6; color:rgba(74,65,57,.85); font-style:italic; }
-  #ocard .catface { font-size:44px; line-height:1; margin-bottom:12px; }
-  #obtn {
-    display:inline-block; background:var(--accent); color:#FFF; border:none; border-radius:999px;
-    padding:11px 30px; font-size:15px; font-family:inherit; letter-spacing:1px; cursor:pointer;
-    box-shadow:0 4px 0 rgba(74,65,57,.18);
-  }
-  #obtn:active { transform:translateY(2px); box-shadow:0 2px 0 rgba(74,65,57,.18); }
-</style>
+<link rel="stylesheet" href="styles/main.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F4ECE3">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -83,1034 +25,332 @@
   <p id="otext"></p>
   <button id="obtn"></button>
 </div></div>
-<script>
-'use strict';
 
-// ---------- Setup ----------
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d', { alpha: false });
-canvas.style.display = 'block';
-let W = 0, H = 0, DPR = 1;
-function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
-  canvas.width = W * DPR; canvas.height = H * DPR;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-}
-window.addEventListener('resize', resize); resize();
+<script src="js/polyfills.js"></script>
+<script type="module">
+import { CONFIG, createCat, createCamera, createLevelState, loadLevel, resetCat, resetCamera, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger } from './js/core.js';
+import { createRenderer } from './js/renderer.js';
+import { createPhysics } from './js/physics.js';
+import { createUI } from './js/ui.js';
+import { createInputManager } from './js/input.js';
 
-// ---------- Pastel palette (per-act tints override some entries) ----------
-const C = {
-  bg:'#F4ECE3', band:'#EDE0D2',
-  ink:'#4A4139', cat:'#26221D',
-  coral:'#E8967E', butter:'#F0C987', sand:'#EBD3B0', blush:'#F3C5B4',
-  sage:'#B7C7AA', lilac:'#CBBFD9', sky:'#BFD3DB',
-  wood:'#C7A17B', woodDk:'#A9835F', cream:'#FBF6EE',
-  shadow:'rgba(74,65,57,.14)'
-};
+async function main() {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
 
-// ---------- World constants ----------
-const WORLD_W = 900;
-const WORLD_H = 1750;
-const FLOOR_Y = WORLD_H - 60;
-const CEILING_Y = 80;
-const GRAV = 2400;
-const JUMP_VX = 330, JUMP_VY = 880, BIG_VY = 1150;
-
-// ---------- Story: three acts ----------
-const F = FLOOR_Y;
-const LEVELS = [
-  {
-    name:'La cocina', kicker:'Acto I', time:'morning',
-    tint:{ bg:'#F6EEE2', band:'#F0E2CF' },
-    intro:'La casa está en silencio. Nero se despierta solo: la familia salió temprano. Pero la cocina todavía huele a mañana… y alguien dejó su taza sin lavar.',
-    platforms:[
-      { x:0,   y:F,        w:WORLD_W, h:60, kind:'floor' },
-      { x:90,  y:F-145,  w:150, h:16, kind:'chair' },
-      { x:330, y:F-290,  w:300, h:22, kind:'table' },
-      { x:700, y:F-430,  w:200, h:26, kind:'counter' },
-      { x:480, y:F-580,  w:170, h:14, kind:'shelf' },
-      { x:150, y:F-730,  w:190, h:14, kind:'shelf' },
-      { x:470, y:F-880,  w:180, h:14, kind:'shelf' },
-      { x:130, y:F-1030, w:160, h:14, kind:'shelf' },
-      { x:430, y:F-1190, w:220, h:18, kind:'top' },
-      { x:60,  y:F-1350, w:250, h:20, kind:'window' }
-    ],
-    goalKind:'window',
-    knock:{ platform:3, offset:60, type:'mug', memoryId:'taza' },
-    yarn:true, bookShelf:5,
-    memories:[
-      { id:'taza',   trigger:'knock',            text:'La taza favorita del abuelo se hizo pedazos.<br><b>Nadie la usaba… pero nadie se atrevía a guardarla.</b>' },
-      { id:'planta', trigger:'platform', pi:8,   text:'La monstera que mamá riega cada domingo.<br><b>«No la toques, Nero», dice siempre. Demasiado tarde.</b>' },
-      { id:'ventana',trigger:'goal',             text:'Desde la ventana se ve el camino a la escuela.<br><b>Por ahí se fueron todos esta mañana.</b>' }
-    ]
-  },
-  {
-    name:'La sala', kicker:'Acto II', time:'afternoon',
-    tint:{ bg:'#F7E8DF', band:'#F1DACE' },
-    intro:'La tarde entra baja por las cortinas. Los cojines del sofá aún guardan la forma de la última siesta juntos. Nero busca los rincones donde la familia deja sus huellas.',
-    platforms:[
-      { x:0,   y:F,        w:WORLD_W, h:60, kind:'floor' },
-      { x:540, y:F-140,  w:280, h:20, kind:'sofa' },
-      { x:230, y:F-280,  w:190, h:16, kind:'table' },
-      { x:620, y:F-430,  w:180, h:14, kind:'shelf' },
-      { x:300, y:F-575,  w:180, h:14, kind:'frameshelf' },
-      { x:40,  y:F-720,  w:160, h:14, kind:'shelf' },
-      { x:420, y:F-870,  w:190, h:14, kind:'shelf' },
-      { x:110, y:F-1020, w:150, h:14, kind:'shelf' },
-      { x:470, y:F-1180, w:200, h:18, kind:'top' },
-      { x:90,  y:F-1340, w:230, h:20, kind:'door' }
-    ],
-    goalKind:'door',
-    knock:null,
-    yarn:true, bookShelf:6,
-    memories:[
-      { id:'manta',   trigger:'platform', pi:1, text:'La manta del sofá huele a todos a la vez.<br><b>Aquí caben cuatro personas y un gato, apretados y felices.</b>' },
-      { id:'retrato', trigger:'platform', pi:4, text:'El retrato de la playa, un poco torcido.<br><b>Ese día Nero era apenas una bolita negra en la arena.</b>' },
-      { id:'puerta',  trigger:'goal',           text:'La puerta del pasillo quedó entreabierta.<br><b>Del otro lado, el cuarto de la niña. Su lugar favorito.</b>' }
-    ]
-  },
-  {
-    name:'El cuarto', kicker:'Acto III', time:'night',
-    tint:{ bg:'#E7E3F0', band:'#DBD6E9' },
-    intro:'Ya es de noche y la casa suspira. En el cuarto de la niña la luna dibuja las cosas con luz suave. Escaleras de muebles llevan hasta la cama alta. Falta poco para que vuelvan.',
-    platforms:[
-      { x:0,   y:F,        w:WORLD_W, h:60, kind:'floor' },
-      { x:610, y:F-140,  w:170, h:16, kind:'chair' },
-      { x:250, y:F-285,  w:230, h:18, kind:'desk' },
-      { x:20,  y:F-430,  w:180, h:16, kind:'dresser' },
-      { x:360, y:F-580,  w:160, h:14, kind:'shelf' },
-      { x:650, y:F-730,  w:170, h:14, kind:'shelf' },
-      { x:290, y:F-885,  w:170, h:14, kind:'starshelf' },
-      { x:600, y:F-1040, w:160, h:14, kind:'shelf' },
-      { x:180, y:F-1200, w:300, h:26, kind:'bed' }
-    ],
-    goalKind:'bed',
-    knock:{ platform:2, offset:50, type:'toy', memoryId:'juguete' },
-    yarn:false, bookShelf:4,
-    memories:[
-      { id:'juguete',  trigger:'knock',           text:'El ratón de trapo rodó bajo el escritorio.<br><b>Fue el primer regalo de la niña. Ya casi no tiene orejas.</b>' },
-      { id:'estrellas',trigger:'platform', pi:6,  text:'El móvil de estrellas gira despacito.<br><b>Cada noche la niña le pide un deseo. Casi siempre es sobre Nero.</b>' },
-      { id:'cama',     trigger:'goal',            text:'La cama alta, tibia de tantas noches.<br><b>Se oye la puerta de casa: ya volvieron. Nero cierra los ojos.</b>' }
-    ]
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-];
+  window.addEventListener('resize', resize);
+  resize();
 
-// ---------- Game state ----------
-let level = 0;
-let platforms = [], memories = [], found = {};
-let knock = null, yarn = null, books = [], bookShelfIdx = -1;
-let mode = 'ui'; // 'ui' | 'play'
-let totalFound = 0;
+  // Load game data
+  const [levelsRes, storiesRes] = await Promise.all([
+    fetch('data/scenes.json'),
+    fetch('data/stories.json')
+  ]);
+  const levels = await levelsRes.json();
+  const story = await storiesRes.json();
 
-const cat = {
-  x:140, y:FLOOR_Y, vx:0, vy:0, w:44, h:40,
-  onGround:true, facing:1,
-  state:'idle', stateT:0, landAge:99, combo:0,
-  squash:1, tailT:0, hangPlat:null, hangSide:1, slideSide:1, landT:0
-};
+  // Create game systems
+  const config = { ...CONFIG, W, H, currentLevel: 0 };
+  const renderer = createRenderer(ctx, config);
+  const physics = createPhysics(config);
+  const ui = createUI();
+  const cat = createCat();
+  const cam = createCamera();
+  const levelState = createLevelState();
 
-function loadLevel(i) {
-  levelDone = false;
-  level = i;
-  const L = LEVELS[i];
-  C.bg = L.tint.bg; C.band = L.tint.band;
-  platforms = L.platforms;
-  memories = L.memories;
-  found = {};
-  knock = L.knock ? {
-    ...L.knock,
-    x: platforms[L.knock.platform].x + L.knock.offset,
-    y: platforms[L.knock.platform].y,
-    vx:0, vy:0, falling:false, broken:false, r:14, wob:0
-  } : null;
-  yarn = L.yarn ? { x:580, y:FLOOR_Y-12, r:12, vx:0, rot:0 } : null;
-  bookShelfIdx = L.bookShelf ?? -1;
-  books = bookShelfIdx >= 0 ? [
-    { ox: 40, w:13, h:36, c:C.coral,  down:false, x:0, y:0, vx:0, vy:0, rot:0, rest:false },
-    { ox: 58, w:11, h:30, c:C.sage,   down:false, x:0, y:0, vx:0, vy:0, rot:0, rest:false },
-    { ox: 74, w:13, h:33, c:C.butter, down:false, x:0, y:0, vx:0, vy:0, rot:0, rest:false }
-  ] : [];
-  cat.x = 140; cat.y = FLOOR_Y; cat.vx = 0; cat.vy = 0;
-  cat.onGround = true; cat.state = 'idle'; cat.squash = 1;
-  cat.hangPlat = null; cat.combo = 0; cat.landAge = 99;
-  cam.x = 0; cam.y = WORLD_H; // snap to bottom
-  uiActo.textContent = `${L.kicker} · ${L.name}`;
-  updatePaws();
-  uiMemory.classList.remove('show');
-}
+  // Input setup
+  const inputMgr = createInputManager(canvas, config);
+  let hintShown = true;
 
-// ---------- UI ----------
-const uiActo = document.getElementById('acto');
-const uiPaws = document.getElementById('paws');
-const uiMemory = document.getElementById('memory');
-const uiHint = document.getElementById('hint');
-const overlay = document.getElementById('overlay');
-const oface = document.getElementById('oface'), okicker = document.getElementById('okicker');
-const otitle = document.getElementById('otitle'), osub = document.getElementById('osub');
-const otext = document.getElementById('otext'), obtn = document.getElementById('obtn');
-let hintShown = true;
-
-function updatePaws() {
-  uiPaws.innerHTML = memories.map(m =>
-    `<span class="p${found[m.id] ? ' on' : ''}">🐾</span>`).join('');
-}
-function showMemory(html) {
-  uiMemory.innerHTML = html;
-  uiMemory.classList.add('show');
-  clearTimeout(uiMemory._t);
-  uiMemory._t = setTimeout(() => uiMemory.classList.remove('show'), 4600);
-}
-function collect(id) {
-  if (found[id]) return;
-  found[id] = true; totalFound++;
-  updatePaws();
-  const m = memories.find(m => m.id === id);
-  if (m) showMemory(m.text);
-}
-
-function showCard(cfg) {
-  mode = 'ui';
-  oface.textContent = cfg.face ?? '🐈‍⬛';
-  okicker.textContent = cfg.kicker ?? '';
-  otitle.textContent = cfg.title ?? '';
-  otitle.style.display = cfg.title ? '' : 'none';
-  osub.textContent = cfg.sub ?? '';
-  osub.style.display = cfg.sub ? '' : 'none';
-  otext.innerHTML = cfg.text ?? '';
-  obtn.textContent = cfg.btn ?? 'Continuar';
-  overlay.classList.add('show');
-  obtn.onclick = () => { overlay.classList.remove('show'); cfg.then(); };
-}
-
-function showTitle() {
-  showCard({
-    kicker:'una historia de gato en tres actos',
-    title:'N E R O',
-    text:'La familia salió temprano y la casa parece vacía. Pero una casa nunca está vacía: está llena de los que viven en ella. Nero va a demostrarlo, saltando.',
-    btn:'Empezar', then: startAct
+  inputMgr.setCallbacks({
+    onJump: ({ dir, big }) => {
+      const result = doJump(dir, big);
+      hintShown = result.hintShown;
+    },
+    onDrop: () => doDrop(),
+    onTargetJump: ({ x, y }) => tryTargetJump(x, y),
+    onChargeStart: () => {
+      if (levelState.mode === 'play' && cat.onGround && cat.state !== 'hang') {
+        cat.state = 'charge';
+        cat.squash = 0.8;
+      }
+    },
+    onHideHint: () => {
+      if (hintShown) {
+        hintShown = false;
+        ui.hideHint();
+      }
+    },
+    onReset: () => {
+      if (levelState.mode === 'play') {
+        resetLevel();
+      }
+    },
+    cat,
+    cam
   });
-}
-function startAct() {
-  const L = LEVELS[level];
-  showCard({
-    kicker:L.kicker, sub:L.name, title:'',
-    text:L.intro, btn:'Jugar',
-    then: () => { mode = 'play'; }
+
+  ui.onResetClick(() => {
+    if (levelState.mode === 'play') {
+      resetLevel();
+    }
   });
-}
-function completeLevel() {
-  if (level + 1 < LEVELS.length) {
-    level++;
+
+  function doJump(dir, big) {
+    if (levelState.mode !== 'play') return { hintShown };
+    if (cat.state === 'slide' && !cat.onGround) {
+      const away = -cat.slideSide;
+      cat.vx = away * CONFIG.JUMP_VX * 1.2;
+      cat.vy = -CONFIG.JUMP_VY;
+      cat.facing = away;
+      cat.state = 'air';
+      cat.squash = 1.25;
+      return { hintShown };
+    }
+    if (cat.state === 'hang') {
+      if (dir === -cat.hangSide) {
+        cat.state = 'air';
+        cat.onGround = false;
+        cat.hangPlat = null;
+        cat.vy = -CONFIG.BIG_VY * 0.85;
+        cat.vx = dir * CONFIG.JUMP_VX * 1.35;
+        cat.facing = dir;
+        cat.squash = 1.3;
+        return { hintShown };
+      }
+      cat.y = cat.hangPlat.y;
+      cat.x += cat.hangSide * 20;
+      cat.vy = -420;
+      cat.vx = 0;
+      cat.state = 'air';
+      cat.onGround = false;
+      cat.hangPlat = null;
+      return { hintShown };
+    }
+    if (!cat.onGround) return { hintShown };
+    if (cat.landAge < 0.22) cat.combo = Math.min(cat.combo + 1, 3);
+    else cat.combo = 0;
+    const boost = 1 + 0.12 * cat.combo;
+    cat.onGround = false;
+    cat.state = 'air';
+    cat.vy = -(big ? CONFIG.BIG_VY : CONFIG.JUMP_VY) * boost;
+    cat.vx = dir * CONFIG.JUMP_VX;
+    if (dir !== 0) cat.facing = dir;
+    cat.squash = 1.25 + 0.05 * cat.combo;
+    if (hintShown) {
+      hintShown = false;
+      ui.hideHint();
+    }
+    return { hintShown };
+  }
+
+  function tryTargetJump(wx, wy) {
+    if (levelState.mode !== 'play' || !cat.onGround) return false;
+    let best = null;
+    for (const p of levelState.platforms) {
+      if (Math.abs(p.y - wy) > 70) continue;
+      const tx = Math.max(p.x + 14, Math.min(p.x + p.w - 14, wx));
+      if (Math.abs(tx - wx) > 70) continue;
+      if (p.y === cat.y && Math.abs(tx - cat.x) < 30) continue;
+      const d = Math.hypot(tx - cat.x, p.y - cat.y);
+      if (!best || d < best.d) best = { tx, ty: p.y, d };
+    }
+    if (!best) return false;
+    const rise = Math.max(cat.y - best.ty, 0) + 40;
+    const vy = -Math.sqrt(2 * CONFIG.GRAV * rise);
+    if (-vy > CONFIG.BIG_VY * 1.2) return false;
+    const disc = vy * vy + 2 * CONFIG.GRAV * (best.ty - cat.y);
+    if (disc < 0) return false;
+    const t = (-vy + Math.sqrt(disc)) / CONFIG.GRAV;
+    const vx = (best.tx - cat.x) / t;
+    if (Math.abs(vx) > 430) return false;
+    cat.onGround = false;
+    cat.state = 'air';
+    cat.vy = vy;
+    cat.vx = vx;
+    if (Math.abs(vx) > 20) cat.facing = Math.sign(vx);
+    cat.squash = 1.25;
+    if (hintShown) {
+      hintShown = false;
+      ui.hideHint();
+    }
+    return true;
+  }
+
+  function doDrop() {
+    if (levelState.mode !== 'play') return;
+    if (cat.state === 'hang') {
+      cat.state = 'air';
+      cat.hangPlat = null;
+      cat.vy = 100;
+      return;
+    }
+    if (cat.onGround) {
+      const p = levelState.platforms.find(p => cat.y === p.y);
+      if (!p || p.kind === 'floor') return;
+      cat.y += 3;
+      cat.vy = 180;
+      cat.onGround = false;
+      cat.state = 'air';
+      cat.squash = 1.15;
+    } else {
+      cat.vy += 500;
+    }
+  }
+
+  function startLevel(idx) {
+    levelState.level = idx;
+    resetCat(cat);
+    resetCamera(cam);
+    loadLevel(levelState, levels[idx]);
+    renderer.updatePalette(levelState.level, levels);
+    ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found);
+    ui.resetHint();
+    hintShown = true;
+    levelState.mode = 'play';
+  }
+
+  function resetLevel() {
+    startLevel(levelState.level);
+  }
+
+  function completeLevel() {
+    if (levelState.level + 1 < levels.length) {
+      levelState.level++;
+      setTimeout(() => {
+        startLevel(levelState.level);
+        ui.showAct(levelState.level, levels, story);
+      }, 1600);
+    } else {
+      setTimeout(() => {
+        ui.showEnding(levelState.totalFound, levels, story);
+      }, 1600);
+    }
+  }
+
+  function showTitle() {
+    levelState.mode = 'ui';
+    ui.showTitle(story);
     setTimeout(() => {
-      loadLevel(level);
-      startAct();
-    }, 1600);
-  } else {
-    setTimeout(() => showCard({
-      face:'🌙', kicker:'fin',
-      title:'', sub:'La casa llena',
-      text:`Nero se acurruca en la cama alta y oye las llaves en la puerta. La casa nunca estuvo vacía: estaba llena de ellos.<br><br>🐾 Recuerdos encontrados: <b>${totalFound} / 9</b>`,
-      btn:'Jugar otra vez',
-      then: () => { totalFound = 0; level = 0; loadLevel(0); startAct(); }
-    }), 1600);
-  }
-}
-
-// ---------- Input ----------
-function doJump(dir, big) {
-  if (mode !== 'play') return;
-  if (cat.state === 'slide' && !cat.onGround) {
-    const away = -cat.slideSide;
-    cat.vx = away * JUMP_VX * 1.2; cat.vy = -JUMP_VY;
-    cat.facing = away; cat.state = 'air'; cat.squash = 1.25;
-    return;
-  }
-  if (cat.state === 'hang') {
-    if (dir === -cat.hangSide) {
-      cat.state = 'air'; cat.onGround = false; cat.hangPlat = null;
-      cat.vy = -BIG_VY * 0.85; cat.vx = dir * JUMP_VX * 1.35;
-      cat.facing = dir; cat.squash = 1.3;
-      return;
-    }
-    cat.y = cat.hangPlat.y; cat.x += cat.hangSide * 20;
-    cat.vy = -420; cat.vx = 0; cat.state = 'air'; cat.onGround = false; cat.hangPlat = null;
-    return;
-  }
-  if (!cat.onGround) return;
-  if (cat.landAge < 0.22) cat.combo = Math.min(cat.combo + 1, 3);
-  else cat.combo = 0;
-  const boost = 1 + 0.12 * cat.combo;
-  cat.onGround = false; cat.state = 'air';
-  cat.vy = -(big ? BIG_VY : JUMP_VY) * boost;
-  cat.vx = dir * JUMP_VX;
-  if (dir !== 0) cat.facing = dir;
-  cat.squash = 1.25 + 0.05 * cat.combo;
-  if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
-}
-
-function tryTargetJump(wx, wy) {
-  if (mode !== 'play' || !cat.onGround) return false;
-  let best = null;
-  for (const p of platforms) {
-    if (Math.abs(p.y - wy) > 70) continue;
-    const tx = Math.max(p.x + 14, Math.min(p.x + p.w - 14, wx));
-    if (Math.abs(tx - wx) > 70) continue;
-    if (p.y === cat.y && Math.abs(tx - cat.x) < 30) continue;
-    const d = Math.hypot(tx - cat.x, p.y - cat.y);
-    if (!best || d < best.d) best = { tx, ty:p.y, d };
-  }
-  if (!best) return false;
-  const rise = Math.max(cat.y - best.ty, 0) + 40;
-  const vy = -Math.sqrt(2 * GRAV * rise);
-  if (-vy > BIG_VY * 1.2) return false;
-  const disc = vy * vy + 2 * GRAV * (best.ty - cat.y);
-  if (disc < 0) return false;
-  const t = (-vy + Math.sqrt(disc)) / GRAV;
-  const vx = (best.tx - cat.x) / t;
-  if (Math.abs(vx) > 430) return false;
-  cat.onGround = false; cat.state = 'air';
-  cat.vy = vy; cat.vx = vx;
-  if (Math.abs(vx) > 20) cat.facing = Math.sign(vx);
-  cat.squash = 1.25;
-  if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
-  return true;
-}
-
-function doDrop() {
-  if (mode !== 'play') return;
-  if (cat.state === 'hang') { cat.state = 'air'; cat.hangPlat = null; cat.vy = 100; return; }
-  if (cat.onGround) {
-    const p = platforms.find(p => cat.y === p.y);
-    if (!p || p.kind === 'floor') return;
-    cat.y += 3; cat.vy = 180; cat.onGround = false; cat.state = 'air';
-    cat.squash = 1.15;
-  } else {
-    cat.vy += 500;
-  }
-}
-
-let pressT = null, pressZone = 0, pressStart = null;
-let sneakTouchDir = 0;
-const activePointers = new Set();
-canvas.addEventListener('pointerdown', e => {
-  activePointers.add(e.pointerId);
-  if (activePointers.size >= 2) { doJump(pressZone, true); pressT = null; return; }
-  pressZone = e.clientX < W/3 ? -1 : (e.clientX > 2*W/3 ? 1 : 0);
-  pressT = performance.now();
-  pressStart = { x:e.clientX, y:e.clientY };
-  if (mode === 'play' && cat.onGround && cat.state !== 'hang') { cat.state = 'charge'; cat.squash = 0.8; }
-});
-canvas.addEventListener('pointermove', e => {
-  if (!pressStart || activePointers.size !== 1) return;
-  const dx = e.clientX - pressStart.x, dy = e.clientY - pressStart.y;
-  if (Math.abs(dx) > 22 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-    sneakTouchDir = Math.sign(dx);
-    pressT = null;
-    if (hintShown) { hintShown = false; uiHint.style.opacity = 0; }
-  }
-});
-function releasePointer(e) {
-  activePointers.delete(e.pointerId);
-  const start = pressStart;
-  if (activePointers.size === 0) { sneakTouchDir = 0; pressStart = null; }
-  if (pressT === null) return;
-  const heldMs = performance.now() - pressT;
-  pressT = null;
-  if (start && e.clientX !== undefined) {
-    const dx = e.clientX - start.x, dy = e.clientY - start.y;
-    if (dy < -30) {
-      const dir = dx > 36 ? 1 : dx < -36 ? -1 : 0;
-      const big = -dy > 130 || (heldMs < 180 && -dy > 70);
-      doJump(dir, big);
-      return;
-    }
-    if (dy > 30 && Math.abs(dy) > Math.abs(dx)) { doDrop(); return; }
-  }
-  const wx = cam.x + e.clientX / cam.scale, wy = cam.y + e.clientY / cam.scale;
-  if (!tryTargetJump(wx, wy)) {
-    const dir = Math.abs(wx - cat.x) > 40 ? Math.sign(wx - cat.x) : 0;
-    doJump(dir, heldMs > 350);
-  }
-}
-canvas.addEventListener('pointerup', releasePointer);
-canvas.addEventListener('pointercancel', releasePointer);
-
-const held = { left:false, right:false, shift:false };
-window.addEventListener('keydown', e => {
-  if (e.key === 'Shift') held.shift = true;
-  if (e.key === 'ArrowLeft') held.left = true;
-  if (e.key === 'ArrowRight') held.right = true;
-  if (e.repeat) return;
-  if (e.key === 'ArrowLeft') { if (!e.shiftKey) doJump(-1, false); }
-  else if (e.key === 'ArrowRight') { if (!e.shiftKey) doJump(1, false); }
-  else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
-  else if (e.key === 'ArrowDown') doDrop();
-  else if (e.key === 'r' || e.key === 'R') { if (mode === 'play') loadLevel(level); }
-});
-window.addEventListener('keyup', e => {
-  if (e.key === 'Shift') held.shift = false;
-  if (e.key === 'ArrowLeft') held.left = false;
-  if (e.key === 'ArrowRight') held.right = false;
-});
-document.getElementById('reset').addEventListener('click', () => { if (mode === 'play') loadLevel(level); });
-
-// ---------- Physics ----------
-let levelDone = false;
-function stepCat(dt) {
-  if (cat.state === 'hang') { cat.tailT += dt; return; }
-
-  const prevY = cat.y;
-  cat.vy += GRAV * dt;
-  cat.x += cat.vx * dt;
-  cat.y += cat.vy * dt;
-  cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
-
-  const wasGrounded = cat.onGround;
-  cat.onGround = false;
-  for (const p of platforms) {
-    if (cat.vy >= 0 && prevY <= p.y + 1 && cat.y >= p.y &&
-        cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w) {
-      cat.y = p.y; cat.vy = 0; cat.vx = 0;
-      if (!wasGrounded) { cat.squash = 0.7; cat.state = 'land'; cat.landT = 0; cat.landAge = 0; }
-      cat.onGround = true;
-      break;
-    }
-    if (!cat.onGround && cat.vy > -80 && p.kind !== 'floor') {
-      const front = cat.x + cat.w/2, back = cat.x - cat.w/2;
-      const nearL = front > p.x - 26 && front < p.x + 14;
-      const nearR = back < p.x + p.w + 26 && back > p.x + p.w - 14;
-      if ((nearL || nearR) && cat.y > p.y + 4 && cat.y < p.y + 90) {
-        cat.state = 'hang'; cat.hangPlat = p; cat.hangSide = nearL ? 1 : -1;
-        cat.x = nearL ? p.x - cat.w*0.25 : p.x + p.w + cat.w*0.25;
-        cat.y = p.y + 34; cat.vx = 0; cat.vy = 0;
-        cat.facing = cat.hangSide;
-        return;
-      }
-    }
+      ui.elements.obtn.onclick = () => {
+        ui.hideCard();
+        showAct();
+      };
+    }, 100);
   }
 
-  if (cat.onGround) {
-    cat.landAge += dt;
-    if (cat.state === 'land') {
-      cat.landT += dt;
-      if (cat.landT > 0.18) cat.state = 'idle';
-    } else if (cat.state !== 'charge') cat.state = 'idle';
-  } else {
-    cat.landAge = 99;
-    if (cat.state !== 'charge') cat.state = 'air';
+  function showAct() {
+    ui.showAct(levelState.level, levels, story);
+    setTimeout(() => {
+      ui.elements.obtn.onclick = () => {
+        ui.hideCard();
+        startLevel(levelState.level);
+      };
+    }, 100);
   }
 
-  // wall cling & slide
-  if (!cat.onGround && cat.state !== 'hang') {
-    const atL = cat.x <= cat.w/2 + 1, atR = cat.x >= WORLD_W - cat.w/2 - 1;
-    if ((atL || atR) && cat.vy > -100) {
-      cat.state = 'slide';
-      cat.slideSide = atL ? -1 : 1;
-      cat.facing = cat.slideSide;
-      if (cat.vy > 120) cat.vy = 120;
-    }
-  }
+  // Game loop
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
 
-  // ceiling
-  if (cat.y - cat.h < CEILING_Y) {
-    cat.y = CEILING_Y + cat.h;
-    if (cat.vy < 0) cat.vy = 0;
-  }
-
-  // sneak-walk
-  const sneakDir = sneakTouchDir || (held.shift ? (held.right ? 1 : 0) - (held.left ? 1 : 0) : 0);
-  if (cat.onGround && sneakDir !== 0) {
-    cat.x += sneakDir * 115 * dt;
-    cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
-    cat.facing = sneakDir;
-    cat.state = 'sneak';
-    const supported = platforms.some(p =>
-      cat.y === p.y && cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w);
-    if (!supported) { cat.onGround = false; cat.state = 'air'; }
-  }
-
-  if (cat.y > WORLD_H + 200) { cat.x = 140; cat.y = FLOOR_Y; cat.vy = 0; cat.vx = 0; }
-
-  cat.squash += (1 - cat.squash) * Math.min(1, dt * 10);
-  cat.tailT += dt;
-
-  // knockable object
-  if (knock && !knock.broken && !knock.falling &&
-      Math.abs(cat.x - knock.x) < 40 && Math.abs(cat.y - knock.y) < 50) {
-    knock.falling = true;
-    knock.vx = (knock.x > cat.x ? 1 : -1) * 120; knock.vy = -80;
-  }
-  // platform-trigger memories & goal
-  if (cat.onGround) {
-    for (const m of memories) {
-      if (m.trigger === 'platform' && cat.y === platforms[m.pi].y &&
-          cat.x > platforms[m.pi].x && cat.x < platforms[m.pi].x + platforms[m.pi].w) {
-        collect(m.id);
-      }
-    }
-    const goal = platforms.find(p => p.kind === LEVELS[level].goalKind);
-    if (goal && cat.y === goal.y && cat.x > goal.x && cat.x < goal.x + goal.w && !levelDone) {
-      const gm = memories.find(m => m.trigger === 'goal');
-      if (gm) collect(gm.id);
-      levelDone = true;
-      completeLevel();
-    }
-  }
-}
-
-function stepKnock(dt) {
-  if (!knock) return;
-  if (!knock.falling || knock.broken) { knock.wob += dt; return; }
-  knock.vy += GRAV * 0.8 * dt;
-  knock.x += knock.vx * dt; knock.y += knock.vy * dt;
-  if (knock.y >= FLOOR_Y - 4) {
-    knock.y = FLOOR_Y - 4; knock.broken = true; knock.falling = false;
-    if (knock.memoryId) collect(knock.memoryId);
-  }
-}
-
-function stepProps(dt) {
-  if (yarn) {
-    if (Math.abs(cat.y - FLOOR_Y) < 40 && Math.abs(cat.x - yarn.x) < 40) {
-      yarn.vx = (yarn.x > cat.x ? 1 : -1) * 240;
-    }
-    yarn.x += yarn.vx * dt;
-    yarn.rot += yarn.vx * dt / yarn.r;
-    yarn.vx *= Math.pow(0.35, dt);
-    if (yarn.x < yarn.r + 6)           { yarn.x = yarn.r + 6; yarn.vx *= -0.6; }
-    if (yarn.x > WORLD_W - yarn.r - 6) { yarn.x = WORLD_W - yarn.r - 6; yarn.vx *= -0.6; }
-  }
-  if (bookShelfIdx >= 0) {
-    const shelf = platforms[bookShelfIdx];
-    for (const b of books) {
-      if (!b.down) {
-        const bx = shelf.x + b.ox;
-        if (cat.y === shelf.y && Math.abs(cat.x - bx) < 28) {
-          b.down = true; b.x = bx; b.y = shelf.y;
-          b.vx = (bx > cat.x ? 1 : -1) * 90; b.vy = -60;
+    if (levelState.mode === 'play' && !levelState.levelDone) {
+      // Check memory triggers
+      const memoryTriggers = checkMemoryTriggers(cat, levelState, levelState.platforms);
+      for (const id of memoryTriggers) {
+        if (!levelState.found[id]) {
+          levelState.found[id] = true;
+          levelState.totalFound++;
+          const m = levelState.memories.find(m => m.id === id);
+          if (m) ui.showMemory(m.text);
+          ui.updatePaws(levelState.memories, levelState.found);
         }
-      } else if (!b.rest) {
-        b.vy += GRAV * 0.8 * dt;
-        b.x += b.vx * dt; b.y += b.vy * dt;
-        b.rot += b.vx * 0.02 * dt * 60;
-        if (b.y >= FLOOR_Y - 4) { b.y = FLOOR_Y - 4; b.rest = true; b.rot = (b.vx > 0 ? 1 : -1) * 1.5; }
       }
-    }
-  }
-}
 
-// ---------- Camera ----------
-const cam = { x:0, y:0, scale:1 };
-function stepCam(dt) {
-  cam.scale = Math.max(W / WORLD_W, 0.8);
-  const targetX = Math.max(0, Math.min(WORLD_W - W / cam.scale, cat.x - (W / cam.scale) / 2));
-  const targetY = Math.max(0, Math.min(WORLD_H - H / cam.scale, cat.y - (H / cam.scale) * 0.62));
-  cam.x += (targetX - cam.x) * Math.min(1, dt * 5);
-  cam.y += (targetY - cam.y) * Math.min(1, dt * 4);
-}
-
-// ---------- Drawing ----------
-function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
-
-function drawBackground() {
-  const L = LEVELS[level];
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.save();
-  ctx.scale(cam.scale, cam.scale);
-  ctx.translate(-cam.x, -cam.y);
-
-  ctx.fillStyle = C.band;
-  ctx.fillRect(0, FLOOR_Y - 480, WORLD_W, 480);
-
-  if (L.time === 'night') {
-    // moon + stars
-    ctx.fillStyle = C.cream;
-    ctx.beginPath(); ctx.arc(170, FLOOR_Y - 1540, 62, 0, 7); ctx.fill();
-    ctx.fillStyle = C.band;
-    ctx.beginPath(); ctx.arc(190, FLOOR_Y - 1555, 50, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(251,246,238,.85)';
-    for (const [sx, sy, r] of [[420,F-1580,3],[560,F-1500,2],[700,F-1590,2.5],[820,F-1480,2],[300,F-1470,2],[650,F-1400,1.8],[500,F-1300,2.2]]) {
-      ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fill();
-    }
-  } else {
-    // sun
-    ctx.fillStyle = L.time === 'afternoon' ? C.blush : C.cream;
-    ctx.beginPath(); ctx.arc(160, FLOOR_Y - 1560, 70, 0, 7); ctx.fill();
-    // boho arcs
-    const ax = 700, ay = FLOOR_Y - 1520;
-    const arcs = [[110, C.blush], [88, C.butter], [66, C.coral]];
-    for (const [r, col] of arcs) {
-      ctx.beginPath(); ctx.arc(ax, ay, r, Math.PI, 0);
-      ctx.lineWidth = 20; ctx.strokeStyle = col; ctx.stroke();
-    }
-  }
-
-  // half-circle wall decor
-  ctx.fillStyle = C.sand;
-  ctx.beginPath(); ctx.arc(820, FLOOR_Y - 700, 60, Math.PI/2, -Math.PI/2); ctx.fill();
-  ctx.fillStyle = L.time === 'night' ? C.lilac : C.blush;
-  ctx.beginPath(); ctx.arc(40, FLOOR_Y - 950, 55, -Math.PI/2, Math.PI/2); ctx.fill();
-
-  // ceiling
-  ctx.fillStyle = C.woodDk;
-  ctx.fillRect(0, CEILING_Y - 26, WORLD_W, 26);
-  ctx.fillStyle = L.time === 'night' ? C.lilac : C.coral;
-  ctx.fillRect(0, CEILING_Y - 4, WORLD_W, 8);
-
-  // rug
-  ctx.fillStyle = L.time === 'night' ? C.lilac : C.coral;
-  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 160, 18, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = C.cream;
-  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 120, 13, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = C.butter;
-  ctx.beginPath(); ctx.ellipse(450, FLOOR_Y + 8, 78, 9, 0, 0, 7); ctx.fill();
-
-  // picture frames
-  const frame = (x, y, w, h, col) => {
-    ctx.fillStyle = C.woodDk; ctx.fillRect(x-4, y-4, w+8, h+8);
-    ctx.fillStyle = col; ctx.fillRect(x, y, w, h);
-  };
-  frame(600, FLOOR_Y - 720, 60, 78, C.blush);
-  ctx.fillStyle = C.cat;
-  ctx.beginPath(); ctx.arc(630, FLOOR_Y - 672, 14, 0, 7); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(630, FLOOR_Y - 654, 17, 10, 0, 0, 7); ctx.fill();
-  frame(310, FLOOR_Y - 1120, 70, 52, C.sage);
-  ctx.fillStyle = C.butter;
-  ctx.beginPath(); ctx.arc(345, FLOOR_Y - 1098, 10, 0, 7); ctx.fill();
-
-  ctx.restore();
-}
-
-function drawPlatform(p) {
-  const L = LEVELS[level];
-  switch (p.kind) {
-    case 'floor':
-      ctx.fillStyle = C.wood; ctx.fillRect(p.x, p.y, p.w, p.h);
-      ctx.fillStyle = C.woodDk; ctx.fillRect(p.x, p.y, p.w, 8);
-      return;
-    case 'chair':
-      ctx.fillStyle = C.coral; rr(p.x, p.y, p.w, p.h, 6); ctx.fill();
-      ctx.fillStyle = C.woodDk;
-      ctx.fillRect(p.x+14, p.y+p.h, 10, FLOOR_Y-p.y-p.h);
-      ctx.fillRect(p.x+p.w-24, p.y+p.h, 10, FLOOR_Y-p.y-p.h);
-      return;
-    case 'table': case 'desk': {
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 8); ctx.fill();
-      ctx.fillStyle = C.woodDk;
-      ctx.fillRect(p.x+20, p.y+p.h, 14, FLOOR_Y-p.y-p.h);
-      ctx.fillRect(p.x+p.w-34, p.y+p.h, 14, FLOOR_Y-p.y-p.h);
-      if (p.kind === 'table') { ctx.fillStyle = C.cream; ctx.fillRect(p.x+60, p.y-2, 90, 6); }
-      else { // desk: lamp
-        ctx.fillStyle = C.butter;
-        ctx.beginPath(); ctx.arc(p.x+p.w-40, p.y-26, 12, Math.PI, 0); ctx.fill();
-        ctx.fillStyle = C.woodDk; ctx.fillRect(p.x+p.w-42, p.y-26, 4, 26);
+      // Check knock trigger
+      if (checkKnockTrigger(cat, levelState.knock)) {
+        levelState.knock.falling = true;
+        levelState.knock.vx = (levelState.knock.x > cat.x ? 1 : -1) * 120;
+        levelState.knock.vy = -80;
       }
-      return;
-    }
-    case 'counter':
-      ctx.fillStyle = C.sage; rr(p.x, p.y, p.w, p.h, 6); ctx.fill();
-      ctx.fillStyle = C.woodDk; ctx.fillRect(p.x+8, p.y+p.h, p.w-16, FLOOR_Y-p.y-p.h);
-      ctx.fillStyle = 'rgba(251,246,238,.3)';
-      ctx.fillRect(p.x+24, p.y+p.h+20, 60, 90);
-      return;
-    case 'sofa':
-      ctx.fillStyle = C.blush; rr(p.x-14, p.y-46, 26, 66, 12); ctx.fill(); // arm
-      rr(p.x+p.w-12, p.y-46, 26, 66, 12); ctx.fill();                      // arm
-      ctx.fillStyle = C.coral; rr(p.x, p.y, p.w, p.h+56, 10); ctx.fill();  // seat body
-      ctx.fillStyle = C.blush;
-      rr(p.x+10, p.y+2, p.w/2-16, 14, 7); ctx.fill();                      // cushions
-      rr(p.x+p.w/2+2, p.y+2, p.w/2-16, 14, 7); ctx.fill();
-      ctx.fillStyle = C.woodDk;
-      ctx.fillRect(p.x+8, p.y+p.h+56, 8, FLOOR_Y-p.y-p.h-56);
-      ctx.fillRect(p.x+p.w-16, p.y+p.h+56, 8, FLOOR_Y-p.y-p.h-56);
-      return;
-    case 'window':
-      ctx.fillStyle = C.cream; rr(p.x+20, p.y-190, p.w-40, 180, 90); ctx.fill();
-      ctx.strokeStyle = C.woodDk; ctx.lineWidth = 8;
-      rr(p.x+20, p.y-190, p.w-40, 180, 90); ctx.stroke();
-      ctx.fillStyle = C.butter;
-      ctx.beginPath(); ctx.arc(p.x+p.w/2, p.y-100, 34, 0, 7); ctx.fill();
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      return;
-    case 'door':
-      // half-open door glowing warm
-      ctx.fillStyle = C.woodDk; rr(p.x+30, p.y-200, p.w-60, 200, 6); ctx.fill();
-      ctx.fillStyle = C.butter; rr(p.x+40, p.y-190, p.w-104, 190, 4); ctx.fill();
-      ctx.fillStyle = C.wood;   rr(p.x+p.w-70, p.y-196, 40, 196, 4); ctx.fill();
-      ctx.fillStyle = C.cream;
-      ctx.beginPath(); ctx.arc(p.x+p.w-62, p.y-100, 4, 0, 7); ctx.fill();
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      return;
-    case 'bed':
-      // loft bed: headboard + mattress + pillow + blanket, short posts
-      ctx.fillStyle = C.woodDk;
-      ctx.fillRect(p.x+6,  p.y+p.h, 10, 130);
-      ctx.fillRect(p.x+p.w-16, p.y+p.h, 10, 130);
-      ctx.fillRect(p.x+6, p.y+p.h+124, p.w-12, 6); // cross-beam
-      ctx.fillStyle = C.wood; rr(p.x-8, p.y-56, 16, 80, 6); ctx.fill();
-      ctx.fillStyle = C.cream; rr(p.x, p.y-14, p.w, 16, 8); ctx.fill();     // mattress
-      ctx.fillStyle = C.lilac; rr(p.x+p.w*0.35, p.y-14, p.w*0.65, 16, 8); ctx.fill(); // blanket
-      ctx.fillStyle = C.blush; rr(p.x+10, p.y-22, 52, 14, 7); ctx.fill();   // pillow
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      return;
-    case 'dresser':
-      ctx.fillStyle = C.sand; rr(p.x, p.y, p.w, p.h, 5); ctx.fill();
-      ctx.fillStyle = C.wood; ctx.fillRect(p.x+6, p.y+p.h, p.w-12, FLOOR_Y-p.y-p.h);
-      ctx.fillStyle = C.woodDk;
-      for (let d = 0; d < 3; d++) ctx.fillRect(p.x+18, p.y+p.h+18+d*34, p.w-36, 4);
-      return;
-    case 'frameshelf':
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      // family portrait standing on it
-      ctx.fillStyle = C.woodDk; rr(p.x+p.w-58, p.y-52, 44, 52, 3); ctx.fill();
-      ctx.fillStyle = C.sky;    rr(p.x+p.w-52, p.y-46, 32, 40, 2); ctx.fill();
-      ctx.fillStyle = C.coral;
-      ctx.beginPath(); ctx.arc(p.x+p.w-42, p.y-30, 5, 0, 7); ctx.fill();
-      ctx.beginPath(); ctx.arc(p.x+p.w-30, p.y-28, 4, 0, 7); ctx.fill();
-      ctx.fillStyle = C.cat;
-      ctx.beginPath(); ctx.arc(p.x+p.w-36, p.y-14, 4, 0, 7); ctx.fill();
-      ctx.fillStyle = C.shadow; ctx.fillRect(p.x+6, p.y+p.h, p.w-12, 6);
-      return;
-    case 'starshelf': {
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      // star mobile hanging above
-      const cxm = p.x + p.w/2, sw = Math.sin(cat.tailT * 1.1) * 6;
-      ctx.strokeStyle = 'rgba(74,65,57,.4)'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(cxm, p.y-92); ctx.lineTo(cxm+sw, p.y-46); ctx.stroke();
-      ctx.fillStyle = C.butter;
-      for (const [dx, dy] of [[-26,-40],[0,-58],[26,-38]]) {
-        star(cxm+dx+sw*0.7, p.y-46+dy, 8);
+
+      // Physics
+      physics.stepCat(cat, levelState.platforms, dt, levelState.mode);
+      physics.stepKnock(levelState.knock, dt);
+      physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
+
+      // Handle sneak movement
+      const sneakDir = inputMgr.getSneakDir();
+      if (cat.onGround && sneakDir !== 0) {
+        cat.x += sneakDir * 115 * dt;
+        cat.x = Math.max(cat.w/2, Math.min(CONFIG.WORLD_W - cat.w/2, cat.x));
+        cat.facing = sneakDir;
+        cat.state = 'sneak';
+        const supported = levelState.platforms.some(p =>
+          cat.y === p.y && cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w);
+        if (!supported) { cat.onGround = false; cat.state = 'air'; }
       }
-      ctx.fillStyle = C.shadow; ctx.fillRect(p.x+6, p.y+p.h, p.w-12, 6);
-      return;
+
+      // Check goal
+      if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind)) {
+        const goalMemory = levelState.memories.find(m => m.trigger === 'goal');
+        if (goalMemory && !levelState.found[goalMemory.id]) {
+          levelState.found[goalMemory.id] = true;
+          levelState.totalFound++;
+          ui.showMemory(goalMemory.text);
+          ui.updatePaws(levelState.memories, levelState.found);
+        }
+        levelState.levelDone = true;
+        completeLevel();
+      }
+
+      physics.stepCam(cam, cat, W, H);
+    } else if (levelState.mode === 'ui') {
+      cat.tailT += dt;
     }
-    case 'top':
-      ctx.fillStyle = C.coral; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      ctx.fillStyle = C.shadow; ctx.fillRect(p.x+6, p.y+p.h, p.w-12, 6);
-      return;
-    default: // shelf
-      ctx.fillStyle = C.wood; rr(p.x, p.y, p.w, p.h, 4); ctx.fill();
-      ctx.fillStyle = C.shadow; ctx.fillRect(p.x+6, p.y+p.h, p.w-12, 6);
-  }
-}
 
-function star(x, y, r) {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI/2 + i * Math.PI/5;
-    const rr2 = i % 2 === 0 ? r : r * 0.45;
-    ctx.lineTo(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2);
-  }
-  ctx.closePath(); ctx.fill();
-}
-
-function drawPlant(x, baseY) {
-  ctx.fillStyle = C.butter;
-  rr(x-26, baseY-78, 52, 78, 18); ctx.fill();
-  ctx.fillStyle = C.cat;
-  ctx.save(); ctx.translate(x, baseY-78);
-  for (const [ang, len] of [[-1.9,70],[-2.4,58],[-1.2,66],[-0.7,52],[-1.6,84]]) {
-    ctx.save(); ctx.rotate(ang + Math.sin(performance.now()/900 + len) * 0.03);
-    ctx.beginPath(); ctx.ellipse(len*0.6, 0, len*0.55, 12, 0, 0, 7); ctx.fill();
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-function drawKnock() {
-  if (!knock) return;
-  if (knock.type === 'mug') {
-    if (knock.broken) {
-      ctx.fillStyle = C.coral;
-      ctx.beginPath(); ctx.moveTo(knock.x-16, knock.y);
-      ctx.lineTo(knock.x-6, knock.y-10); ctx.lineTo(knock.x+2, knock.y);
-      ctx.lineTo(knock.x+10, knock.y-8); ctx.lineTo(knock.x+18, knock.y);
-      ctx.closePath(); ctx.fill();
-      return;
-    }
-    const wob = knock.falling ? Math.sin(knock.wob*20)*0.4 : 0;
-    ctx.save(); ctx.translate(knock.x, knock.y); ctx.rotate(wob);
-    ctx.fillStyle = C.coral;
-    rr(-knock.r, -knock.r*1.6, knock.r*2, knock.r*1.6, 4); ctx.fill();
-    ctx.strokeStyle = C.coral; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(knock.r+4, -knock.r*0.8, 7, -1.2, 1.2); ctx.stroke();
-    ctx.restore();
-  } else { // toy mouse
-    ctx.save(); ctx.translate(knock.x, knock.y);
-    if (knock.broken) ctx.rotate(0.9);
-    ctx.fillStyle = C.sand;
-    ctx.beginPath(); ctx.ellipse(0, -8, 13, 8, 0, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(-11, -12, 4, 0, 7); ctx.fill();  // ear
-    ctx.beginPath(); ctx.arc(-6, -13, 4, 0, 7); ctx.fill();
-    ctx.strokeStyle = C.coral; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(12, -8);
-    ctx.quadraticCurveTo(22, -4, 24, -12); ctx.stroke();      // tail
-    ctx.fillStyle = C.ink;
-    ctx.beginPath(); ctx.arc(-9, -9, 1.3, 0, 7); ctx.fill();  // eye
-    ctx.restore();
-  }
-}
-
-function drawProps() {
-  if (yarn) {
+    // Render
+    renderer.drawBackground(levelState.level, levels, cat, cam);
     ctx.save();
-    ctx.translate(yarn.x, yarn.y); ctx.rotate(yarn.rot);
-    ctx.fillStyle = C.butter;
-    ctx.beginPath(); ctx.arc(0, 0, yarn.r, 0, 7); ctx.fill();
-    ctx.strokeStyle = 'rgba(169,131,95,.55)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(0, 0, yarn.r*0.72, 0.4, 2.6); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, 0, yarn.r*0.72, 3.3, 5.6); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-yarn.r*0.8, -yarn.r*0.3);
-    ctx.quadraticCurveTo(0, yarn.r*0.9, yarn.r*0.8, yarn.r*0.2); ctx.stroke();
+    ctx.scale(cam.scale, cam.scale);
+    ctx.translate(-cam.x, -cam.y);
+
+    for (const p of levelState.platforms) renderer.drawPlatform(p);
+    const topShelf = levelState.platforms.find(p => p.kind === 'top');
+    if (topShelf) renderer.drawPlant(topShelf.x + topShelf.w - 55, topShelf.y);
+    renderer.drawKnock(levelState.knock);
+    renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
+    renderer.drawCat(cat);
+
     ctx.restore();
-    if (Math.abs(yarn.rot) > 0.5) {
-      ctx.strokeStyle = C.butter; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(yarn.x - yarn.r, FLOOR_Y - 2);
-      ctx.quadraticCurveTo(yarn.x - 30, FLOOR_Y - 8, yarn.x - 52, FLOOR_Y - 2);
-      ctx.stroke();
-    }
-  }
-  if (bookShelfIdx >= 0) {
-    const shelf = platforms[bookShelfIdx];
-    for (const b of books) {
-      ctx.save();
-      if (!b.down) {
-        ctx.translate(shelf.x + b.ox, shelf.y);
-        ctx.rotate(Math.sin(cat.tailT * 1.3 + b.ox) * 0.02);
-      } else {
-        ctx.translate(b.x, b.y); ctx.rotate(b.rot);
-      }
-      ctx.fillStyle = b.c;
-      ctx.fillRect(-b.w/2, -b.h, b.w, b.h);
-      ctx.fillStyle = 'rgba(251,246,238,.85)';
-      ctx.fillRect(-b.w/2, -b.h, b.w, 4);
-      ctx.restore();
-    }
-  }
-}
-
-// --- cat drawing helpers -------------------------------------------------
-function catTail(pts, w) {
-  const [a, c1, c2, m, c3, c4, tip] = pts;
-  ctx.strokeStyle = C.cat; ctx.lineCap = 'round';
-  ctx.lineWidth = w;
-  ctx.beginPath(); ctx.moveTo(a[0], a[1]);
-  ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], m[0], m[1]);
-  ctx.stroke();
-  ctx.lineWidth = w * 0.62;
-  ctx.beginPath(); ctx.moveTo(m[0], m[1]);
-  ctx.bezierCurveTo(c3[0], c3[1], c4[0], c4[1], tip[0], tip[1]);
-  ctx.stroke();
-  ctx.fillStyle = C.cat;
-  ctx.beginPath(); ctx.arc(tip[0], tip[1], w * 0.36, 0, 7); ctx.fill();
-}
-
-// ears drawn BEFORE the head so their bases tuck under the skull — never detached
-function catEars(hx, hy, hr, flat) {
-  ctx.fillStyle = C.cat;
-  ctx.beginPath();
-  ctx.moveTo(hx - hr * 0.55, hy - hr * 0.1);
-  ctx.quadraticCurveTo(hx - hr * 1.2, hy - hr * 1.5 + flat, hx - hr * 0.8, hy - hr * 2.05 + flat);
-  ctx.quadraticCurveTo(hx - hr * 0.25, hy - hr * 1.2, hx - hr * 0.05, hy - hr * 0.5);
-  ctx.closePath(); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(hx + hr * 0.65, hy - hr * 0.1);
-  ctx.quadraticCurveTo(hx + hr * 1.3, hy - hr * 1.5 + flat, hx + hr * 0.9, hy - hr * 2.05 + flat);
-  ctx.quadraticCurveTo(hx + hr * 0.35, hy - hr * 1.2, hx + hr * 0.15, hy - hr * 0.5);
-  ctx.closePath(); ctx.fill();
-}
-// inner-ear accents drawn AFTER the head, only the tips show
-function catEarAccents(hx, hy, hr, flat) {
-  ctx.fillStyle = '#4A4038';
-  ctx.beginPath();
-  ctx.moveTo(hx - hr * 0.52, hy - hr * 1.05);
-  ctx.lineTo(hx - hr * 0.74, hy - hr * 1.72 + flat);
-  ctx.lineTo(hx - hr * 0.3, hy - hr * 1.18);
-  ctx.closePath(); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(hx + hr * 0.62, hy - hr * 1.05);
-  ctx.lineTo(hx + hr * 0.84, hy - hr * 1.72 + flat);
-  ctx.lineTo(hx + hr * 0.4, hy - hr * 1.18);
-  ctx.closePath(); ctx.fill();
-}
-
-function catFace(hx, hy, hr, t, lookUp) {
-  const blink = (Math.sin(t * 0.7) > 0.995) ? 0.12 : 1;
-  const ey = hy + hr * 0.14 - (lookUp ? hr * 0.14 : 0);
-  const er = hr * 0.35;
-  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.ellipse(hx - hr * 0.48, ey, er, er * blink, 0, 0, 7); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(hx + hr * 0.55, ey, er, er * blink, 0, 0, 7); ctx.stroke();
-  if (blink === 1) {
-    const px = hr * 0.08, py = lookUp ? -hr * 0.1 : hr * 0.05;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath(); ctx.arc(hx - hr * 0.48 + px, ey + py, hr * 0.12, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx + hr * 0.55 + px, ey + py, hr * 0.12, 0, 7); ctx.fill();
-  }
-  ctx.fillStyle = C.blush;
-  ctx.beginPath();
-  ctx.moveTo(hx - hr * 0.04, ey + hr * 0.46);
-  ctx.lineTo(hx + hr * 0.16, ey + hr * 0.46);
-  ctx.lineTo(hx + hr * 0.06, ey + hr * 0.62);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(hx - hr * 0.8, ey + hr * 0.42); ctx.lineTo(hx - hr * 1.55, ey + hr * 0.26); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(hx - hr * 0.8, ey + hr * 0.56); ctx.lineTo(hx - hr * 1.5, ey + hr * 0.6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, ey + hr * 0.42); ctx.lineTo(hx + hr * 1.65, ey + hr * 0.26); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, ey + hr * 0.56); ctx.lineTo(hx + hr * 1.6, ey + hr * 0.6); ctx.stroke();
-}
-
-function drawCat() {
-  const t = cat.tailT;
-  ctx.save();
-  ctx.translate(cat.x, cat.y);
-
-  ctx.fillStyle = C.shadow;
-  ctx.beginPath(); ctx.ellipse(0, 2, cat.w * 0.55, 6, 0, 0, 7); ctx.fill();
-
-  const sy = cat.squash, sx = 2 - cat.squash;
-  ctx.scale(cat.facing * sx, sy);
-
-  const air = cat.state === 'air';
-  const hang = cat.state === 'hang';
-  const sneak = cat.state === 'sneak';
-  const slide = cat.state === 'slide';
-  const sway = Math.sin(t * 2.2) * 8;
-
-  ctx.fillStyle = C.cat;
-  ctx.strokeStyle = C.cat;
-  ctx.lineCap = 'round';
-
-  let hx, hy, hr, hrot = 0;
-  if (hang) {
-    hx = 10; hy = -22; hr = 13.5; hrot = -0.12;
-    catTail([[-4,-4],[-8,10+sway*0.4],[-20,16+sway*0.8],[-19,4+sway],
-             [-18,-4+sway],[-13,-8+sway*0.8],[-10,-3+sway*0.7]], 9);
-    ctx.fillStyle = C.cat;
-    ctx.beginPath();
-    ctx.moveTo(15, -33);
-    ctx.bezierCurveTo(23, -20, 19, -2, 6, 1);
-    ctx.bezierCurveTo(-6, 4, -14, -7, -10, -21);
-    ctx.bezierCurveTo(-8, -29, -2, -34, 5, -35);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = C.cat; ctx.lineWidth = 8;
-    ctx.beginPath(); ctx.moveTo(23, -39); ctx.lineTo(14, -27); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(13, -41); ctx.lineTo(7, -29); ctx.stroke();
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.arc(25, -40, 5.5, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(14, -42, 5.5, 0, 7); ctx.fill();
-    ctx.strokeStyle = 'rgba(251,246,238,.45)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(23.5, -44); ctx.lineTo(23.5, -40); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(26.5, -44); ctx.lineTo(26.5, -40); ctx.stroke();
-  } else if (slide) {
-    hx = 6; hy = -50; hr = 13; hrot = -0.15;
-    catTail([[-8,-8],[-20,-2+sway*0.5],[-30,-14+sway],[-26,-28+sway*0.7],
-             [-23,-38+sway*0.5],[-16,-44+sway*0.4],[-12,-38+sway*0.3]], 9);
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.ellipse(3, -26, 12.5, 23, 0.1, 0, 7); ctx.fill();
-    ctx.strokeStyle = C.cat; ctx.lineWidth = 7;
-    ctx.beginPath(); ctx.moveTo(8, -42); ctx.lineTo(17, -46); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(7, -14); ctx.lineTo(16, -16); ctx.stroke();
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.arc(18, -47, 5, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(17, -17, 5, 0, 7); ctx.fill();
-  } else if (sneak) {
-    ctx.translate(0, Math.sin(t * 13) * 1.3);
-    hx = 22; hy = -19; hr = 11; hrot = 0.12;
-    catTail([[-22,-10],[-34,-8+sway*0.4],[-42,-14+sway*0.8],[-40,-22+sway],
-             [-38,-28+sway],[-32,-31+sway*0.9],[-28,-27+sway*0.8]], 8);
-    ctx.fillStyle = C.cat;
-    ctx.beginPath();
-    ctx.moveTo(-26, 0);
-    ctx.bezierCurveTo(-30, -14, -18, -23, -2, -22);
-    ctx.bezierCurveTo(8, -22, 14, -24, 18, -25);
-    ctx.bezierCurveTo(20, -14, 16, -3, 8, 0);
-    ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-4, -10, 24, 10, 0.06, 0, 7); ctx.fill();
-  } else if (air) {
-    hx = 12; hy = -42; hr = 12.5; hrot = -0.12;
-    catTail([[-14,-10],[-30,-2+sway],[-46,-14+sway],[-46,-32+sway*0.6],
-             [-46,-44+sway*0.4],[-38,-52+sway*0.3],[-32,-47+sway*0.3]], 10);
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.ellipse(-4, -22, 20, 14, -0.32, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(7, -32, 13, 12, -0.15, 0, 7); ctx.fill();
-    ctx.strokeStyle = C.cat; ctx.lineWidth = 7;
-    ctx.beginPath(); ctx.moveTo(12, -26); ctx.lineTo(24, -12); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(6, -24); ctx.lineTo(17, -9); ctx.stroke();
-    ctx.fillStyle = C.cat;
-    ctx.beginPath(); ctx.arc(25, -11, 4.5, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(18, -8, 4.5, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-15, -12, 9, 7, 0.5, 0, 7); ctx.fill();
-  } else {
-    hx = 3; hy = -59; hr = 15;
-    catTail([[-6,-4],[-30,4],[-46,-2+sway*0.4],[-44,-26+sway],
-             [-43,-46+sway],[-32,-58+sway],[-23,-50+sway*0.7]], 11);
-    ctx.fillStyle = C.cat;
-    ctx.beginPath();
-    ctx.moveTo(-22, 0);
-    ctx.bezierCurveTo(-27, -13, -23, -27, -13, -38);
-    ctx.bezierCurveTo(-9, -43, -10, -50, -8, -55);
-    ctx.bezierCurveTo(-7, -71, 13, -72, 14, -57);
-    ctx.bezierCurveTo(15, -51, 12, -46, 14, -40);
-    ctx.bezierCurveTo(19, -29, 21, -14, 18, 0);
-    ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(-4, -12, 19, 13, -0.1, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(13, -26, 6, 9, 0.3, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(5, -2, 7, 4.5, 0, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(15, -2, 6.5, 4, 0, 0, 7); ctx.fill();
-    ctx.strokeStyle = 'rgba(251,246,238,.4)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(5, -0.5); ctx.lineTo(5, 1.5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(15, -0.5); ctx.lineTo(15, 1.5); ctx.stroke();
+    requestAnimationFrame(frame);
   }
 
-  const flat = air ? 6 : (sneak ? 8 : 0);
-  // ears first (bases tucked), then the head over them, then accents + face
-  catEars(hx, hy, hr, flat);
-  ctx.fillStyle = C.cat;
-  ctx.beginPath(); ctx.ellipse(hx, hy, hr, hr * 0.94, hrot, 0, 7); ctx.fill();
-  catEarAccents(hx, hy, hr, flat);
-  catFace(hx, hy, hr, t, hang || slide || air);
-
-  ctx.restore();
-}
-
-// ---------- Main loop ----------
-let last = performance.now();
-function frame(now) {
-  const dt = Math.min(0.033, (now - last) / 1000);
-  last = now;
-
-  if (mode === 'play' && !levelDone) {
-    stepCat(dt);
-    stepKnock(dt);
-    stepProps(dt);
-  } else {
-    cat.tailT += dt;
-  }
-  stepCam(dt);
-
-  drawBackground();
-  ctx.save();
-  ctx.scale(cam.scale, cam.scale);
-  ctx.translate(-cam.x, -cam.y);
-
-  for (const p of platforms) drawPlatform(p);
-  const topShelf = platforms.find(p => p.kind === 'top');
-  if (topShelf) drawPlant(topShelf.x + topShelf.w - 55, topShelf.y);
-  drawKnock();
-  drawProps();
-  drawCat();
-
-  ctx.restore();
+  // Start game
+  loadLevel(levelState, levels[0]);
+  renderer.updatePalette(0, levels);
+  ui.updateHUD(0, levels, levelState.memories, levelState.found);
+  ui.setHintText(story?.ui?.hint ?? 'Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso');
+  showTitle();
   requestAnimationFrame(frame);
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
 }
 
-loadLevel(0);
-showTitle();
-requestAnimationFrame(frame);
+main().catch(console.error);
 </script>
 </body>
 </html>
