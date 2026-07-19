@@ -139,6 +139,12 @@ export function checkMemoryTriggers(cat, levelState, platforms) {
         triggers.push(m.id);
       }
     }
+    // Knock trigger (hit an object)
+    if (m.trigger === 'knock' && levelState.knock && levelState.knock.broken) {
+      if (m.id === levelState.knock.memoryId) {
+        triggers.push(m.id);
+      }
+    }
   }
   return triggers;
 }
