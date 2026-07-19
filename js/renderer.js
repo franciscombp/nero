@@ -467,7 +467,9 @@ export function createRenderer(ctx, config) {
       if (isInsideBox && obj.id === 'caja') {
         ctx.save();
         ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-        ctx.rotate(obj.tilt || 0);
+
+        const tiltAngle = obj.tilt || 0;
+        ctx.rotate(tiltAngle);
 
         // Draw box with perspective/tilt
         ctx.fillStyle = '#8B6F47';
@@ -483,21 +485,23 @@ export function createRenderer(ctx, config) {
         ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, 20);
 
         // Tilt indicator (diagonal line that moves as box tips)
-        const tipAngle = (obj.tilt || 0) / (Math.PI / 2); // 0 to 1 as it tips
-        ctx.strokeStyle = `rgba(100,100,100,${0.3 + tipAngle * 0.4})`;
+        const tipPercent = Math.min(100, Math.round((tiltAngle / (Math.PI / 2)) * 100));
+        ctx.strokeStyle = `rgba(100,100,100,${0.3 + (tipPercent/100) * 0.4})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(-obj.w/2 + 20, obj.h/2 - 20);
         ctx.lineTo(obj.w/2 - 20, -obj.h/2 + 20);
         ctx.stroke();
 
-        // Progress text
-        const tipPercent = Math.min(100, Math.round(tipAngle * 100));
-        ctx.fillStyle = tipPercent > 80 ? '#E8967E' : '#E8D4B8';
-        ctx.font = 'bold 20px monospace';
-        ctx.fillText(`${tipPercent}%`, -20, 10);
-
+        // Progress text (outside rotation context for clarity)
         ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = tipPercent > 80 ? '#E8967E' : '#E8D4B8';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText(`${tipPercent}%`, obj.x + obj.w/2 - 30, obj.y - 20);
+        ctx.restore();
+
         continue;
       }
 

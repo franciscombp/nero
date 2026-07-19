@@ -194,20 +194,29 @@ export function createPhysics(config) {
         if (!obj.tiltVel) obj.tiltVel = 0;
 
         // Each jump adds torque proportional to jump height
-        const jumpForce = Math.max(0, cat.vy * -0.002); // Negative vy = jumping up
-        obj.tiltVel += jumpForce * dt;
+        // Cat vy is negative when jumping up, positive when falling
+        const jumpForce = Math.max(0, -cat.vy * 0.008); // 2.5x more sensitive
+        obj.tiltVel += jumpForce;
 
         // Apply damping and gravity to tilt
-        obj.tiltVel *= 0.98; // Friction
-        obj.tiltVel += 0.5 * dt; // "Gravity" towards tipped
+        obj.tiltVel *= 0.92; // Friction
+        obj.tiltVel += 0.15; // "Gravity" towards tipped
 
         // Update tilt angle
-        obj.tilt += obj.tiltVel * dt;
+        obj.tilt += obj.tiltVel;
         obj.tilt = Math.max(0, Math.min(Math.PI/2 + 0.3, obj.tilt)); // Cap at ~105 degrees
+
+        // Debug every 30 frames
+        if (window.frameCount === undefined) window.frameCount = 0;
+        window.frameCount++;
+        if (window.frameCount % 30 === 0) {
+          console.log(`🎲 Box tilt: ${(obj.tilt * 180 / Math.PI).toFixed(1)}°, cat.vy: ${cat.vy.toFixed(0)}, jumpForce: ${jumpForce.toFixed(4)}`);
+        }
 
         // When box tips past threshold, it's ready to escape
         if (obj.tilt > obj.tipThreshold) {
           obj.tipped = true;
+          console.log(`✅ BOX TIPPED! Escape ready!`);
         }
       }
 
