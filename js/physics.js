@@ -83,12 +83,33 @@ export function createPhysics(config) {
     }
 
     if (!cat.onGround && cat.state !== 'hang') {
+      // Check wall slide on world edges
       const atL = cat.x <= cat.w/2 + 1, atR = cat.x >= WORLD_W - cat.w/2 - 1;
       if ((atL || atR) && cat.vy > -100) {
         cat.state = 'slide';
         cat.slideSide = atL ? -1 : 1;
         cat.facing = cat.slideSide;
         if (cat.vy > 120) cat.vy = 120;
+      }
+
+      // Check wall slide on wall platforms
+      if (cat.state !== 'slide') {
+        for (const p of platforms) {
+          if ((p.kind === 'wall' || p.kind === 'wall_left' || p.kind === 'wall_right') && cat.vy > -100) {
+            const isLeft = p.kind === 'wall_left' || (p.kind === 'wall' && p.x < WORLD_W / 2);
+            const nearWall = isLeft ?
+              (cat.x - cat.w/2 < p.x + p.w && cat.x > p.x) :
+              (cat.x + cat.w/2 > p.x && cat.x < p.x + p.w);
+            const inRange = cat.y > p.y && cat.y < p.y + p.h;
+            if (nearWall && inRange && currentLevel?.mechanics?.wallSlide) {
+              cat.state = 'slide';
+              cat.slideSide = isLeft ? -1 : 1;
+              cat.facing = cat.slideSide;
+              if (cat.vy > 120) cat.vy = 120;
+              break;
+            }
+          }
+        }
       }
     }
 
