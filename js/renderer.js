@@ -456,18 +456,18 @@ export function createRenderer(ctx, config) {
 
   function drawPushables(pushables) {
     for (const obj of pushables) {
-      // Wireframe cubo/caja
-      ctx.fillStyle = 'rgba(150, 150, 150, 0.3)';
+      // Bright visible cube
+      ctx.fillStyle = '#FFD700'; // Gold/bright yellow
       ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
 
-      ctx.strokeStyle = '#999';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#FF8C00'; // Dark orange
+      ctx.lineWidth = 3;
       ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
-      // Label
-      ctx.fillStyle = '#666';
-      ctx.font = '11px monospace';
-      ctx.fillText(obj.id, obj.x + 4, obj.y + 16);
+      // Label with white text for visibility
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(obj.id, obj.x + 8, obj.y + obj.h / 2 + 5);
     }
   }
 
