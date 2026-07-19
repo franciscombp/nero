@@ -14,7 +14,7 @@
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "caja", "x": 350, "y": 1450, "w": 200, "h": 200, "weight": 3, "canTip": true, "tipThreshold": 5.0 }
+      { "id": "caja", "x": 350, "y": 1450, "w": 200, "h": 200, "weight": 3, "canTip": true, "tipThreshold": 3.5 }
     ],
     "memories": [
       { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. Huele a cartón y miedo.<br><b>Abandonado. Encerrado. Solo.</b>" },

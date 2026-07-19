@@ -168,10 +168,6 @@ async function main() {
   }
 
   function doJump(dir, big) {
-    if (window.JUMP_EXECUTIONS === undefined) window.JUMP_EXECUTIONS = 0;
-    window.JUMP_EXECUTIONS++;
-    console.log(`⬆️ doJump #${window.JUMP_EXECUTIONS} (dir: ${dir}, big: ${big}, state: ${cat.state}, onGround: ${cat.onGround})`);
-
     if (levelState.mode !== 'play') return { hintShown };
 
     const mods = getMovementMods();

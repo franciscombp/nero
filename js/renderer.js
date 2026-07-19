@@ -462,16 +462,6 @@ export function createRenderer(ctx, config) {
   function drawPushables(pushables, isInsideBox) {
     if (!pushables || pushables.length === 0) return;
 
-    // Debug rendering (first frame only)
-    if (window.DEBUG_RENDER_PUSHABLES === undefined) {
-      window.DEBUG_RENDER_PUSHABLES = true;
-      console.log('🎨 drawPushables - isInsideBox:', isInsideBox);
-      if (pushables[0]) {
-        console.log('   obj[0].id:', pushables[0].id);
-        console.log('   condition check (isInsideBox && id === caja):', isInsideBox && pushables[0].id === 'caja');
-      }
-    }
-
     for (const obj of pushables) {
       // Special rendering for "inside box" mechanic
       if (isInsideBox && obj.id === 'caja') {

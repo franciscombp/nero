@@ -187,13 +187,6 @@ export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   // Inside box mechanic: check if box is tipped enough
   if (goalKind === 'box_tipped') {
     const box = levelState?.pushables?.find(p => p.id === 'caja');
-    if (window.DEBUG_GOAL === undefined) {
-      window.DEBUG_GOAL = true;
-      console.log('🎯 checkGoalTrigger - box_tipped');
-      console.log('   box:', box);
-      console.log('   box.tipped:', box?.tipped);
-      console.log('   box.tilt:', box?.tilt);
-    }
     return box && box.tipped;
   }
   // Custom goals (origin story)

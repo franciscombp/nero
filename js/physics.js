@@ -184,18 +184,6 @@ export function createPhysics(config) {
   }
 
   function stepPushables(pushables, cat, platforms, dt, currentLevel) {
-    // Debug initialization (first time only)
-    if (!window.DEBUG_STEP_PUSHABLES) {
-      window.DEBUG_STEP_PUSHABLES = true;
-      console.log('📦 stepPushables initialized');
-      console.log('   insideBox:', currentLevel?.mechanics?.insideBox);
-      console.log('   pushables:', pushables);
-      if (pushables[0]) {
-        console.log('   pushables[0].canTip:', pushables[0].canTip);
-        console.log('   pushables[0].tipThreshold:', pushables[0].tipThreshold);
-      }
-    }
-
     for (const obj of pushables) {
       if (obj.broken) continue;
 
@@ -218,25 +206,9 @@ export function createPhysics(config) {
         obj.tilt += obj.tiltVel;
         obj.tilt = Math.max(0, Math.min(Math.PI/2 + 0.3, obj.tilt)); // Cap at ~105 degrees
 
-        // DETAILED DEBUG - first 5 updates with any jump force
-        if (jumpForce > 0.001) {
-          if (window.JUMP_COUNT === undefined) window.JUMP_COUNT = 0;
-          window.JUMP_COUNT++;
-          if (window.JUMP_COUNT <= 5) {
-            console.log(`\n🚀 JUMP #${window.JUMP_COUNT}:`);
-            console.log(`   cat.vy: ${cat.vy.toFixed(0)}`);
-            console.log(`   jumpForce: ${jumpForce.toFixed(6)}`);
-            console.log(`   tiltVel after: ${obj.tiltVel.toFixed(6)}`);
-            console.log(`   tilt: ${obj.tilt.toFixed(6)} (${(obj.tilt * 180 / Math.PI).toFixed(1)}°)`);
-            console.log(`   tipThreshold: ${obj.tipThreshold}`);
-            console.log(`   tipped: ${obj.tipped}`);
-          }
-        }
-
         // When box tips past threshold, it's ready to escape
         if (obj.tilt > obj.tipThreshold) {
           obj.tipped = true;
-          console.log(`\n✅ BOX TIPPED! Escape ready!`);
         }
       }
 
