@@ -113,6 +113,81 @@ export function createUI() {
     elements.reset.addEventListener('click', callback);
   }
 
+  // Timer functionality for level challenges
+  let levelTimer = null;
+  let timerInterval = null;
+  let timerElement = null;
+
+  function createTimerElement() {
+    if (!timerElement) {
+      timerElement = document.createElement('div');
+      timerElement.id = 'level-timer';
+      timerElement.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        font-size: 32px;
+        font-weight: bold;
+        z-index: 100;
+        text-align: right;
+        color: #4A4139;
+        font-family: monospace;
+        text-shadow: 2px 2px 4px rgba(255,255,255,0.3);
+        transition: color 0.1s ease;
+      `;
+      document.body.appendChild(timerElement);
+    }
+    return timerElement;
+  }
+
+  function startLevelTimer(duration, onExpire) {
+    levelTimer = duration;
+    const timerEl = createTimerElement();
+    timerEl.style.display = 'block';
+
+    const updateDisplay = () => {
+      if (levelTimer <= 0) {
+        timerEl.textContent = '0s';
+        timerEl.style.color = '#E8967E';
+        clearInterval(timerInterval);
+        onExpire?.();
+        return;
+      }
+
+      timerEl.textContent = `${levelTimer}s`;
+      if (levelTimer <= 5) {
+        timerEl.style.color = '#E8967E';
+        timerEl.style.animation = 'pulse 0.3s ease-in-out';
+      } else if (levelTimer <= 15) {
+        timerEl.style.color = '#F0C987';
+        timerEl.style.animation = 'none';
+      } else {
+        timerEl.style.color = '#4A4139';
+        timerEl.style.animation = 'none';
+      }
+    };
+
+    updateDisplay();
+    timerInterval = setInterval(() => {
+      levelTimer--;
+      updateDisplay();
+    }, 1000);
+  }
+
+  function stopLevelTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    if (timerElement) {
+      timerElement.style.display = 'none';
+    }
+  }
+
+  function getLevelTimer() {
+    return levelTimer ?? 0;
+  }
+
   return {
     elements,
     updateHUD,
@@ -128,6 +203,9 @@ export function createUI() {
     resetHint,
     setHintText,
     onResetClick,
-    isHintShown: () => hintShown
+    isHintShown: () => hintShown,
+    startLevelTimer,
+    stopLevelTimer,
+    getLevelTimer
   };
 }

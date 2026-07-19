@@ -148,7 +148,33 @@ export function checkKnockTrigger(cat, knock) {
   return Math.abs(cat.x - knock.x) < 40 && Math.abs(cat.y - knock.y) < 50;
 }
 
-export function checkGoalTrigger(cat, platforms, goalKind) {
+export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
+  // Custom goals (origin story)
+  if (goalKind === 'custom_caja_escape') {
+    return cat.y < 650;
+  }
+  if (goalKind === 'custom_truck_bed') {
+    const truckBed = platforms[5];
+    return truckBed && cat.y === truckBed.y &&
+           cat.x > truckBed.x && cat.x < truckBed.x + truckBed.w;
+  }
+  if (goalKind === 'custom_driver_pickup') {
+    return true;
+  }
+  if (goalKind === 'custom_first_connection') {
+    if (!levelState) return false;
+    const memoriesCount = levelState.memories.filter(m =>
+      levelState.found[m.id]
+    ).length;
+    return memoriesCount >= 4;
+  }
+  if (goalKind === 'custom_sofa_rest') {
+    const sofa = platforms[1];
+    return sofa && cat.y === sofa.y &&
+           cat.x > sofa.x && cat.x < sofa.x + sofa.w;
+  }
+
+  // Standard goals (by platform kind)
   const goal = platforms.find(p => p.kind === goalKind);
   if (!goal) return false;
   return cat.onGround && cat.y === goal.y && cat.x > goal.x && cat.x < goal.x + goal.w;

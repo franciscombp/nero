@@ -117,12 +117,25 @@ async function main() {
     levelEditor.openEditor();
   });
 
+  // Get movement modifiers for current level
+  function getMovementMods() {
+    const currentLevel = levels[levelState.level];
+    if (!currentLevel?.mechanics?.babyKitten) return { speed: 1, jump: 1 };
+    return {
+      speed: currentLevel.mechanics.speed || 0.7,
+      jump: currentLevel.mechanics.jumpHeight || 0.8
+    };
+  }
+
   function doJump(dir, big) {
     if (levelState.mode !== 'play') return { hintShown };
+
+    const mods = getMovementMods();
+
     if (cat.state === 'slide' && !cat.onGround) {
       const away = -cat.slideSide;
-      cat.vx = away * CONFIG.JUMP_VX * 1.2;
-      cat.vy = -CONFIG.JUMP_VY;
+      cat.vx = away * CONFIG.JUMP_VX * 1.2 * mods.speed;
+      cat.vy = -CONFIG.JUMP_VY * mods.jump;
       cat.facing = away;
       cat.state = 'air';
       cat.squash = 1.25;
@@ -133,15 +146,15 @@ async function main() {
         cat.state = 'air';
         cat.onGround = false;
         cat.hangPlat = null;
-        cat.vy = -CONFIG.BIG_VY * 0.85;
-        cat.vx = dir * CONFIG.JUMP_VX * 1.35;
+        cat.vy = -CONFIG.BIG_VY * 0.85 * mods.jump;
+        cat.vx = dir * CONFIG.JUMP_VX * 1.35 * mods.speed;
         cat.facing = dir;
         cat.squash = 1.3;
         return { hintShown };
       }
       cat.y = cat.hangPlat.y;
       cat.x += cat.hangSide * 20;
-      cat.vy = -420;
+      cat.vy = -420 * mods.jump;
       cat.vx = 0;
       cat.state = 'air';
       cat.onGround = false;
@@ -154,8 +167,8 @@ async function main() {
     const boost = 1 + 0.12 * cat.combo;
     cat.onGround = false;
     cat.state = 'air';
-    cat.vy = -(big ? CONFIG.BIG_VY : CONFIG.JUMP_VY) * boost;
-    cat.vx = dir * CONFIG.JUMP_VX;
+    cat.vy = -(big ? CONFIG.BIG_VY : CONFIG.JUMP_VY) * boost * mods.jump;
+    cat.vx = dir * CONFIG.JUMP_VX * mods.speed;
     if (dir !== 0) cat.facing = dir;
     cat.squash = 1.25 + 0.05 * cat.combo;
     if (hintShown) {
@@ -229,6 +242,21 @@ async function main() {
     ui.resetHint();
     hintShown = true;
     levelState.mode = 'play';
+
+    // Handle timer challenges
+    const currentLevel = levels[idx];
+    if (currentLevel?.mechanics?.timerChallenge) {
+      ui.stopLevelTimer();
+      ui.startLevelTimer(currentLevel.mechanics.timerChallenge, () => {
+        // Timer expired: handle branch_b automatically
+        if (currentLevel.mechanics?.branchId === 'branch_a') {
+          levelState.level = 2; // Skip 1A, go to 1B (converge at level 2)
+          startLevel(2);
+        }
+      });
+    } else {
+      ui.stopLevelTimer();
+    }
   }
 
   function resetLevel() {
@@ -236,6 +264,7 @@ async function main() {
   }
 
   function completeLevel() {
+    ui.stopLevelTimer();
     if (levelState.level + 1 < levels.length) {
       levelState.level++;
       setTimeout(() => {
@@ -297,14 +326,16 @@ async function main() {
       }
 
       // Physics
-      physics.stepCat(cat, levelState.platforms, dt, levelState.mode);
+      const currentLevel = levels[levelState.level];
+      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, currentLevel);
       physics.stepKnock(levelState.knock, dt);
       physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
 
       // Handle sneak movement
       const sneakDir = inputMgr.getSneakDir();
       if (cat.onGround && sneakDir !== 0) {
-        cat.x += sneakDir * 115 * dt;
+        const mods = getMovementMods();
+        cat.x += sneakDir * 115 * mods.speed * dt;
         cat.x = Math.max(cat.w/2, Math.min(CONFIG.WORLD_W - cat.w/2, cat.x));
         cat.facing = sneakDir;
         cat.state = 'sneak';
@@ -314,7 +345,7 @@ async function main() {
       }
 
       // Check goal
-      if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind)) {
+      if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind, levelState)) {
         const goalMemory = levelState.memories.find(m => m.trigger === 'goal');
         if (goalMemory && !levelState.found[goalMemory.id]) {
           levelState.found[goalMemory.id] = true;

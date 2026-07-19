@@ -1,7 +1,15 @@
 export function createPhysics(config) {
   const { WORLD_W, WORLD_H, FLOOR_Y, CEILING_Y, GRAV, JUMP_VX, JUMP_VY, BIG_VY } = config;
 
-  function stepCat(cat, platforms, dt, mode) {
+  function getMovementMods(currentLevel) {
+    if (!currentLevel?.mechanics?.babyKitten) return { speed: 1, jump: 1 };
+    return {
+      speed: currentLevel.mechanics.speed || 0.7,
+      jump: currentLevel.mechanics.jumpHeight || 0.8
+    };
+  }
+
+  function stepCat(cat, platforms, dt, mode, currentLevel) {
     if (cat.state === 'hang') {
       cat.tailT += dt;
       return;
@@ -149,6 +157,7 @@ export function createPhysics(config) {
     stepCat,
     stepKnock,
     stepProps,
-    stepCam
+    stepCam,
+    getMovementMods
   };
 }
