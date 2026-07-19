@@ -15,7 +15,7 @@
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "cube_1", "x": 350, "y": 1690, "w": 80, "h": 80, "weight": 1 }
+      { "id": "cube_1", "x": 350, "y": 1610, "w": 80, "h": 80, "weight": 1 }
     ],
     "puzzles": [
       { "id": "puzzle_0_1", "type": "pushable_position", "params": { "objectId": "cube_1", "targetX": 620, "tolerance": 80 } }
