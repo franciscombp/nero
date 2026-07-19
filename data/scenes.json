@@ -7,15 +7,15 @@
     "intro": "Nero se despierta en la caja. Hay una salida alta que parece imposible. Pero espera... hay un cubo en el piso. ¿Puedo usarlo para alcanzar?",
     "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "wallSlide": false },
     "platforms": [
-      { "x": 0, "y": 1200, "w": 900, "h": 60, "kind": "floor" },
-      { "x": 600, "y": 800, "w": 250, "h": 60, "kind": "floor" }
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
+      { "x": 600, "y": 1400, "w": 250, "h": 60, "kind": "floor" }
     ],
     "goalKind": "custom_caja_escape",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "cube_1", "x": 350, "y": 1200, "w": 80, "h": 80, "weight": 1 }
+      { "id": "cube_1", "x": 350, "y": 1690, "w": 80, "h": 80, "weight": 1 }
     ],
     "puzzles": [
       { "id": "puzzle_0_1", "type": "pushable_position", "params": { "objectId": "cube_1", "targetX": 620, "tolerance": 80 } }
