@@ -75,6 +75,40 @@ async function main() {
   const levelState = createLevelState();
   const levelEditor = createLevelEditor(canvas, ctx, config, levels);
 
+  // Cinematics for origin story
+  const cinematics = {
+    2: { // Nivel 1B: El Encuentro (Rama B)
+      text: `Nero no logró subirse a tiempo. Resbala. Cae.<br><br>Una sombra enorme lo cubre.<br>Una voz profunda dice: "¿Qué haces aquí, pequeño?"<br><br>Manos suaves lo levantan.<br>Nero está asustado pero... seguro.`,
+      duration: 4000
+    },
+    5: { // Nivel 4: Amanecer
+      text: `<b>Un nuevo amanecer.</b><br><br>El dueño prepara café.<br>Nero baja del sofá, estirándose.<br><br>La cocina es la misma que ayer.<br>Pero Nero es diferente. El dueño es diferente.<br><br><b>La aventura verdadera comienza.</b>`,
+      duration: 5000
+    }
+  };
+
+  // Branch tracking (Rama A vs B del prólogo)
+  function recordBranch(branchId) {
+    try {
+      const data = JSON.parse(localStorage.getItem('nero_branches') || '{}');
+      data.origin = branchId;
+      data.timestamp = new Date().toISOString();
+      localStorage.setItem('nero_branches', JSON.stringify(data));
+      console.log('🌳 Branch saved:', branchId);
+    } catch (e) {
+      console.warn('Could not save branch:', e);
+    }
+  }
+
+  function getBranch() {
+    try {
+      const data = JSON.parse(localStorage.getItem('nero_branches') || '{}');
+      return data.origin;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Input setup
   const inputMgr = createInputManager(canvas, config);
   let hintShown = true;
@@ -250,8 +284,11 @@ async function main() {
       ui.startLevelTimer(currentLevel.mechanics.timerChallenge, () => {
         // Timer expired: handle branch_b automatically
         if (currentLevel.mechanics?.branchId === 'branch_a') {
+          recordBranch('branch_b');
+          levelState.levelDone = true;
           levelState.level = 2; // Skip 1A, go to 1B (converge at level 2)
-          startLevel(2);
+          cinematicShown = false; // Reset for next level's cinematic
+          completeLevel();
         }
       });
     } else {
@@ -301,11 +338,38 @@ async function main() {
 
   // Game loop
   let last = performance.now();
+  let cinematicShown = false;
+  let cinematicEndTime = 0;
+
   function frame(now) {
     const dt = Math.min(0.033, (now - last) / 1000);
     last = now;
 
+    const currentLevel = levels[levelState.level];
+
     if (levelState.mode === 'play' && !levelState.levelDone) {
+      // Handle cinematic-only levels
+      if (currentLevel?.mechanics?.cinematicOnly) {
+        if (!cinematicShown) {
+          const cinematic = cinematics[levelState.level];
+          if (cinematic) {
+            ui.showCinematic(cinematic.text, cinematic.duration);
+            cinematicEndTime = now + cinematic.duration;
+          }
+          cinematicShown = true;
+        }
+        // Auto-complete after cinematic duration
+        if (now >= cinematicEndTime && cinematicShown) {
+          levelState.levelDone = true;
+          completeLevel();
+        }
+        // Still render the scene in background
+        renderer.drawBackground(levelState.level, levels, cat, cam);
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      cinematicShown = false;
       // Check memory triggers
       const memoryTriggers = checkMemoryTriggers(cat, levelState, levelState.platforms);
       for (const id of memoryTriggers) {
@@ -326,7 +390,6 @@ async function main() {
       }
 
       // Physics
-      const currentLevel = levels[levelState.level];
       physics.stepCat(cat, levelState.platforms, dt, levelState.mode, currentLevel);
       physics.stepKnock(levelState.knock, dt);
       physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
@@ -353,6 +416,12 @@ async function main() {
           ui.showMemory(goalMemory.text);
           ui.updatePaws(levelState.memories, levelState.found);
         }
+
+        // Record branch if origin story level
+        if (levelState.level === 1 && currentLevel?.mechanics?.branchId === 'branch_a') {
+          recordBranch('branch_a');
+        }
+
         levelState.levelDone = true;
         completeLevel();
       }

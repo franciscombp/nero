@@ -24,8 +24,32 @@ export function createUI() {
   }
 
   function updatePaws(memories, found) {
-    elements.paws.innerHTML = memories.map(m =>
-      `<span class="p${found[m.id] ? ' on' : ''}">🐾</span>`).join('');
+    elements.paws.innerHTML = memories.map((m, i) =>
+      `<span class="p${found[m.id] ? ' on' : ''}" data-idx="${i}" data-id="${m.id}" style="cursor: pointer;">🐾</span>`).join('');
+
+    // Add click handlers to show progress
+    document.querySelectorAll('#paws .p').forEach((el, idx) => {
+      el.addEventListener('click', () => {
+        const found_count = Object.values(found).filter(Boolean).length;
+        const total_count = memories.length;
+        const paw_idx = idx + 1;
+        let progressText = `<b>Recuerdos: ${found_count} / ${total_count}</b><br><br>`;
+
+        memories.forEach((m, i) => {
+          const isFound = found[m.id];
+          const icon = isFound ? '🟢' : '⭕';
+          progressText += `${icon} ${i + 1}. ${m.text.split('<')[0]}<br>`;
+        });
+
+        showCard({
+          kicker: 'Progreso',
+          title: `Recuerdos (${paw_idx}/${total_count})`,
+          text: progressText,
+          btn: 'Cerrar',
+          then: () => { /* dismiss */ }
+        });
+      });
+    });
   }
 
   function showMemory(html) {
@@ -188,6 +212,30 @@ export function createUI() {
     return levelTimer ?? 0;
   }
 
+  // Cinematic display
+  let cinematicTimeout = null;
+
+  function showCinematic(cinematicText, duration = 3000) {
+    showCard({
+      face: '🎬',
+      kicker: '',
+      title: '',
+      text: cinematicText,
+      btn: 'Continuar',
+      then: () => { /* will be handled by auto-advance */ }
+    });
+
+    clearTimeout(cinematicTimeout);
+    cinematicTimeout = setTimeout(() => {
+      hideCard();
+    }, duration);
+  }
+
+  function hideCinematic() {
+    clearTimeout(cinematicTimeout);
+    hideCard();
+  }
+
   return {
     elements,
     updateHUD,
@@ -206,6 +254,8 @@ export function createUI() {
     isHintShown: () => hintShown,
     startLevelTimer,
     stopLevelTimer,
-    getLevelTimer
+    getLevelTimer,
+    showCinematic,
+    hideCinematic
   };
 }
