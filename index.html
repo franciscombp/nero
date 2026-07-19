@@ -14,6 +14,7 @@
   <div class="pill" id="acto">—</div>
   <div class="pill" id="paws"></div>
   <div class="pill" id="reset">↺</div>
+  <div class="pill" id="editor-btn" style="margin-left: auto; cursor: pointer; font-weight: bold;">🎨 EDITOR</div>
 </div>
 <div id="memory"></div>
 <div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
@@ -33,6 +34,7 @@ import { createRenderer } from './js/renderer.js';
 import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createInputManager } from './js/input.js';
+import { createLevelEditor } from './js/levelEditor.js';
 
 async function main() {
   const canvas = document.getElementById('game');
@@ -66,6 +68,7 @@ async function main() {
   const cat = createCat();
   const cam = createCamera();
   const levelState = createLevelState();
+  const levelEditor = createLevelEditor(canvas, ctx, config, levels);
 
   // Input setup
   const inputMgr = createInputManager(canvas, config);
@@ -103,6 +106,10 @@ async function main() {
     if (levelState.mode === 'play') {
       resetLevel();
     }
+  });
+
+  document.getElementById('editor-btn').addEventListener('click', () => {
+    levelEditor.openEditor();
   });
 
   function doJump(dir, big) {
@@ -333,6 +340,15 @@ async function main() {
     renderer.drawCat(cat);
 
     ctx.restore();
+
+    // Render editor overlay if active
+    if (levelEditor.isEditing()) {
+      ctx.save();
+      ctx.scale(1 / cam.scale, 1 / cam.scale);
+      levelEditor.render();
+      ctx.restore();
+    }
+
     requestAnimationFrame(frame);
   }
 
