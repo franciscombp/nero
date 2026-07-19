@@ -1,0 +1,13 @@
+{
+  "title": {
+    "title": "Nero",
+    "body": "Una casa llena de recuerdos. Un gato que aprende a moverse entre ellos.",
+    "highlight": "Tu misión: encontrar los recuerdos ocultos en cada acto."
+  },
+  "ui": {
+    "hint": "Toca la pantalla o usa las flechas para moverte. Cada recuerdo te acerca a la puerta final.",
+    "sceneComplete": "La escena quedó en calma. El siguiente acto ya está preparado.",
+    "nextScene": "Sigue avanzando para reunir la historia completa.",
+    "final": "La casa no estaba vacía: estaba esperando a que Nero regresara a ella."
+  }
+}

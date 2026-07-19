@@ -1,0 +1,86 @@
+[
+  {
+    "id": "kitchen",
+    "name": "La cocina",
+    "kicker": "Acto I",
+    "intro": "La casa está en silencio. Nero se despierta solo y la cocina todavía vibra con el eco de la mañana.",
+    "playerStartY": 520,
+    "pwaThemeColor": "#1d1412",
+    "palette": {
+      "sky": "#f4e8d8",
+      "ground": "#e3c8a9",
+      "floor": "#f5ead8",
+      "platform": "#a86d4a",
+      "memory": "#ff8c67",
+      "goal": "#7bd8ff"
+    },
+    "platforms": [
+      { "x": 0, "y": 620, "w": 900, "h": 80, "color": "#8b674d" },
+      { "x": 110, "y": 500, "w": 150, "h": 20, "color": "#c1855d" },
+      { "x": 320, "y": 420, "w": 180, "h": 20, "color": "#c1855d" },
+      { "x": 560, "y": 320, "w": 180, "h": 20, "color": "#c1855d" }
+    ],
+    "goal": { "x": 760, "y": 250, "w": 80, "h": 70 },
+    "memories": [
+      { "id": "taza", "label": "la taza del abuelo", "x": 130, "y": 470 },
+      { "id": "planta", "label": "la monstera", "x": 380, "y": 390 },
+      { "id": "ventana", "label": "la ventana del camino", "x": 610, "y": 290 }
+    ]
+  },
+  {
+    "id": "living",
+    "name": "La sala",
+    "kicker": "Acto II",
+    "intro": "La tarde entra por las cortinas y el sofá aún conserva la forma de una siesta compartida.",
+    "playerStartY": 520,
+    "pwaThemeColor": "#241918",
+    "palette": {
+      "sky": "#f6e6dc",
+      "ground": "#d7a68a",
+      "floor": "#f4e4da",
+      "platform": "#8a5d46",
+      "memory": "#7bd8ff",
+      "goal": "#ff8c67"
+    },
+    "platforms": [
+      { "x": 0, "y": 620, "w": 900, "h": 80, "color": "#8f6b53" },
+      { "x": 130, "y": 500, "w": 180, "h": 18, "color": "#b87b62" },
+      { "x": 360, "y": 420, "w": 200, "h": 18, "color": "#b87b62" },
+      { "x": 620, "y": 330, "w": 160, "h": 18, "color": "#b87b62" }
+    ],
+    "goal": { "x": 760, "y": 260, "w": 80, "h": 70 },
+    "memories": [
+      { "id": "manta", "label": "la manta del sofá", "x": 180, "y": 470 },
+      { "id": "retrato", "label": "el retrato de la playa", "x": 420, "y": 390 },
+      { "id": "puerta", "label": "la puerta del pasillo", "x": 670, "y": 300 }
+    ]
+  },
+  {
+    "id": "bedroom",
+    "name": "El cuarto",
+    "kicker": "Acto III",
+    "intro": "Ya es de noche y la luna pinta el cuarto con una luz de cuentos antiguos.",
+    "playerStartY": 520,
+    "pwaThemeColor": "#2a2437",
+    "palette": {
+      "sky": "#e9e4f2",
+      "ground": "#9ea3d8",
+      "floor": "#efe9f7",
+      "platform": "#655a8f",
+      "memory": "#ffb36d",
+      "goal": "#8ee6b0"
+    },
+    "platforms": [
+      { "x": 0, "y": 620, "w": 900, "h": 80, "color": "#6b6788" },
+      { "x": 120, "y": 500, "w": 170, "h": 18, "color": "#7d73a7" },
+      { "x": 330, "y": 420, "w": 190, "h": 18, "color": "#7d73a7" },
+      { "x": 610, "y": 330, "w": 180, "h": 18, "color": "#7d73a7" }
+    ],
+    "goal": { "x": 760, "y": 260, "w": 80, "h": 70 },
+    "memories": [
+      { "id": "raton", "label": "el ratón de trapo", "x": 180, "y": 470 },
+      { "id": "estrellas", "label": "el móvil de estrellas", "x": 390, "y": 390 },
+      { "id": "cama", "label": "la cama alta", "x": 660, "y": 300 }
+    ]
+  }
+]
