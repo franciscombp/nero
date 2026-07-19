@@ -197,8 +197,8 @@ export function createPhysics(config) {
       // Ground collision (only with floor platforms)
       for (const p of platforms) {
         if ((p.kind === 'floor' || p.kind === 'chair' || p.kind === 'table' || p.kind === 'counter' || p.kind === 'sofa' || p.kind === 'shelf' || p.kind === 'top' || p.kind === 'desk' || p.kind === 'dresser' || p.kind === 'bed' || p.kind === 'frameshelf' || p.kind === 'starshelf' || p.kind === 'window' || p.kind === 'door') &&
-            obj.vy >= 0 && obj.y + obj.h >= p.y && obj.y + obj.h <= p.y + 4 &&
-            obj.x + obj.w * 0.2 > p.x && obj.x + obj.w * 0.8 < p.x + p.w) {
+            obj.vy >= 0 && obj.y + obj.h >= p.y && obj.y + obj.h <= p.y + 20 &&
+            obj.x + obj.w * 0.1 > p.x && obj.x + obj.w * 0.9 < p.x + p.w) {
           obj.y = p.y - obj.h;
           obj.vy = 0;
           obj.onGround = true;

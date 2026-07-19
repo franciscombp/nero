@@ -506,12 +506,9 @@ async function main() {
     requestAnimationFrame(frame);
   }
 
-  // Start game
-  loadLevel(levelState, levels[0]);
-  renderer.updatePalette(0, levels);
-  ui.updateHUD(0, levels, levelState.memories, levelState.found);
-  ui.setHintText(story?.ui?.hint ?? 'Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso');
-  showTitle();
+  // Start game - Skip intro and go straight to Level 0
+  startLevel(0);
+  ui.setHintText(story?.ui?.hint ?? 'Salta ↑ hacia la pared · Salta ↓ para bajar<br>Toca la pared para trepar · Salta sobre la caja para romperla');
   requestAnimationFrame(frame);
 
   // Expose globals for testing/debugging
