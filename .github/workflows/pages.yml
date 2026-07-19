@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/cat-home-exploration-game-h7uuxc
   workflow_dispatch:
 
 permissions:
