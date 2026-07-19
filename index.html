@@ -276,18 +276,22 @@ async function main() {
     // Load pushables
     const level = levels[idx];
     levelState.pushables = [];
-    if (level.pushables) {
+    if (level.pushables && level.pushables.length > 0) {
       levelState.pushables = level.pushables.map(p => {
         const obj = createPushable(p);
         obj.startX = p.x;
         obj.startY = p.y;
         return obj;
       });
+      console.log('✅ Pushables loaded:', levelState.pushables.length, levelState.pushables);
+    } else {
+      console.log('⚠️ No pushables in level', idx);
     }
 
     // Load puzzles
     levelState.puzzles = level.puzzles || [];
     levelState.puzzleSolved = {};
+    console.log('✅ Puzzles loaded:', levelState.puzzles.length);
 
     renderer.updatePalette(levelState.level, levels);
     ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
@@ -473,7 +477,10 @@ async function main() {
     if (topShelf) renderer.drawPlant(topShelf.x + topShelf.w - 55, topShelf.y);
     renderer.drawKnock(levelState.knock);
     renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
-    if (levelState.pushables.length > 0) renderer.drawPushables(levelState.pushables);
+    if (levelState.pushables && levelState.pushables.length > 0) {
+      console.log('🎲 Drawing', levelState.pushables.length, 'pushables:', levelState.pushables);
+      renderer.drawPushables(levelState.pushables);
+    }
     renderer.drawCat(cat);
 
     ctx.restore();
