@@ -1,0 +1,6 @@
+<svg viewBox="0 0 13 36" xmlns="http://www.w3.org/2000/svg">
+  <!-- Libro (coral) -->
+  <rect x="0" y="0" width="13" height="36" rx="1" fill="#E8967E"/>
+  <rect x="0" y="0" width="13" height="2" fill="rgba(255,255,255,0.3)"/>
+  <line x1="1" y1="0" x2="1" y2="36" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
+</svg>

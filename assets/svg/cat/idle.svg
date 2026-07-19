@@ -1,0 +1,15 @@
+<svg viewBox="0 0 44 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Placeholder: Gato sentado -->
+  <rect x="8" y="18" width="28" height="18" rx="4" fill="#26221D"/>
+  <circle cx="22" cy="12" r="8" fill="#26221D"/>
+  <!-- Orejas -->
+  <polygon points="14,2 12,10 16,8" fill="#26221D"/>
+  <polygon points="30,2 32,10 28,8" fill="#26221D"/>
+  <!-- Ojos -->
+  <circle cx="18" cy="10" r="2" fill="#FFFFFF"/>
+  <circle cx="26" cy="10" r="2" fill="#FFFFFF"/>
+  <circle cx="18" cy="10" r="1" fill="#000000"/>
+  <circle cx="26" cy="10" r="1" fill="#000000"/>
+  <!-- Nariz -->
+  <circle cx="22" cy="14" r="1.5" fill="#F3C5B4"/>
+</svg>

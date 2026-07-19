@@ -1,0 +1,8 @@
+<svg viewBox="0 0 44 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Placeholder: Gato (slide) -->
+  <rect x="6" y="16" width="32" height="20" rx="3" fill="#26221D" opacity="0.8"/>
+  <circle cx="22" cy="10" r="8" fill="#26221D"/>
+  <circle cx="18" cy="9" r="2" fill="#FFFFFF"/>
+  <circle cx="26" cy="9" r="2" fill="#FFFFFF"/>
+  <text x="22" y="24" font-size="8" text-anchor="middle" fill="#F3C5B4">slide</text>
+</svg>

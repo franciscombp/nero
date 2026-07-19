@@ -1,0 +1,8 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ovillo de lana -->
+  <circle cx="12" cy="12" r="10" fill="#F0C987"/>
+  <circle cx="12" cy="12" r="8" fill="none" stroke="#C9934F" stroke-width="1" opacity="0.5"/>
+  <circle cx="12" cy="12" r="6" fill="none" stroke="#C9934F" stroke-width="1" opacity="0.5"/>
+  <!-- Línea suelta -->
+  <path d="M 20 8 Q 24 10, 22 14" stroke="#F0C987" stroke-width="2" fill="none"/>
+</svg>

@@ -35,6 +35,7 @@ import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createInputManager } from './js/input.js';
 import { createLevelEditor } from './js/levelEditor.js';
+import { loadAssets } from './js/assetLoader.js';
 
 async function main() {
   const canvas = document.getElementById('game');
@@ -58,6 +59,10 @@ async function main() {
     fetch('data/stories.json')
   ]);
   const levels = await levelsRes.json();
+  
+  // Cargar SVG assets
+  const assets = await loadAssets();
+  console.log("✅ Assets cargados:", assets);
   const story = await storiesRes.json();
 
   // Create game systems
