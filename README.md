@@ -1,7 +1,10 @@
 # Nero · una historia de gato 🐈‍⬛
 
 Juego de exploración doméstica en **tres actos**, protagonizado por un gato negro "líquido".
-Todo el juego vive en un solo archivo: `index.html` (canvas + JavaScript vanilla, sin dependencias).
+
+**Jugable:** [nero.maldonado.pro](https://nero.maldonado.pro) ✨
+
+Arquitectura modular, sin dependencias externas, totalmente configurable y escalable.
 
 ## La historia
 
@@ -65,3 +68,74 @@ no está al alcance, el gato da un salto normal hacia esa dirección.
 
 Paleta cálida boho: crema, terracota, mostaza, salvia; gato de silueta negra con ojos blancos,
 arcos decorativos y sol, siguiendo las imágenes de referencia del GDD.
+
+## 🏗️ Arquitectura Modular
+
+El juego utiliza una arquitectura profesional y escalable:
+
+```
+nero/
+├── index.html              # Punto de entrada (orquestador)
+├── styles/main.css         # Estilos AAA quality
+├── js/
+│   ├── core.js            # Constantes y utilidades
+│   ├── renderer.js        # Sistema de renderizado
+│   ├── physics.js         # Motor de física
+│   ├── input.js           # Gestión de input
+│   ├── ui.js              # Sistema de UI
+│   └── polyfills.js       # Compatibilidad
+└── data/
+    ├── scenes.json        # Niveles configurables
+    └── stories.json       # Narrativa modular
+```
+
+**Beneficios:**
+- ✅ Modularidad: 6 módulos independientes
+- ✅ Escalabilidad: Agregar niveles sin tocar código
+- ✅ Mantenibilidad: Cambios centralizados
+- ✅ Performance: Canvas 2D optimizado
+- ✅ AAA Quality: UI mejorada con glassmorphism y animaciones
+
+Ver [`ARCHITECTURE.md`](ARCHITECTURE.md) para documentación completa.
+
+## 📦 Instalación & Desarrollo
+
+### Para jugar
+
+```bash
+# Servir localmente
+npx serve .
+
+# Abrir en http://localhost:3000
+```
+
+### Para desarrollar
+
+El juego está completamente modularizado. Para agregar contenido:
+
+**Nuevo acto:** Editar `data/scenes.json`
+```json
+{
+  "name": "Mi habitación",
+  "platforms": [...],
+  "memories": [...],
+  "tint": { "bg": "#...", "band": "#..." }
+}
+```
+
+**Nuevo tipo de plataforma:** Agregar caso en `js/renderer.drawPlatform()`
+
+**Cambiar UI:** Editar `styles/main.css` o `js/ui.js`
+
+**Cambiar narrativa:** Editar `data/stories.json`
+
+## 🚀 Deploy a GitHub Pages
+
+El proyecto se deploya automáticamente a GitHub Pages en cada push a `main`:
+
+```bash
+git push origin main
+# → Automáticamente publicado en https://nero.maldonado.pro
+```
+
+Configurado en `.github/workflows/pages.yml`
