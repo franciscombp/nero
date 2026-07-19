@@ -1,28 +1,27 @@
 [
   {
-    "name": "Despertar en la Caja",
+    "name": "Abandonado · En la Caja",
     "kicker": "Prólogo · Acto 0",
     "time": "dawn",
     "tint": { "bg": "#2C2C2C", "band": "#1A1A1A" },
-    "intro": "Nero despierta en la oscuridad. Una caja. Huele a cartón viejo. Hay luz débil arriba. ¿Puede escapar? Hay piezas sueltas adentro... y las paredes internas son débiles.",
+    "intro": "Oscuridad. Una caja de cartón. Huele a alguien que desapareció hace poco. Nero es pequeño. Tiene miedo. Pero ve luz arriba. Necesita salir. Las paredes de cartón son frágiles. Puede romperlas. O trepar.",
     "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "wallSlide": true },
     "platforms": [
       { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
-      { "x": 0, "y": 200, "w": 20, "h": 1490, "kind": "wall_left" },
-      { "x": 880, "y": 200, "w": 20, "h": 1490, "kind": "wall_right" },
-      { "x": 200, "y": 600, "w": 500, "h": 20, "kind": "goal" }
+      { "x": 20, "y": 1000, "w": 30, "h": 690, "kind": "wall_left" },
+      { "x": 850, "y": 1000, "w": 30, "h": 690, "kind": "wall_right" },
+      { "x": 150, "y": 750, "w": 600, "h": 30, "kind": "goal" }
     ],
     "goalKind": "goal",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "carton_1", "x": 150, "y": 1610, "w": 80, "h": 80, "weight": 1, "durability": 3 },
-      { "id": "carton_2", "x": 670, "y": 1610, "w": 80, "h": 80, "weight": 1, "durability": 3 }
+      { "id": "carton_roto", "x": 350, "y": 1610, "w": 120, "h": 100, "weight": 1, "durability": 2 }
     ],
     "memories": [
-      { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "Despierta en la oscuridad. Huele a cartón viejo y madera.<br><b>Una caja. Está atrapado.</b>" },
-      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 520, "text": "Con astucia de gato: saltó, rasguñó, trepó las paredes frágiles.<br><b>Escapó. Ahora la calle le espera.</b>" }
+      { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. El olor de la soledad.<br><b>Abandonado. Una caja. Miedo.</b>" },
+      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 680, "text": "Una garra se aferra a la pared. Sube. Rasguña. El cartón cede.<br><b>Escapó. Ahora olfatea el aire exterior. Es libre.</b>" }
     ]
   },
 
