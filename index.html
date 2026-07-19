@@ -412,7 +412,7 @@ async function main() {
       }
 
       // Physics
-      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, currentLevel);
+      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, currentLevel, levelState.pushables);
       physics.stepKnock(levelState.knock, dt);
       physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
       if (levelState.pushables.length > 0) {

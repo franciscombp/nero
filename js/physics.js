@@ -9,7 +9,7 @@ export function createPhysics(config) {
     };
   }
 
-  function stepCat(cat, platforms, dt, mode, currentLevel) {
+  function stepCat(cat, platforms, dt, mode, currentLevel, pushables = []) {
     if (cat.state === 'hang') {
       cat.tailT += dt;
       return;
@@ -23,6 +23,23 @@ export function createPhysics(config) {
 
     const wasGrounded = cat.onGround;
     cat.onGround = false;
+
+    // Check collision with pushables first
+    for (const obj of pushables) {
+      if (cat.vy >= 0 && prevY <= obj.y + 1 && cat.y >= obj.y &&
+          cat.x + cat.w*0.35 > obj.x && cat.x - cat.w*0.35 < obj.x + obj.w) {
+        cat.y = obj.y; cat.vy = 0; cat.vx = 0;
+        if (!wasGrounded) {
+          cat.squash = 0.7;
+          cat.state = 'land';
+          cat.landT = 0;
+          cat.landAge = 0;
+        }
+        cat.onGround = true;
+        break;
+      }
+    }
+
     for (const p of platforms) {
       if (cat.vy >= 0 && prevY <= p.y + 1 && cat.y >= p.y &&
           cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w) {
@@ -163,9 +180,9 @@ export function createPhysics(config) {
       }
 
       // Check if cat is on top - push the object
-      if (cat.y === obj.y && obj.onGround &&
+      if (cat.y === obj.y && cat.onGround &&
           cat.x + cat.w * 0.35 > obj.x && cat.x - cat.w * 0.35 < obj.x + obj.w) {
-        const pushSpeed = Math.abs(cat.vx) * 0.4;
+        const pushSpeed = Math.abs(cat.vx) * 0.5;
         if (cat.vx > 0) obj.x += pushSpeed * dt;
         if (cat.vx < 0) obj.x -= pushSpeed * dt;
       }
