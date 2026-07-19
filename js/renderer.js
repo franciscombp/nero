@@ -463,64 +463,67 @@ export function createRenderer(ctx, config) {
     if (!pushables || pushables.length === 0) return;
 
     for (const obj of pushables) {
-      if (obj.broken) continue;
+      if (obj.broken) {
+        // Draw broken object as scattered pieces
+        ctx.fillStyle = '#6B4E2F';
+        ctx.globalAlpha = 0.3;
+        for (let i = 0; i < 3; i++) {
+          const px = obj.x + (obj.w / 4) * (1 + i);
+          const py = obj.y + 10 + i * 5;
+          ctx.fillRect(px - 15, py, 30, 15);
+        }
+        ctx.globalAlpha = 1;
+        continue;
+      }
 
       // Cartón damage visualization
       const durPercent = obj.durability && obj.maxDurability ? obj.durability / obj.maxDurability : 1;
-
-      // Color: fresh = tan, damaged = darker
       const baseColor = obj.durability !== null ? '#8B6F47' : '#FFD700'; // Brown for cartón, gold for cube
+
+      // Damage reduces brightness
+      const alpha = 0.6 + durPercent * 0.4;
+      ctx.globalAlpha = alpha;
       ctx.fillStyle = baseColor;
-
-      // Debug: ensure rendering on first frame
-      if (window.DEBUG_PUSHABLES === undefined) {
-        window.DEBUG_PUSHABLES = true;
-        console.log('🎲 Drawing pushables at positions:', pushables.map(p => `${p.id}(${p.x},${p.y})`).join(' '));
-      }
-
-      // Damage cracks visual
-      if (obj.durability !== null && durPercent < 1) {
-        ctx.globalAlpha = 0.7;
-      }
-
       ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
       ctx.globalAlpha = 1;
 
-      // Border
-      ctx.strokeStyle = obj.durability !== null ? '#6B4E2F' : '#FF8C00';
-      ctx.lineWidth = 2;
+      // Border gets darker with damage
+      const borderColor = obj.durability !== null ? `rgba(107,78,47,${0.5 + durPercent * 0.5})` : '#FF8C00';
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3;
       ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
       // Draw damage marks (cracks) if damaged
       if (obj.durability !== null && durPercent < 1) {
-        ctx.strokeStyle = '#2C2C2C';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(44,44,44,0.6)';
+        ctx.lineWidth = 2;
         const dmgLevel = obj.maxDurability - obj.durability;
         if (dmgLevel >= 1) {
           ctx.beginPath();
-          ctx.moveTo(obj.x + 20, obj.y + 10);
-          ctx.lineTo(obj.x + 50, obj.y + 40);
+          ctx.moveTo(obj.x + 15, obj.y + 15);
+          ctx.lineTo(obj.x + 45, obj.y + 50);
           ctx.stroke();
         }
         if (dmgLevel >= 2) {
           ctx.beginPath();
-          ctx.moveTo(obj.x + obj.w - 20, obj.y + 15);
-          ctx.lineTo(obj.x + obj.w - 45, obj.y + 50);
+          ctx.moveTo(obj.x + obj.w - 15, obj.y + 20);
+          ctx.lineTo(obj.x + obj.w - 45, obj.y + 55);
           ctx.stroke();
         }
         if (dmgLevel >= 3) {
           ctx.beginPath();
-          ctx.moveTo(obj.x + 30, obj.y + obj.h - 20);
-          ctx.lineTo(obj.x + 60, obj.y + obj.h - 45);
+          ctx.moveTo(obj.x + 35, obj.y + obj.h - 15);
+          ctx.lineTo(obj.x + 60, obj.y + obj.h - 40);
           ctx.stroke();
         }
       }
 
-      // Label
-      ctx.fillStyle = obj.durability !== null ? '#E8D4B8' : '#000000';
-      ctx.font = 'bold 11px monospace';
-      const label = obj.durability !== null ? `${obj.durability}` : obj.id;
-      ctx.fillText(label, obj.x + 8, obj.y + obj.h / 2 + 5);
+      // Label showing durability
+      if (obj.durability !== null) {
+        ctx.fillStyle = durPercent < 0.4 ? '#E8967E' : '#E8D4B8';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText(`${obj.durability}`, obj.x + obj.w/2 - 6, obj.y + obj.h/2 + 6);
+      }
     }
   }
 

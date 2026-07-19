@@ -173,10 +173,11 @@ export function createPhysics(config) {
       obj.vy += GRAV * dt;
       obj.y += obj.vy * dt;
 
-      // Ground collision
+      // Ground collision (only with floor platforms)
       for (const p of platforms) {
-        if (obj.vy >= 0 && obj.y + obj.h >= p.y && obj.y + obj.h <= p.y + 2 &&
-            obj.x + obj.w * 0.3 > p.x && obj.x + obj.w * 0.7 < p.x + p.w) {
+        if ((p.kind === 'floor' || p.kind === 'chair' || p.kind === 'table' || p.kind === 'counter' || p.kind === 'sofa' || p.kind === 'shelf' || p.kind === 'top' || p.kind === 'desk' || p.kind === 'dresser' || p.kind === 'bed' || p.kind === 'frameshelf' || p.kind === 'starshelf' || p.kind === 'window' || p.kind === 'door') &&
+            obj.vy >= 0 && obj.y + obj.h >= p.y && obj.y + obj.h <= p.y + 4 &&
+            obj.x + obj.w * 0.2 > p.x && obj.x + obj.w * 0.8 < p.x + p.w) {
           obj.y = p.y - obj.h;
           obj.vy = 0;
           obj.onGround = true;
@@ -186,14 +187,18 @@ export function createPhysics(config) {
 
       // Damage from impact (when cat lands on it with velocity)
       if (cat.y === obj.y && obj.onGround && obj.durability !== null) {
-        const prevCatVy = cat.vy;
-        if (prevCatVy > 100) { // Strong landing
-          obj.durability--;
-          if (obj.durability <= 0) {
-            obj.broken = true;
-            console.log(`💥 ${obj.id} se rompió!`);
-          } else {
-            console.log(`🔨 ${obj.id} golpeado: ${obj.durability} durability restante`);
+        // Only damage once per landing: check if this is a fresh landing
+        if (!obj.lastDamageT || performance.now() - obj.lastDamageT > 200) {
+          const prevCatVy = cat.vy;
+          if (prevCatVy > 40) { // Landing with any meaningful velocity
+            obj.durability--;
+            obj.lastDamageT = performance.now();
+            if (obj.durability <= 0) {
+              obj.broken = true;
+              console.log(`💥 ${obj.id} se rompió!`);
+            } else {
+              console.log(`🔨 ${obj.id} golpeado: ${obj.durability} durability restante`);
+            }
           }
         }
       }
@@ -211,12 +216,15 @@ export function createPhysics(config) {
       obj.y = Math.max(0, Math.min(WORLD_H, obj.y));
 
       // Off screen = reset (optional)
-      if (obj.y > WORLD_H + 100) {
-        obj.y = obj.startY || 1690;
-        obj.x = obj.startX || 400;
+      if (obj.y > WORLD_H + 200) {
+        obj.y = obj.startY;
+        obj.x = obj.startX;
         obj.vy = 0;
+        obj.vx = 0;
+        obj.onGround = false; // Will find ground on next frame
         obj.durability = obj.maxDurability;
         obj.broken = false;
+        console.log(`🔄 ${obj.id} reset to (${obj.x},${obj.y})`);
       }
     }
   }

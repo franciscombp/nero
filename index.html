@@ -14,7 +14,12 @@
   <div class="pill" id="acto">—</div>
   <div class="pill" id="paws"></div>
   <div class="pill" id="reset">↺</div>
-  <!-- <div class="pill" id="editor-btn" style="margin-left: auto; cursor: pointer; font-weight: bold; pointer-events: auto;">🎨 EDITOR</div> -->
+  <div id="level-selector" style="display: none; position: fixed; top: 60px; right: 20px; z-index: 1000; background: rgba(0,0,0,0.9); border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto; pointer-events: auto;">
+    <div style="color: #fff; font-size: 12px; margin-bottom: 8px; font-weight: bold;">NIVEL:</div>
+    <div id="level-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
+    <button id="close-levels" style="width: 100%; margin-top: 8px; padding: 6px; background: #666; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Cerrar</button>
+  </div>
+  <button id="dev-levels" style="position: fixed; top: 20px; right: 20px; z-index: 999; padding: 6px 12px; background: rgba(100,100,100,0.8); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">🎮 NIVELES</button>
 </div>
 <div id="memory"></div>
 <div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
@@ -516,6 +521,64 @@ async function main() {
   window.levelState = levelState;
   window.levels = levels;
   window.story = story;
+
+  // Level selector for testing
+  const devBtn = document.getElementById('dev-levels');
+  const selector = document.getElementById('level-selector');
+  const levelList = document.getElementById('level-list');
+  const closeBtn = document.getElementById('close-levels');
+
+  devBtn.addEventListener('click', () => {
+    if (selector.style.display === 'none') {
+      selector.style.display = 'block';
+      levelList.innerHTML = '';
+      levels.forEach((lvl, idx) => {
+        const btn = document.createElement('button');
+        btn.textContent = `Lv ${idx}: ${lvl.name}`;
+        btn.style.cssText = `
+          width: 100%;
+          padding: 6px 8px;
+          background: ${levelState.level === idx ? '#888' : '#555'};
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 11px;
+          text-align: left;
+          transition: background 0.2s;
+        `;
+        btn.onmouseover = () => btn.style.background = '#777';
+        btn.onmouseout = () => btn.style.background = levelState.level === idx ? '#888' : '#555';
+        btn.onclick = () => {
+          if (levelState.mode === 'play' || levelState.mode === 'ui') {
+            levelState.levelDone = false;
+            startLevel(idx);
+            selector.style.display = 'none';
+          }
+        };
+        levelList.appendChild(btn);
+      });
+    } else {
+      selector.style.display = 'none';
+    }
+  });
+
+  closeBtn.addEventListener('click', () => {
+    selector.style.display = 'none';
+  });
+
+  // Debug pushables on keypress
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'd') {
+      console.log('🎲 Current pushables:', levelState.pushables);
+      levelState.pushables.forEach(p => {
+        console.log(`  ${p.id}: x=${p.x}, y=${p.y}, onGround=${p.onGround}, durability=${p.durability}/${p.maxDurability}, broken=${p.broken}`);
+      });
+    }
+    if (e.key === 'r') {
+      resetLevel();
+    }
+  });
 
   // Service worker
   if ('serviceWorker' in navigator) {

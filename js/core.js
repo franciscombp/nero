@@ -92,7 +92,8 @@ export function createPushable(data) {
     startY: data.y,
     durability: data.durability || null,
     maxDurability: data.durability || null,
-    broken: false
+    broken: false,
+    lastDamageT: 0
   };
 }
 
