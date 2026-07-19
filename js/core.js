@@ -175,10 +175,10 @@ export function checkKnockTrigger(cat, knock) {
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   // Custom goals (origin story)
   if (goalKind === 'custom_caja_escape') {
-    // Escape the box: all puzzles solved + reach the top platform (y=600)
-    const allSolved = Object.values(levelState?.puzzleSolved || {}).filter(Boolean).length >= 2;
-    const topPlat = platforms[4];
-    return allSolved && topPlat && cat.onGround && cat.y === topPlat.y &&
+    // Escape the box: puzzle solved + reach the high platform (y=1400)
+    const puzzleSolved = Object.values(levelState?.puzzleSolved || {}).filter(Boolean).length >= 1;
+    const topPlat = platforms[1]; // The high platform at y=1400
+    return puzzleSolved && topPlat && cat.onGround && cat.y === topPlat.y &&
            cat.x > topPlat.x && cat.x < topPlat.x + topPlat.w;
   }
   if (goalKind === 'custom_truck_bed') {
