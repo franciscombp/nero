@@ -344,6 +344,14 @@ async function main() {
   showTitle();
   requestAnimationFrame(frame);
 
+  // Expose globals for testing/debugging
+  window.CONFIG = CONFIG;
+  window.cat = cat;
+  window.cam = cam;
+  window.levelState = levelState;
+  window.levels = levels;
+  window.story = story;
+
   // Service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
