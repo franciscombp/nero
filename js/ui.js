@@ -17,10 +17,13 @@ export function createUI() {
   let hintShown = true;
   let memoryTimeout = null;
 
-  function updateHUD(level, levels, memories, found) {
+  function updateHUD(level, levels, memories, found, puzzles, puzzleSolved) {
     const L = levels[level];
     elements.acto.textContent = `${L.kicker} · ${L.name}`;
     updatePaws(memories, found);
+    if (puzzles && puzzles.length > 0) {
+      updatePuzzleProgress(puzzles, puzzleSolved);
+    }
   }
 
   function updatePaws(memories, found) {
@@ -131,6 +134,19 @@ export function createUI() {
 
   function setHintText(text) {
     elements.hint.innerHTML = text;
+  }
+
+  function updatePuzzleProgress(puzzles, puzzleSolved) {
+    const solved = Object.values(puzzleSolved || {}).filter(Boolean).length;
+    const total = puzzles?.length || 0;
+
+    let display = '';
+    for (let i = 0; i < total; i++) {
+      display += puzzleSolved?.[i] ? '■ ' : '□ ';
+    }
+
+    // Store for display
+    window.puzzleProgress = `${display}(${solved}/${total})`;
   }
 
   function onResetClick(callback) {

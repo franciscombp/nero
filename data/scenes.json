@@ -17,6 +17,12 @@
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
+    "pushables": [
+      { "id": "cube_escape", "x": 400, "y": 1690, "w": 40, "h": 40, "weight": 1 }
+    ],
+    "puzzles": [
+      { "id": "puzzle_0_1", "type": "pushable_position", "params": { "objectId": "cube_escape", "targetX": 620, "tolerance": 50 } }
+    ],
     "memories": [
       { "id": "origen_0_1_sueno", "trigger": "start", "x": 450, "y": 1200, "text": "Antes había luz. Calor. Una boca suave.<br><b>Luego frío. Oscuridad. Solo.</b>" },
       { "id": "origen_0_2_caja", "trigger": "goal", "x": 720, "y": 500, "text": "Logró salir. La calle es enorme. Desconocida.<br><b>¿Y ahora qué?</b>" }

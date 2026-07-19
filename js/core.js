@@ -69,7 +69,25 @@ export function createLevelState() {
     yarn: null,
     books: [],
     bookShelfIdx: -1,
-    totalFound: 0
+    totalFound: 0,
+    pushables: [],
+    puzzles: [],
+    puzzleSolved: {}
+  };
+}
+
+export function createPushable(data) {
+  return {
+    id: data.id,
+    x: data.x,
+    y: data.y,
+    w: data.w,
+    h: data.h,
+    weight: data.weight || 1,
+    vx: 0,
+    vy: 0,
+    onGround: true,
+    type: 'pushable'
   };
 }
 
@@ -191,4 +209,30 @@ export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   const goal = platforms.find(p => p.kind === goalKind);
   if (!goal) return false;
   return cat.onGround && cat.y === goal.y && cat.x > goal.x && cat.x < goal.x + goal.w;
+}
+
+export function checkPuzzleCondition(puzzle, levelState) {
+  const { type, params } = puzzle;
+
+  // Pushable position puzzle: object must be in range
+  if (type === 'pushable_position') {
+    const obj = levelState.pushables.find(p => p.id === params.objectId);
+    if (!obj) return false;
+    const targetX = params.targetX;
+    const tolerance = params.tolerance || 50;
+    return Math.abs(obj.x - targetX) < tolerance;
+  }
+
+  // Count solved puzzles
+  if (type === 'puzzle_count') {
+    const solvedCount = Object.values(levelState.puzzleSolved).filter(Boolean).length;
+    return solvedCount >= params.required;
+  }
+
+  // Memory found puzzle
+  if (type === 'memory_found') {
+    return levelState.found[params.memoryId] === true;
+  }
+
+  return false;
 }

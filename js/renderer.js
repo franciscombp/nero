@@ -454,6 +454,23 @@ export function createRenderer(ctx, config) {
     ctx.restore();
   }
 
+  function drawPushables(pushables) {
+    for (const obj of pushables) {
+      // Wireframe cubo/caja
+      ctx.fillStyle = 'rgba(150, 150, 150, 0.3)';
+      ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
+
+      // Label
+      ctx.fillStyle = '#666';
+      ctx.font = '11px monospace';
+      ctx.fillText(obj.id, obj.x + 4, obj.y + 16);
+    }
+  }
+
   function updatePalette(level, levels) {
     const L = levels[level];
     C.bg = L.tint?.bg || config.palette.bg;
@@ -466,6 +483,7 @@ export function createRenderer(ctx, config) {
     drawPlant,
     drawKnock,
     drawProps,
+    drawPushables,
     drawCat,
     updatePalette,
     getPalette: () => C

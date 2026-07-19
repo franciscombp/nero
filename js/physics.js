@@ -145,6 +145,44 @@ export function createPhysics(config) {
     }
   }
 
+  function stepPushables(pushables, cat, platforms, dt) {
+    for (const obj of pushables) {
+      // Gravity
+      obj.vy += GRAV * dt;
+      obj.y += obj.vy * dt;
+
+      // Ground collision
+      for (const p of platforms) {
+        if (obj.vy >= 0 && obj.y + obj.h >= p.y && obj.y + obj.h <= p.y + 2 &&
+            obj.x + obj.w * 0.3 > p.x && obj.x + obj.w * 0.7 < p.x + p.w) {
+          obj.y = p.y - obj.h;
+          obj.vy = 0;
+          obj.onGround = true;
+          break;
+        }
+      }
+
+      // Check if cat is on top - push the object
+      if (cat.y === obj.y && obj.onGround &&
+          cat.x + cat.w * 0.35 > obj.x && cat.x - cat.w * 0.35 < obj.x + obj.w) {
+        const pushSpeed = Math.abs(cat.vx) * 0.4;
+        if (cat.vx > 0) obj.x += pushSpeed * dt;
+        if (cat.vx < 0) obj.x -= pushSpeed * dt;
+      }
+
+      // World bounds
+      obj.x = Math.max(0, Math.min(WORLD_W - obj.w, obj.x));
+      obj.y = Math.max(0, Math.min(WORLD_H, obj.y));
+
+      // Off screen = reset (optional)
+      if (obj.y > WORLD_H + 100) {
+        obj.y = obj.startY || 1690;
+        obj.x = obj.startX || 400;
+        obj.vy = 0;
+      }
+    }
+  }
+
   function stepCam(cam, cat, W, H) {
     cam.scale = Math.max(W / WORLD_W, 0.8);
     const targetX = Math.max(0, Math.min(WORLD_W - W / cam.scale, cat.x - (W / cam.scale) / 2));
@@ -157,6 +195,7 @@ export function createPhysics(config) {
     stepCat,
     stepKnock,
     stepProps,
+    stepPushables,
     stepCam,
     getMovementMods
   };
