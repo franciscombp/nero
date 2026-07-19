@@ -2,7 +2,7 @@
   "name": "Nero · una historia de gato",
   "short_name": "Nero",
   "description": "Una experiencia de juego de exploración en una casa llena de recuerdos.",
-  "start_url": "/",
+  "start_url": "https://franciscombp.github.io/nero/",
   "display": "standalone",
   "background_color": "#11131a",
   "theme_color": "#11131a",
