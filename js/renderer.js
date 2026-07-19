@@ -460,6 +460,8 @@ export function createRenderer(ctx, config) {
   }
 
   function drawPushables(pushables) {
+    if (!pushables || pushables.length === 0) return;
+
     for (const obj of pushables) {
       if (obj.broken) continue;
 
@@ -469,6 +471,12 @@ export function createRenderer(ctx, config) {
       // Color: fresh = tan, damaged = darker
       const baseColor = obj.durability !== null ? '#8B6F47' : '#FFD700'; // Brown for cartón, gold for cube
       ctx.fillStyle = baseColor;
+
+      // Debug: ensure rendering on first frame
+      if (window.DEBUG_PUSHABLES === undefined) {
+        window.DEBUG_PUSHABLES = true;
+        console.log('🎲 Drawing pushables at positions:', pushables.map(p => `${p.id}(${p.x},${p.y})`).join(' '));
+      }
 
       // Damage cracks visual
       if (obj.durability !== null && durPercent < 1) {
