@@ -87,7 +87,10 @@ export function createPushable(data) {
     vx: 0,
     vy: 0,
     onGround: true,
-    type: 'pushable'
+    type: 'pushable',
+    durability: data.durability || null,
+    maxDurability: data.durability || null,
+    broken: false
   };
 }
 
@@ -174,6 +177,12 @@ export function checkKnockTrigger(cat, knock) {
 
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   // Custom goals (origin story)
+  if (goalKind === 'goal') {
+    // Escape the box: reach the goal platform
+    const goal = platforms.find(p => p.kind === 'goal');
+    return goal && cat.onGround && cat.y === goal.y &&
+           cat.x > goal.x && cat.x < goal.x + goal.w;
+  }
   if (goalKind === 'custom_caja_escape') {
     // Escape the box: puzzle solved + reach the high platform (y=1400)
     const puzzleSolved = Object.values(levelState?.puzzleSolved || {}).filter(Boolean).length >= 1;

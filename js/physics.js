@@ -164,6 +164,11 @@ export function createPhysics(config) {
 
   function stepPushables(pushables, cat, platforms, dt) {
     for (const obj of pushables) {
+      if (obj.broken) continue;
+
+      const prevVy = obj.vy;
+      const prevY = obj.y;
+
       // Gravity
       obj.vy += GRAV * dt;
       obj.y += obj.vy * dt;
@@ -176,6 +181,20 @@ export function createPhysics(config) {
           obj.vy = 0;
           obj.onGround = true;
           break;
+        }
+      }
+
+      // Damage from impact (when cat lands on it with velocity)
+      if (cat.y === obj.y && obj.onGround && obj.durability !== null) {
+        const prevCatVy = cat.vy;
+        if (prevCatVy > 100) { // Strong landing
+          obj.durability--;
+          if (obj.durability <= 0) {
+            obj.broken = true;
+            console.log(`💥 ${obj.id} se rompió!`);
+          } else {
+            console.log(`🔨 ${obj.id} golpeado: ${obj.durability} durability restante`);
+          }
         }
       }
 
@@ -196,6 +215,8 @@ export function createPhysics(config) {
         obj.y = obj.startY || 1690;
         obj.x = obj.startX || 400;
         obj.vy = 0;
+        obj.durability = obj.maxDurability;
+        obj.broken = false;
       }
     }
   }

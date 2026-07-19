@@ -456,18 +456,58 @@ export function createRenderer(ctx, config) {
 
   function drawPushables(pushables) {
     for (const obj of pushables) {
-      // Bright visible cube
-      ctx.fillStyle = '#FFD700'; // Gold/bright yellow
-      ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+      if (obj.broken) continue;
 
-      ctx.strokeStyle = '#FF8C00'; // Dark orange
-      ctx.lineWidth = 3;
+      // Cartón damage visualization
+      const durPercent = obj.durability && obj.maxDurability ? obj.durability / obj.maxDurability : 1;
+
+      // Color: fresh = tan, damaged = darker
+      const baseColor = obj.durability !== null ? '#8B6F47' : '#FFD700'; // Brown for cartón, gold for cube
+      ctx.fillStyle = baseColor;
+
+      // Damage cracks visual
+      if (obj.durability !== null && durPercent < 1) {
+        ctx.globalAlpha = 0.7;
+      }
+
+      ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+      ctx.globalAlpha = 1;
+
+      // Border
+      ctx.strokeStyle = obj.durability !== null ? '#6B4E2F' : '#FF8C00';
+      ctx.lineWidth = 2;
       ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
-      // Label with white text for visibility
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 14px monospace';
-      ctx.fillText(obj.id, obj.x + 8, obj.y + obj.h / 2 + 5);
+      // Draw damage marks (cracks) if damaged
+      if (obj.durability !== null && durPercent < 1) {
+        ctx.strokeStyle = '#2C2C2C';
+        ctx.lineWidth = 1;
+        const dmgLevel = obj.maxDurability - obj.durability;
+        if (dmgLevel >= 1) {
+          ctx.beginPath();
+          ctx.moveTo(obj.x + 20, obj.y + 10);
+          ctx.lineTo(obj.x + 50, obj.y + 40);
+          ctx.stroke();
+        }
+        if (dmgLevel >= 2) {
+          ctx.beginPath();
+          ctx.moveTo(obj.x + obj.w - 20, obj.y + 15);
+          ctx.lineTo(obj.x + obj.w - 45, obj.y + 50);
+          ctx.stroke();
+        }
+        if (dmgLevel >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(obj.x + 30, obj.y + obj.h - 20);
+          ctx.lineTo(obj.x + 60, obj.y + obj.h - 45);
+          ctx.stroke();
+        }
+      }
+
+      // Label
+      ctx.fillStyle = obj.durability !== null ? '#E8D4B8' : '#000000';
+      ctx.font = 'bold 11px monospace';
+      const label = obj.durability !== null ? `${obj.durability}` : obj.id;
+      ctx.fillText(label, obj.x + 8, obj.y + obj.h / 2 + 5);
     }
   }
 
@@ -477,6 +517,41 @@ export function createRenderer(ctx, config) {
     C.band = L.tint?.band || config.palette.band;
   }
 
+  function drawBoxWalls() {
+    // Draw caja visual for Nivel 0
+    // Box interior walls (thick cardboard)
+    ctx.strokeStyle = '#5C4A2C';
+    ctx.lineWidth = 12;
+
+    // Left wall
+    ctx.beginPath();
+    ctx.moveTo(20, 200);
+    ctx.lineTo(20, 1690);
+    ctx.stroke();
+
+    // Right wall
+    ctx.beginPath();
+    ctx.moveTo(880, 200);
+    ctx.lineTo(880, 1690);
+    ctx.stroke();
+
+    // Top edge (box rim)
+    ctx.strokeStyle = '#6B5835';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(20, 200);
+    ctx.lineTo(880, 200);
+    ctx.stroke();
+
+    // Highlight on top (light reflection)
+    ctx.strokeStyle = 'rgba(251,246,238,.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(25, 205);
+    ctx.lineTo(875, 205);
+    ctx.stroke();
+  }
+
   return {
     drawBackground,
     drawPlatform,
@@ -484,6 +559,7 @@ export function createRenderer(ctx, config) {
     drawKnock,
     drawProps,
     drawPushables,
+    drawBoxWalls,
     drawCat,
     updatePalette,
     getPalette: () => C

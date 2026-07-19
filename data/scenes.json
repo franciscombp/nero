@@ -4,25 +4,24 @@
     "kicker": "Prólogo · Acto 0",
     "time": "dawn",
     "tint": { "bg": "#2C2C2C", "band": "#1A1A1A" },
-    "intro": "Nero se despierta en la caja. Hay una salida alta que parece imposible. Pero espera... hay un cubo en el piso. ¿Puedo usarlo para alcanzar?",
-    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "wallSlide": false },
+    "intro": "Nero despierta en la oscuridad. Una caja. Huele a cartón viejo. Hay luz débil arriba. ¿Puede escapar? Hay piezas sueltas adentro... y las paredes internas son débiles.",
+    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "wallSlide": true },
     "platforms": [
       { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
-      { "x": 600, "y": 1400, "w": 250, "h": 60, "kind": "floor" }
+      { "x": -40, "y": 0, "w": 40, "h": 1750, "kind": "wall" },
+      { "x": 900, "y": 0, "w": 40, "h": 1750, "kind": "wall" }
     ],
-    "goalKind": "custom_caja_escape",
+    "goalKind": "goal",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "cube_1", "x": 350, "y": 1610, "w": 80, "h": 80, "weight": 1 }
-    ],
-    "puzzles": [
-      { "id": "puzzle_0_1", "type": "pushable_position", "params": { "objectId": "cube_1", "targetX": 620, "tolerance": 80 } }
+      { "id": "carton_1", "x": 150, "y": 1610, "w": 80, "h": 80, "weight": 1, "durability": 4 },
+      { "id": "carton_2", "x": 670, "y": 1610, "w": 80, "h": 80, "weight": 1, "durability": 6 }
     ],
     "memories": [
-      { "id": "origen_0_1_sueno", "trigger": "start", "x": 450, "y": 1300, "text": "Antes había luz. Calor. Una boca suave.<br><b>Luego frío. Oscuridad. Solo.</b>" },
-      { "id": "origen_0_2_caja", "trigger": "goal", "x": 500, "y": 500, "text": "Logró salir. Usó los cubos para trepar. Ingenio de sobrevivencia.<br><b>La calle le espera.</b>" }
+      { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "Despierta en la oscuridad. Huele a cartón viejo y madera.<br><b>Una caja. Está atrapado.</b>" },
+      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 520, "text": "Con astucia de gato: saltó, rasguñó, trepó las paredes frágiles.<br><b>Escapó. Ahora la calle le espera.</b>" }
     ]
   },
 
