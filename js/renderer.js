@@ -74,6 +74,11 @@ export function createRenderer(ctx, config) {
   function drawPlatform(p) {
     const L = config.currentLevel;
     switch (p.kind) {
+      case 'wall':
+      case 'wall_left':
+      case 'wall_right':
+      case 'goal':
+        return; // These are drawn elsewhere or not at all
       case 'floor':
         ctx.fillStyle = C.wood; ctx.fillRect(p.x, p.y, p.w, p.h);
         ctx.fillStyle = C.woodDk; ctx.fillRect(p.x, p.y, p.w, 8);
