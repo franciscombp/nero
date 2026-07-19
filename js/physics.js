@@ -207,12 +207,11 @@ export function createPhysics(config) {
 
         // Each jump adds torque proportional to jump height
         // Cat vy is negative when jumping up, positive when falling
-        const jumpForce = Math.max(0, -cat.vy * 0.008); // 2.5x more sensitive
+        const jumpForce = Math.max(0, -cat.vy * 0.006);
         obj.tiltVel += jumpForce;
 
-        // Apply damping and gravity to tilt
-        obj.tiltVel *= 0.92; // Friction
-        obj.tiltVel += 0.15; // "Gravity" towards tipped
+        // Apply damping (NO passive gravity - only jumps matter)
+        obj.tiltVel *= 0.90; // Friction
 
         // Update tilt angle
         obj.tilt += obj.tiltVel;
