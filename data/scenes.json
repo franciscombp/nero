@@ -1,27 +1,24 @@
 [
   {
-    "name": "Abandonado · En la Caja",
+    "name": "Dentro de la Caja",
     "kicker": "Prólogo · Acto 0",
     "time": "dawn",
     "tint": { "bg": "#2C2C2C", "band": "#1A1A1A" },
-    "intro": "Oscuridad. Una caja de cartón. Huele a alguien que desapareció hace poco. Nero es pequeño. Tiene miedo. Pero ve luz arriba. Necesita salir. Las paredes de cartón son frágiles. Puede romperlas. O trepar.",
-    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "wallSlide": true },
+    "intro": "Oscuridad absoluta. Cartón. Miedo. Nero está atrapado dentro. No puede ver. Pero puede saltar. Cada salto sacude la caja. De tanto saltar... la caja se volteará. Y cuando caiga de costado, podrá escapar.",
+    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "insideBox": true },
     "platforms": [
-      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
-      { "x": 20, "y": 1000, "w": 30, "h": 690, "kind": "wall_left" },
-      { "x": 850, "y": 1000, "w": 30, "h": 690, "kind": "wall_right" },
-      { "x": 150, "y": 750, "w": 600, "h": 30, "kind": "goal" }
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" }
     ],
-    "goalKind": "goal",
+    "goalKind": "box_tipped",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
     "pushables": [
-      { "id": "carton_roto", "x": 350, "y": 1610, "w": 120, "h": 100, "weight": 1, "durability": 2 }
+      { "id": "caja", "x": 350, "y": 1450, "w": 200, "h": 200, "weight": 3, "canTip": true, "tipThreshold": 1.5 }
     ],
     "memories": [
-      { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. El olor de la soledad.<br><b>Abandonado. Una caja. Miedo.</b>" },
-      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 680, "text": "Una garra se aferra a la pared. Sube. Rasguña. El cartón cede.<br><b>Escapó. Ahora olfatea el aire exterior. Es libre.</b>" }
+      { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. Huele a cartón y miedo.<br><b>Abandonado. Encerrado. Solo.</b>" },
+      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 800, "text": "La caja se vuelca. La luz entra. Nero trepa por el borde.<br><b>Escapó. Respira aire fresco. Es libre.</b>" }
     ]
   },
 

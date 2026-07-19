@@ -459,10 +459,48 @@ export function createRenderer(ctx, config) {
     ctx.restore();
   }
 
-  function drawPushables(pushables) {
+  function drawPushables(pushables, isInsideBox) {
     if (!pushables || pushables.length === 0) return;
 
     for (const obj of pushables) {
+      // Special rendering for "inside box" mechanic
+      if (isInsideBox && obj.id === 'caja') {
+        ctx.save();
+        ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+        ctx.rotate(obj.tilt || 0);
+
+        // Draw box with perspective/tilt
+        ctx.fillStyle = '#8B6F47';
+        ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+
+        // Border
+        ctx.strokeStyle = '#5C4A2C';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+
+        // Highlight on top
+        ctx.fillStyle = 'rgba(251,246,238,.2)';
+        ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, 20);
+
+        // Tilt indicator (diagonal line that moves as box tips)
+        const tipAngle = (obj.tilt || 0) / (Math.PI / 2); // 0 to 1 as it tips
+        ctx.strokeStyle = `rgba(100,100,100,${0.3 + tipAngle * 0.4})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-obj.w/2 + 20, obj.h/2 - 20);
+        ctx.lineTo(obj.w/2 - 20, -obj.h/2 + 20);
+        ctx.stroke();
+
+        // Progress text
+        const tipPercent = Math.min(100, Math.round(tipAngle * 100));
+        ctx.fillStyle = tipPercent > 80 ? '#E8967E' : '#E8D4B8';
+        ctx.font = 'bold 20px monospace';
+        ctx.fillText(`${tipPercent}%`, -20, 10);
+
+        ctx.restore();
+        continue;
+      }
+
       if (obj.broken) {
         // Draw broken object as scattered pieces
         ctx.fillStyle = '#6B4E2F';
@@ -476,24 +514,20 @@ export function createRenderer(ctx, config) {
         continue;
       }
 
-      // Cartón damage visualization
+      // Standard pushable rendering
       const durPercent = obj.durability && obj.maxDurability ? obj.durability / obj.maxDurability : 1;
-      const baseColor = obj.durability !== null ? '#8B6F47' : '#FFD700'; // Brown for cartón, gold for cube
-
-      // Damage reduces brightness
+      const baseColor = obj.durability !== null ? '#8B6F47' : '#FFD700';
       const alpha = 0.6 + durPercent * 0.4;
       ctx.globalAlpha = alpha;
       ctx.fillStyle = baseColor;
       ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
       ctx.globalAlpha = 1;
 
-      // Border gets darker with damage
       const borderColor = obj.durability !== null ? `rgba(107,78,47,${0.5 + durPercent * 0.5})` : '#FF8C00';
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = 3;
       ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
-      // Draw damage marks (cracks) if damaged
       if (obj.durability !== null && durPercent < 1) {
         ctx.strokeStyle = 'rgba(44,44,44,0.6)';
         ctx.lineWidth = 2;
@@ -518,7 +552,6 @@ export function createRenderer(ctx, config) {
         }
       }
 
-      // Label showing durability
       if (obj.durability !== null) {
         ctx.fillStyle = durPercent < 0.4 ? '#E8967E' : '#E8D4B8';
         ctx.font = 'bold 14px monospace';

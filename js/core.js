@@ -179,6 +179,11 @@ export function checkKnockTrigger(cat, knock) {
 }
 
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
+  // Inside box mechanic: check if box is tipped enough
+  if (goalKind === 'box_tipped') {
+    const box = levelState?.pushables?.find(p => p.id === 'caja');
+    return box && box.tipped;
+  }
   // Custom goals (origin story)
   if (goalKind === 'goal') {
     // Escape the box: reach the goal platform

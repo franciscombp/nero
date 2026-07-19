@@ -183,9 +183,33 @@ export function createPhysics(config) {
     }
   }
 
-  function stepPushables(pushables, cat, platforms, dt) {
+  function stepPushables(pushables, cat, platforms, dt, currentLevel) {
     for (const obj of pushables) {
       if (obj.broken) continue;
+
+      // Inside box mechanic: transfer jump energy to box tilt
+      if (currentLevel?.mechanics?.insideBox && obj.canTip) {
+        // Accumulate tilt based on cat's vertical velocity
+        if (!obj.tilt) obj.tilt = 0;
+        if (!obj.tiltVel) obj.tiltVel = 0;
+
+        // Each jump adds torque proportional to jump height
+        const jumpForce = Math.max(0, cat.vy * -0.002); // Negative vy = jumping up
+        obj.tiltVel += jumpForce * dt;
+
+        // Apply damping and gravity to tilt
+        obj.tiltVel *= 0.98; // Friction
+        obj.tiltVel += 0.5 * dt; // "Gravity" towards tipped
+
+        // Update tilt angle
+        obj.tilt += obj.tiltVel * dt;
+        obj.tilt = Math.max(0, Math.min(Math.PI/2 + 0.3, obj.tilt)); // Cap at ~105 degrees
+
+        // When box tips past threshold, it's ready to escape
+        if (obj.tilt > obj.tipThreshold) {
+          obj.tipped = true;
+        }
+      }
 
       const prevVy = obj.vy;
       const prevY = obj.y;

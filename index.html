@@ -421,7 +421,7 @@ async function main() {
       physics.stepKnock(levelState.knock, dt);
       physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
       if (levelState.pushables.length > 0) {
-        physics.stepPushables(levelState.pushables, cat, levelState.platforms, dt);
+        physics.stepPushables(levelState.pushables, cat, levelState.platforms, dt, currentLevel);
       }
 
       // Handle sneak movement
@@ -489,9 +489,12 @@ async function main() {
     renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
     if (levelState.pushables && levelState.pushables.length > 0) {
       console.log('🎲 Drawing', levelState.pushables.length, 'pushables:', levelState.pushables);
-      renderer.drawPushables(levelState.pushables);
+      renderer.drawPushables(levelState.pushables, currentLevel?.mechanics?.insideBox);
     }
-    renderer.drawCat(cat);
+    // Don't draw cat if inside box
+    if (!currentLevel?.mechanics?.insideBox) {
+      renderer.drawCat(cat);
+    }
 
     ctx.restore();
 
