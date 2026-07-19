@@ -88,6 +88,8 @@ export function createPushable(data) {
     vy: 0,
     onGround: true,
     type: 'pushable',
+    startX: data.x,
+    startY: data.y,
     durability: data.durability || null,
     maxDurability: data.durability || null,
     broken: false
