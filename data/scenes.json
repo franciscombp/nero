@@ -1,24 +1,22 @@
 [
   {
-    "name": "Dentro de la Caja",
+    "name": "Escapar de la Caja",
     "kicker": "Prólogo · Acto 0",
     "time": "dawn",
     "tint": { "bg": "#2C2C2C", "band": "#1A1A1A" },
-    "intro": "Oscuridad absoluta. Cartón. Miedo. Nero está atrapado dentro. No puede ver. Pero puede saltar. Cada salto sacude la caja. Necesita 8-10 saltos para voltearla completamente.",
-    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "insideBox": true },
+    "intro": "Oscuridad. Una caja. Nero es pequeño pero saltarín. Arriba hay luz. Solo necesita saltar lo suficiente para alcanzarla. Salta alto. Sigue saltando. Puede escapar.",
+    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8 },
     "platforms": [
-      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" }
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
+      { "x": 150, "y": 600, "w": 600, "h": 30, "kind": "goal" }
     ],
-    "goalKind": "box_tipped",
+    "goalKind": "goal",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
-    "pushables": [
-      { "id": "caja", "x": 350, "y": 1450, "w": 200, "h": 200, "weight": 3, "canTip": true, "tipThreshold": 3.5 }
-    ],
     "memories": [
       { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. Huele a cartón y miedo.<br><b>Abandonado. Encerrado. Solo.</b>" },
-      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 800, "text": "La caja se vuelca. La luz entra. Nero trepa por el borde.<br><b>Escapó. Respira aire fresco. Es libre.</b>" }
+      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 520, "text": "Con un último salto, la luz lo ciega. Patas en aire libre. Respira.<br><b>Escapó. Es libre.</b>" }
     ]
   },
 

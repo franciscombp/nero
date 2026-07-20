@@ -286,12 +286,8 @@ async function main() {
         const obj = createPushable(p);
         obj.startX = p.x;
         obj.startY = p.y;
-        console.log(`📦 Pushable "${obj.id}": tipThreshold = ${obj.tipThreshold}, canTip = ${obj.canTip}`);
         return obj;
       });
-      console.log('✅ Pushables loaded:', levelState.pushables.length, levelState.pushables);
-    } else {
-      console.log('⚠️ No pushables in level', idx);
     }
 
     // Load puzzles

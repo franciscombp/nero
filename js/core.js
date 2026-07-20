@@ -184,25 +184,6 @@ export function checkKnockTrigger(cat, knock) {
 }
 
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
-  // Inside box mechanic: check if box is tipped enough
-  if (goalKind === 'box_tipped') {
-    const box = levelState?.pushables?.find(p => p.id === 'caja');
-
-    // Log every time tilt changes significantly
-    if (box && window.LAST_TILT !== box.tilt) {
-      if (box.tilt > 0.1) {
-        const tipPercent = Math.round((box.tilt / box.tipThreshold) * 100);
-        console.log(`📊 Box tilt: ${box.tilt.toFixed(2)} rad (${tipPercent}%), threshold: ${box.tipThreshold}, tipped: ${box.tipped}`);
-        window.LAST_TILT = box.tilt;
-      }
-    }
-
-    if (box && box.tipped) {
-      console.log(`✅ GOAL TRIGGERED: box.tipped = true`);
-    }
-
-    return box && box.tipped;
-  }
   // Custom goals (origin story)
   if (goalKind === 'goal') {
     // Escape the box: reach the goal platform
