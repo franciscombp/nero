@@ -1,22 +1,22 @@
 [
   {
-    "name": "Escapar de la Caja",
+    "name": "Dentro de la Caja",
     "kicker": "Prólogo · Acto 0",
     "time": "dawn",
     "tint": { "bg": "#2C2C2C", "band": "#1A1A1A" },
-    "intro": "Oscuridad. Una caja. Nero es pequeño pero saltarín. Arriba hay luz. Solo necesita saltar lo suficiente para alcanzarla. Salta alto. Sigue saltando. Puede escapar.",
-    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8 },
+    "intro": "Oscuridad. Cartón. Nero está atrapado en una caja. Es pequeño. Salta. Una vez. Dos. Tres. De tanto saltar, la caja se agrieta. Al octavo salto... escapa.",
+    "mechanics": { "babyKitten": true, "speed": 0.7, "jumpHeight": 0.8, "countJumps": true },
     "platforms": [
-      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
-      { "x": 150, "y": 600, "w": 600, "h": 30, "kind": "goal" }
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" }
     ],
-    "goalKind": "goal",
+    "goalKind": "jumps_counted",
+    "goalParams": { "requiredJumps": 8 },
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
     "memories": [
       { "id": "origen_0_1_caja", "trigger": "start", "x": 450, "y": 1300, "text": "La oscuridad. Huele a cartón y miedo.<br><b>Abandonado. Encerrado. Solo.</b>" },
-      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 520, "text": "Con un último salto, la luz lo ciega. Patas en aire libre. Respira.<br><b>Escapó. Es libre.</b>" }
+      { "id": "origen_0_2_escape", "trigger": "goal", "x": 450, "y": 900, "text": "Al octavo salto, el cartón se rasga. Luz. Aire. Libertad.<br><b>Escapó. Es libre.</b>" }
     ]
   },
 

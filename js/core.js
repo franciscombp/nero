@@ -72,7 +72,9 @@ export function createLevelState() {
     totalFound: 0,
     pushables: [],
     puzzles: [],
-    puzzleSolved: {}
+    puzzleSolved: {},
+    jumpCount: 0,
+    goalParams: {}
   };
 }
 
@@ -110,6 +112,8 @@ export function loadLevel(levelState, levelData) {
   levelState.platforms = L.platforms;
   levelState.memories = L.memories;
   levelState.found = {};
+  levelState.jumpCount = 0;
+  levelState.goalParams = L.goalParams || {};
 
   levelState.knock = L.knock ? {
     ...L.knock,
@@ -184,6 +188,10 @@ export function checkKnockTrigger(cat, knock) {
 }
 
 export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
+  // Jump counting goal (Level 0)
+  if (goalKind === 'jumps_counted') {
+    return levelState.jumpCount >= (levelState.goalParams?.requiredJumps || 8);
+  }
   // Custom goals (origin story)
   if (goalKind === 'goal') {
     // Escape the box: reach the goal platform
