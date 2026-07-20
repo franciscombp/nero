@@ -459,12 +459,13 @@ export function createRenderer(ctx, config) {
     ctx.restore();
   }
 
-  function drawPushables(pushables, isJumpCounter, jumpCount, requiredJumps, boxTiltAngle = 0) {
+  function drawPushables(pushables, isJumpCounter, jumpCount, requiredJumps, boxTiltAngle = 0, gameTime = 0, levelState = {}) {
     if (!pushables || pushables.length === 0) return;
 
     for (const obj of pushables) {
       // Special rendering for jump counter (Level 0)
       if (isJumpCounter && obj.id === 'caja') {
+        const isComplete = jumpCount >= (requiredJumps || 8);
         ctx.save();
 
         // Calculate rotation point (center of box, slightly towards bottom for realism)
@@ -548,6 +549,56 @@ export function createRenderer(ctx, config) {
         ctx.font = 'bold 16px monospace';
         ctx.fillText(`${jumpPercent}%`, obj.x + obj.w/2, obj.y + obj.h/2 + 50);
         ctx.textAlign = 'left';
+
+        // Draw escaping cat when complete
+        if (isComplete) {
+          ctx.restore();
+          ctx.save();
+
+          // Cat jumping out from the tilted box
+          // Position: from top edge of tilted box, going up and away
+          const escapeT = (gameTime - levelState.levelDoneT) * 1.5; // Animation time since completion
+          const catX = obj.x + obj.w/2 + Math.sin(gameTime * 3) * 15; // Slight wobble
+          const catY = obj.y - escapeT * 200; // Rising up
+
+          // Draw simple cat head
+          ctx.fillStyle = '#26221D';
+          ctx.beginPath();
+          ctx.arc(catX, catY, 12, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eyes wide (excited)
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.arc(catX - 6, catY - 3, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(catX + 6, catY - 3, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Pupils looking up (escape!)
+          ctx.fillStyle = '#26221D';
+          ctx.beginPath();
+          ctx.arc(catX - 6, catY - 4, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(catX + 6, catY - 4, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Trail particles
+          if (escapeT > 0 && escapeT < 1) {
+            ctx.fillStyle = 'rgba(139,111,71,0.3)';
+            for (let i = 0; i < 3; i++) {
+              const trailY = catY + i * 20;
+              ctx.beginPath();
+              ctx.arc(catX + (Math.random() - 0.5) * 20, trailY, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          ctx.restore();
+          continue;
+        }
 
         ctx.restore();
 

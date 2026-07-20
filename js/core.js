@@ -78,7 +78,9 @@ export function createLevelState() {
     boxTiltAngle: 0,
     boxAnimT: 0,
     boxAnimDuration: 0.6,
-    lastJumpDir: 0
+    lastJumpDir: 0,
+    levelDoneT: 0,
+    levelCompleteTime: 0
   };
 }
 

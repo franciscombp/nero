@@ -497,21 +497,25 @@ async function main() {
 
       // Check goal
       if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind, levelState)) {
-        const goalMemory = levelState.memories.find(m => m.trigger === 'goal');
-        if (goalMemory && !levelState.found[goalMemory.id]) {
-          levelState.found[goalMemory.id] = true;
-          levelState.totalFound++;
-          ui.showMemory(goalMemory.text);
-          ui.updatePaws(levelState.memories, levelState.found);
-        }
+        if (!levelState.levelDone) {
+          levelState.levelCompleteTime = now; // Record completion time
+          const goalMemory = levelState.memories.find(m => m.trigger === 'goal');
+          if (goalMemory && !levelState.found[goalMemory.id]) {
+            levelState.found[goalMemory.id] = true;
+            levelState.totalFound++;
+            ui.showMemory(goalMemory.text);
+            ui.updatePaws(levelState.memories, levelState.found);
+          }
 
-        // Record branch if origin story level
-        if (levelState.level === 1 && currentLevel?.mechanics?.branchId === 'branch_a') {
-          recordBranch('branch_a');
-        }
+          // Record branch if origin story level
+          if (levelState.level === 1 && currentLevel?.mechanics?.branchId === 'branch_a') {
+            recordBranch('branch_a');
+          }
 
-        levelState.levelDone = true;
-        completeLevel();
+          levelState.levelDone = true;
+          // Delay level completion for escape animation
+          setTimeout(() => completeLevel(), 1500);
+        }
       }
 
       physics.stepCam(cam, cat, W, H);
@@ -536,7 +540,7 @@ async function main() {
     renderer.drawKnock(levelState.knock);
     renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
     if (levelState.pushables && levelState.pushables.length > 0) {
-      renderer.drawPushables(levelState.pushables, currentLevel?.goalKind === 'jumps_counted', levelState.jumpCount, currentLevel?.goalParams?.requiredJumps, levelState.boxTiltAngle || 0);
+      renderer.drawPushables(levelState.pushables, currentLevel?.goalKind === 'jumps_counted', levelState.jumpCount, currentLevel?.goalParams?.requiredJumps, levelState.boxTiltAngle || 0, now, levelState);
     }
     // Don't draw cat if in Level 0 (inside box)
     if (currentLevel?.goalKind !== 'jumps_counted') {
