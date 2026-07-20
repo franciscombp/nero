@@ -436,16 +436,14 @@ async function main() {
       if (currentLevel?.goalKind === 'jumps_counted') {
         const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
 
-        // Advance animation timer
-        levelState.boxAnimT += dt / levelState.boxAnimDuration;
-
         if (levelState.jumpCount >= requiredJumps) {
-          // Final jump: stay tilted
+          // Final jump: stay tilted and stable
           const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
           levelState.boxTiltAngle = (Math.PI / 2) * dirSign;
-        } else if (levelState.boxAnimT < 1) {
+        } else if (levelState.boxAnimT > 0 && levelState.boxAnimT < 1) {
           // Mid-animation: apply easing curves
-          const t = levelState.boxAnimT;
+          levelState.boxAnimT += dt / levelState.boxAnimDuration;
+          const t = Math.min(levelState.boxAnimT, 1);
           const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
           const maxTilt = (levelState.jumpCount / requiredJumps) * (Math.PI / 2);
 
@@ -456,16 +454,21 @@ async function main() {
             const swingT = t / 0.4;
             eased = 1 - Math.pow(1 - swingT, 3); // Ease-out
           } else {
-            // Return phase (0.4-1): ease-in cubic with overshoot
+            // Return phase (0.4-1): ease-in cubic (NO overshoot - goes back to exactly 0)
             const returnT = (t - 0.4) / 0.6;
-            eased = 1 - (1 - Math.pow(1 - returnT, 3)) * 1.2; // Overshoot
+            eased = 1 - Math.pow(1 - returnT, 2); // Ease-in quadratic
           }
 
           levelState.boxTiltAngle = maxTilt * dirSign * eased;
+
+          // Animation complete: snap to 0
+          if (t >= 1) {
+            levelState.boxTiltAngle = 0;
+            levelState.boxAnimT = 0;
+          }
         } else {
-          // Animation done: reset to center
+          // Idle: keep centered
           levelState.boxTiltAngle = 0;
-          levelState.boxAnimT = 0;
         }
       }
 
