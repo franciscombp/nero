@@ -175,7 +175,7 @@ async function main() {
     if (currentLevel?.goalKind === 'jumps_counted' && cat.onGround) {
       levelState.jumpCount++;
       levelState.lastJumpDir = dir; // Track jump direction (left/right)
-      levelState.boxAnimT = 0; // Start new animation
+      levelState.boxAnimT = 0.001; // Start new animation (tiny value to trigger)
       const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
       console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps} (dir: ${dir})`);
     }
