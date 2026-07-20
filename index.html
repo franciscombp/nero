@@ -560,9 +560,12 @@ async function main() {
     requestAnimationFrame(frame);
   }
 
-  // Start game - Skip intro and go straight to Level 0
-  startLevel(0);
-  ui.setHintText(story?.ui?.hint ?? 'Salta ↑ hacia la pared · Salta ↓ para bajar<br>Toca la pared para trepar · Salta sobre la caja para romperla');
+  // Start game - Show title first
+  loadLevel(levelState, levels[0]);
+  renderer.updatePalette(0, levels);
+  ui.updateHUD(0, levels, levelState.memories, levelState.found);
+  ui.setHintText(story?.ui?.hint ?? 'Salta ↑ para saltar · ↖ ↗ para saltar diagonalmente<br>8 saltos = escapa de la caja');
+  showTitle();
   requestAnimationFrame(frame);
 
   // Expose globals for testing/debugging

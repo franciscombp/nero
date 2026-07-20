@@ -553,40 +553,38 @@ export function createRenderer(ctx, config) {
         // Draw escaping cat when complete
         if (isComplete) {
           ctx.restore();
-          ctx.save();
 
           // Cat jumping out from the tilted box
-          // Position: from top edge of tilted box, going up and away
-          const escapeT = (gameTime - levelState.levelDoneT) * 1.5; // Animation time since completion
+          const escapeT = (gameTime - levelState.levelCompleteTime) / 1000; // Animation time since completion
           const catX = obj.x + obj.w/2 + Math.sin(gameTime * 3) * 15; // Slight wobble
-          const catY = obj.y - escapeT * 200; // Rising up
+          const catY = obj.y - 100 - escapeT * 300; // Rising up
 
-          // Draw simple cat head
-          ctx.fillStyle = '#26221D';
-          ctx.beginPath();
-          ctx.arc(catX, catY, 12, 0, Math.PI * 2);
-          ctx.fill();
+          if (escapeT < 1.5) {
+            // Draw simple cat head
+            ctx.fillStyle = '#26221D';
+            ctx.beginPath();
+            ctx.arc(catX, catY, 12, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Eyes wide (excited)
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath();
-          ctx.arc(catX - 6, catY - 3, 4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(catX + 6, catY - 3, 4, 0, Math.PI * 2);
-          ctx.fill();
+            // Eyes wide (excited)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(catX - 6, catY - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(catX + 6, catY - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Pupils looking up (escape!)
-          ctx.fillStyle = '#26221D';
-          ctx.beginPath();
-          ctx.arc(catX - 6, catY - 4, 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(catX + 6, catY - 4, 2, 0, Math.PI * 2);
-          ctx.fill();
+            // Pupils looking up (escape!)
+            ctx.fillStyle = '#26221D';
+            ctx.beginPath();
+            ctx.arc(catX - 6, catY - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(catX + 6, catY - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
 
-          // Trail particles
-          if (escapeT > 0 && escapeT < 1) {
+            // Trail particles
             ctx.fillStyle = 'rgba(139,111,71,0.3)';
             for (let i = 0; i < 3; i++) {
               const trailY = catY + i * 20;
@@ -596,8 +594,7 @@ export function createRenderer(ctx, config) {
             }
           }
 
-          ctx.restore();
-          continue;
+          continue; // DON'T draw the box when escaping
         }
 
         ctx.restore();

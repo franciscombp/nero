@@ -172,8 +172,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(74, 65, 57, 0.3);
-  backdrop-filter: blur(4px);
+  background: rgba(44, 39, 33, 0.6);
+  backdrop-filter: blur(8px);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-normal), backdrop-filter var(--transition-normal);
@@ -239,10 +239,11 @@ html, body {
 
 #ocard h1 {
   margin: 0 0 8px;
-  font-size: 38px;
-  letter-spacing: 8px;
+  font-size: 48px;
+  letter-spacing: 12px;
   font-weight: 300;
   color: var(--ink);
+  line-height: 1.1;
 }
 
 #ocard h2 {
