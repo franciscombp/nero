@@ -76,6 +76,7 @@ export function createLevelState() {
     jumpCount: 0,
     goalParams: {},
     boxTiltAngle: 0,
+    boxTargetTilt: 0,
     lastJumpDir: 0
   };
 }

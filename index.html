@@ -176,10 +176,19 @@ async function main() {
       levelState.jumpCount++;
       levelState.lastJumpDir = dir; // Track jump direction (left/right)
       const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
-      // Tilt based on jump count and direction
-      // If jumping left (dir < 0), rotate left; if right (dir > 0), rotate right
+
+      // Calculate target tilt angle based on jump count and direction
       const dirSign = dir === 0 ? 1 : Math.sign(dir); // Default right if no horizontal input
-      levelState.boxTiltAngle = (levelState.jumpCount / requiredJumps) * (Math.PI / 2) * dirSign;
+      const maxTilt = (Math.PI / 2); // 90 degrees max
+      const progressTilt = (levelState.jumpCount / requiredJumps) * maxTilt;
+
+      // If at final jump, stay tilted; otherwise, tilt then return to center
+      if (levelState.jumpCount >= requiredJumps) {
+        levelState.boxTargetTilt = maxTilt * dirSign; // Stay tilted
+      } else {
+        levelState.boxTargetTilt = progressTilt * dirSign; // Swing animation
+      }
+
       console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps} (dir: ${dir})`);
     }
 
@@ -432,6 +441,19 @@ async function main() {
       physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
       if (levelState.pushables.length > 0) {
         physics.stepPushables(levelState.pushables, cat, levelState.platforms, dt, currentLevel);
+      }
+
+      // Smooth box tilt animation for Level 0
+      if (currentLevel?.goalKind === 'jumps_counted') {
+        const lerpSpeed = 0.15; // Interpolation speed (0-1, higher = faster)
+        levelState.boxTiltAngle += (levelState.boxTargetTilt - levelState.boxTiltAngle) * lerpSpeed;
+
+        // Snap to 0 if close enough and not at final jump
+        const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
+        if (Math.abs(levelState.boxTiltAngle) < 0.05 && levelState.jumpCount < requiredJumps) {
+          levelState.boxTiltAngle = 0;
+          levelState.boxTargetTilt = 0;
+        }
       }
 
       // Handle sneak movement
