@@ -175,20 +175,8 @@ async function main() {
     if (currentLevel?.goalKind === 'jumps_counted' && cat.onGround) {
       levelState.jumpCount++;
       levelState.lastJumpDir = dir; // Track jump direction (left/right)
+      levelState.boxAnimT = 0; // Start new animation
       const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
-
-      // Calculate target tilt angle based on jump count and direction
-      const dirSign = dir === 0 ? 1 : Math.sign(dir); // Default right if no horizontal input
-      const maxTilt = (Math.PI / 2); // 90 degrees max
-      const progressTilt = (levelState.jumpCount / requiredJumps) * maxTilt;
-
-      // If at final jump, stay tilted; otherwise, tilt then return to center
-      if (levelState.jumpCount >= requiredJumps) {
-        levelState.boxTargetTilt = maxTilt * dirSign; // Stay tilted
-      } else {
-        levelState.boxTargetTilt = progressTilt * dirSign; // Swing animation
-      }
-
       console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps} (dir: ${dir})`);
     }
 
@@ -444,15 +432,40 @@ async function main() {
       }
 
       // Smooth box tilt animation for Level 0
+      // Box swing animation for Level 0
       if (currentLevel?.goalKind === 'jumps_counted') {
-        const lerpSpeed = 0.15; // Interpolation speed (0-1, higher = faster)
-        levelState.boxTiltAngle += (levelState.boxTargetTilt - levelState.boxTiltAngle) * lerpSpeed;
-
-        // Snap to 0 if close enough and not at final jump
         const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
-        if (Math.abs(levelState.boxTiltAngle) < 0.05 && levelState.jumpCount < requiredJumps) {
+
+        // Advance animation timer
+        levelState.boxAnimT += dt / levelState.boxAnimDuration;
+
+        if (levelState.jumpCount >= requiredJumps) {
+          // Final jump: stay tilted
+          const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
+          levelState.boxTiltAngle = (Math.PI / 2) * dirSign;
+        } else if (levelState.boxAnimT < 1) {
+          // Mid-animation: apply easing curves
+          const t = levelState.boxAnimT;
+          const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
+          const maxTilt = (levelState.jumpCount / requiredJumps) * (Math.PI / 2);
+
+          // Easing: ease-out on swing (fast start), ease-in on return (slow end)
+          let eased;
+          if (t < 0.4) {
+            // Swing phase (0-0.4): ease-out cubic
+            const swingT = t / 0.4;
+            eased = 1 - Math.pow(1 - swingT, 3); // Ease-out
+          } else {
+            // Return phase (0.4-1): ease-in cubic with overshoot
+            const returnT = (t - 0.4) / 0.6;
+            eased = 1 - (1 - Math.pow(1 - returnT, 3)) * 1.2; // Overshoot
+          }
+
+          levelState.boxTiltAngle = maxTilt * dirSign * eased;
+        } else {
+          // Animation done: reset to center
           levelState.boxTiltAngle = 0;
-          levelState.boxTargetTilt = 0;
+          levelState.boxAnimT = 0;
         }
       }
 
@@ -520,7 +533,7 @@ async function main() {
     renderer.drawKnock(levelState.knock);
     renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
     if (levelState.pushables && levelState.pushables.length > 0) {
-      renderer.drawPushables(levelState.pushables, currentLevel?.goalKind === 'jumps_counted', levelState.jumpCount, currentLevel?.goalParams?.requiredJumps, levelState.boxTiltAngle);
+      renderer.drawPushables(levelState.pushables, currentLevel?.goalKind === 'jumps_counted', levelState.jumpCount, currentLevel?.goalParams?.requiredJumps, levelState.boxTiltAngle || 0);
     }
     // Don't draw cat if in Level 0 (inside box)
     if (currentLevel?.goalKind !== 'jumps_counted') {
