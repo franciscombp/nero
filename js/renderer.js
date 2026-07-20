@@ -459,54 +459,58 @@ export function createRenderer(ctx, config) {
     ctx.restore();
   }
 
-  function drawPushables(pushables, isJumpCounter, jumpCount, requiredJumps, shakeIntensity = 0) {
+  function drawPushables(pushables, isJumpCounter, jumpCount, requiredJumps, boxTiltAngle = 0) {
     if (!pushables || pushables.length === 0) return;
 
     for (const obj of pushables) {
       // Special rendering for jump counter (Level 0)
       if (isJumpCounter && obj.id === 'caja') {
-        // Apply shake animation
-        const shake = Math.sin(performance.now() / 30) * shakeIntensity;
-        const boxX = obj.x + shake;
-        const boxY = obj.y + Math.abs(shake) * 0.5;
-
         ctx.save();
 
-        // Draw cartón box with shake
+        // Calculate rotation point (bottom center of box)
+        const centerX = obj.x + obj.w / 2;
+        const centerY = obj.y + obj.h;
+
+        // Tilt the box (rotates from bottom center)
+        ctx.translate(centerX, centerY);
+        ctx.rotate(boxTiltAngle);
+        ctx.translate(-centerX, -centerY);
+
+        // Draw cartón box
         ctx.fillStyle = '#8B6F47';
-        ctx.fillRect(boxX, boxY, obj.w, obj.h);
+        ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
 
         // Border
         ctx.strokeStyle = '#5C4A2C';
         ctx.lineWidth = 4;
-        ctx.strokeRect(boxX, boxY, obj.w, obj.h);
+        ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
         // Highlight on top
         ctx.fillStyle = 'rgba(251,246,238,.2)';
-        ctx.fillRect(boxX, boxY, obj.w, 30);
+        ctx.fillRect(obj.x, obj.y, obj.w, 30);
 
         // Hole to see eyes (circle in the middle-upper area)
         ctx.fillStyle = '#2C2C2C';
         ctx.beginPath();
-        ctx.arc(boxX + obj.w/2, boxY + 80, 25, 0, Math.PI * 2);
+        ctx.arc(obj.x + obj.w/2, obj.y + 80, 25, 0, Math.PI * 2);
         ctx.fill();
 
         // Eyes (cat looking out)
         ctx.fillStyle = '#FFFFFF';
         ctx.beginPath();
-        ctx.arc(boxX + obj.w/2 - 12, boxY + 75, 6, 0, Math.PI * 2);
+        ctx.arc(obj.x + obj.w/2 - 12, obj.y + 75, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(boxX + obj.w/2 + 12, boxY + 75, 6, 0, Math.PI * 2);
+        ctx.arc(obj.x + obj.w/2 + 12, obj.y + 75, 6, 0, Math.PI * 2);
         ctx.fill();
 
         // Pupils
         ctx.fillStyle = '#26221D';
         ctx.beginPath();
-        ctx.arc(boxX + obj.w/2 - 12, boxY + 76, 3, 0, Math.PI * 2);
+        ctx.arc(obj.x + obj.w/2 - 12, obj.y + 76, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(boxX + obj.w/2 + 12, boxY + 76, 3, 0, Math.PI * 2);
+        ctx.arc(obj.x + obj.w/2 + 12, obj.y + 76, 3, 0, Math.PI * 2);
         ctx.fill();
 
         // Damage marks based on jump count
@@ -516,20 +520,20 @@ export function createRenderer(ctx, config) {
           // Add cracks as jumps progress
           if (jumpCount >= 3) {
             ctx.beginPath();
-            ctx.moveTo(boxX + 40, boxY + 40);
-            ctx.lineTo(boxX + 80, boxY + 100);
+            ctx.moveTo(obj.x + 40, obj.y + 40);
+            ctx.lineTo(obj.x + 80, obj.y + 100);
             ctx.stroke();
           }
           if (jumpCount >= 5) {
             ctx.beginPath();
-            ctx.moveTo(boxX + obj.w - 40, boxY + 50);
-            ctx.lineTo(boxX + obj.w - 80, boxY + 120);
+            ctx.moveTo(obj.x + obj.w - 40, obj.y + 50);
+            ctx.lineTo(obj.x + obj.w - 80, obj.y + 120);
             ctx.stroke();
           }
           if (jumpCount >= 7) {
             ctx.beginPath();
-            ctx.moveTo(boxX + 100, boxY + obj.h - 40);
-            ctx.lineTo(boxX + 150, boxY + obj.h - 100);
+            ctx.moveTo(obj.x + 100, obj.y + obj.h - 40);
+            ctx.lineTo(obj.x + 150, obj.y + obj.h - 100);
             ctx.stroke();
           }
         }
@@ -539,10 +543,10 @@ export function createRenderer(ctx, config) {
         ctx.fillStyle = jumpPercent >= 100 ? '#E8967E' : '#E8D4B8';
         ctx.font = 'bold 32px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(`${jumpCount}/${requiredJumps || 8}`, boxX + obj.w/2, boxY + obj.h/2 + 20);
+        ctx.fillText(`${jumpCount}/${requiredJumps || 8}`, obj.x + obj.w/2, obj.y + obj.h/2 + 20);
         ctx.fillStyle = '#8B6F47';
         ctx.font = 'bold 16px monospace';
-        ctx.fillText(`${jumpPercent}%`, boxX + obj.w/2, boxY + obj.h/2 + 50);
+        ctx.fillText(`${jumpPercent}%`, obj.x + obj.w/2, obj.y + obj.h/2 + 50);
         ctx.textAlign = 'left';
 
         ctx.restore();

@@ -75,8 +75,7 @@ export function createLevelState() {
     puzzleSolved: {},
     jumpCount: 0,
     goalParams: {},
-    boxShakeT: 0,
-    boxShakeIntensity: 0
+    boxTiltAngle: 0
   };
 }
 
