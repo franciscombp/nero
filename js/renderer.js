@@ -459,48 +459,60 @@ export function createRenderer(ctx, config) {
     ctx.restore();
   }
 
-  function drawPushables(pushables, isInsideBox) {
+  function drawPushables(pushables, isJumpCounter, jumpCount, requiredJumps) {
     if (!pushables || pushables.length === 0) return;
 
     for (const obj of pushables) {
-      // Special rendering for "inside box" mechanic
-      if (isInsideBox && obj.id === 'caja') {
-        ctx.save();
-        ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
-
-        const tiltAngle = obj.tilt || 0;
-        ctx.rotate(tiltAngle);
-
-        // Draw box with perspective/tilt
+      // Special rendering for jump counter (Level 0)
+      if (isJumpCounter && obj.id === 'caja') {
+        // Draw cartón box
         ctx.fillStyle = '#8B6F47';
-        ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+        ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
 
         // Border
         ctx.strokeStyle = '#5C4A2C';
         ctx.lineWidth = 4;
-        ctx.strokeRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
+        ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
         // Highlight on top
         ctx.fillStyle = 'rgba(251,246,238,.2)';
-        ctx.fillRect(-obj.w/2, -obj.h/2, obj.w, 20);
+        ctx.fillRect(obj.x, obj.y, obj.w, 30);
 
-        // Tilt indicator (diagonal line that moves as box tips)
-        const tipPercent = Math.min(100, Math.round((tiltAngle / (Math.PI / 2)) * 100));
-        ctx.strokeStyle = `rgba(100,100,100,${0.3 + (tipPercent/100) * 0.4})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-obj.w/2 + 20, obj.h/2 - 20);
-        ctx.lineTo(obj.w/2 - 20, -obj.h/2 + 20);
-        ctx.stroke();
+        // Damage marks based on jump count
+        if (jumpCount > 0) {
+          ctx.strokeStyle = 'rgba(44,44,44,0.6)';
+          ctx.lineWidth = 2;
+          // Add cracks as jumps progress
+          if (jumpCount >= 3) {
+            ctx.beginPath();
+            ctx.moveTo(obj.x + 40, obj.y + 40);
+            ctx.lineTo(obj.x + 80, obj.y + 100);
+            ctx.stroke();
+          }
+          if (jumpCount >= 5) {
+            ctx.beginPath();
+            ctx.moveTo(obj.x + obj.w - 40, obj.y + 50);
+            ctx.lineTo(obj.x + obj.w - 80, obj.y + 120);
+            ctx.stroke();
+          }
+          if (jumpCount >= 7) {
+            ctx.beginPath();
+            ctx.moveTo(obj.x + 100, obj.y + obj.h - 40);
+            ctx.lineTo(obj.x + 150, obj.y + obj.h - 100);
+            ctx.stroke();
+          }
+        }
 
-        // Progress text (outside rotation context for clarity)
-        ctx.restore();
-
-        ctx.save();
-        ctx.fillStyle = tipPercent > 80 ? '#E8967E' : '#E8D4B8';
-        ctx.font = 'bold 24px monospace';
-        ctx.fillText(`${tipPercent}%`, obj.x + obj.w/2 - 30, obj.y - 20);
-        ctx.restore();
+        // Counter display
+        const jumpPercent = Math.round((jumpCount / (requiredJumps || 8)) * 100);
+        ctx.fillStyle = jumpPercent >= 100 ? '#E8967E' : '#E8D4B8';
+        ctx.font = 'bold 32px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${jumpCount}/${requiredJumps || 8}`, obj.x + obj.w/2, obj.y + obj.h/2 + 20);
+        ctx.fillStyle = '#8B6F47';
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText(`${jumpPercent}%`, obj.x + obj.w/2, obj.y + obj.h/2 + 50);
+        ctx.textAlign = 'left';
 
         continue;
       }

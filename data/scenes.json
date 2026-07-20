@@ -9,6 +9,9 @@
     "platforms": [
       { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" }
     ],
+    "pushables": [
+      { "id": "caja", "x": 300, "y": 1400, "w": 300, "h": 300 }
+    ],
     "goalKind": "jumps_counted",
     "goalParams": { "requiredJumps": 8 },
     "knock": null,
