@@ -467,11 +467,11 @@ export function createRenderer(ctx, config) {
       if (isJumpCounter && obj.id === 'caja') {
         ctx.save();
 
-        // Calculate rotation point (bottom center of box)
+        // Calculate rotation point (center of box, slightly towards bottom for realism)
         const centerX = obj.x + obj.w / 2;
-        const centerY = obj.y + obj.h;
+        const centerY = obj.y + obj.h * 0.65; // Rotate from lower-center area
 
-        // Tilt the box (rotates from bottom center)
+        // Tilt the box (rotates from center point)
         ctx.translate(centerX, centerY);
         ctx.rotate(boxTiltAngle);
         ctx.translate(-centerX, -centerY);

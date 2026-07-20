@@ -174,10 +174,13 @@ async function main() {
     const currentLevel = levels[levelState.level];
     if (currentLevel?.goalKind === 'jumps_counted' && cat.onGround) {
       levelState.jumpCount++;
+      levelState.lastJumpDir = dir; // Track jump direction (left/right)
       const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
-      // Increase tilt angle: each jump tilts more (Math.PI/2 = 90° at 8 jumps)
-      levelState.boxTiltAngle = (levelState.jumpCount / requiredJumps) * (Math.PI / 2);
-      console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps}`);
+      // Tilt based on jump count and direction
+      // If jumping left (dir < 0), rotate left; if right (dir > 0), rotate right
+      const dirSign = dir === 0 ? 1 : Math.sign(dir); // Default right if no horizontal input
+      levelState.boxTiltAngle = (levelState.jumpCount / requiredJumps) * (Math.PI / 2) * dirSign;
+      console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps} (dir: ${dir})`);
     }
 
     const mods = getMovementMods();
