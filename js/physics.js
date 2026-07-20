@@ -204,7 +204,7 @@ export function createPhysics(config) {
 
         // Update tilt angle
         obj.tilt += obj.tiltVel;
-        obj.tilt = Math.max(0, Math.min(Math.PI/2 + 0.3, obj.tilt)); // Cap at ~105 degrees
+        obj.tilt = Math.max(0, Math.min(Math.PI * 1.2, obj.tilt)); // Cap at ~216 degrees (allows 3.5+ threshold)
 
         // When box tips past threshold, it's ready to escape
         if (obj.tilt > obj.tipThreshold) {
