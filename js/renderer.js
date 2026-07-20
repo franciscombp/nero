@@ -464,39 +464,78 @@ export function createRenderer(ctx, config) {
 
     for (const obj of pushables) {
       // Special rendering for jump counter (Level 0)
-      if (isJumpCounter && obj.id === 'caja') {
+      // CRITICAL: When isComplete, ONLY draw cat - DO NOT render box at all
+      const isBoxCase = isJumpCounter && (obj.id === 'caja' || obj.w === 300);
+      if (isBoxCase) {
         const isComplete = jumpCount >= (requiredJumps || 8);
+
+        // If complete, only draw escaping cat (no box)
+        if (isComplete) {
+          const escapeT = (gameTime - levelState.levelCompleteTime) / 1000;
+          const catX = obj.x + obj.w/2;
+
+          // Quick jump up (0-0.4s), then stay at top
+          let catY;
+          if (escapeT < 0.4) {
+            // Ease-out jump: fast at start, slowing down
+            const jumpProg = escapeT / 0.4;
+            const easeOut = 1 - Math.pow(1 - jumpProg, 2);
+            catY = obj.y - 50 - easeOut * 250;
+          } else {
+            // Stay at top position
+            catY = obj.y - 300;
+          }
+
+          if (escapeT < 2) { // Show cat for 2 seconds
+            ctx.fillStyle = '#26221D';
+            ctx.beginPath();
+            ctx.arc(catX, catY, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(catX - 6, catY - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(catX + 6, catY - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#26221D';
+            ctx.beginPath();
+            ctx.arc(catX - 6, catY - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(catX + 6, catY - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          continue; // ONLY draw cat, skip everything else
+        }
+
+        // Not complete: draw the tilted box
         ctx.save();
 
-        // Calculate rotation point (center of box, slightly towards bottom for realism)
         const centerX = obj.x + obj.w / 2;
-        const centerY = obj.y + obj.h * 0.65; // Rotate from lower-center area
+        const centerY = obj.y + obj.h * 0.65;
 
-        // Tilt the box (rotates from center point)
         ctx.translate(centerX, centerY);
         ctx.rotate(boxTiltAngle);
         ctx.translate(-centerX, -centerY);
 
-        // Draw cartón box
         ctx.fillStyle = '#8B6F47';
         ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
 
-        // Border
         ctx.strokeStyle = '#5C4A2C';
         ctx.lineWidth = 4;
         ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
 
-        // Highlight on top
         ctx.fillStyle = 'rgba(251,246,238,.2)';
         ctx.fillRect(obj.x, obj.y, obj.w, 30);
 
-        // Hole to see eyes (circle in the middle-upper area)
         ctx.fillStyle = '#2C2C2C';
         ctx.beginPath();
         ctx.arc(obj.x + obj.w/2, obj.y + 80, 25, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eyes (cat looking out)
         ctx.fillStyle = '#FFFFFF';
         ctx.beginPath();
         ctx.arc(obj.x + obj.w/2 - 12, obj.y + 75, 6, 0, Math.PI * 2);
@@ -505,7 +544,6 @@ export function createRenderer(ctx, config) {
         ctx.arc(obj.x + obj.w/2 + 12, obj.y + 75, 6, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pupils
         ctx.fillStyle = '#26221D';
         ctx.beginPath();
         ctx.arc(obj.x + obj.w/2 - 12, obj.y + 76, 3, 0, Math.PI * 2);
@@ -514,11 +552,9 @@ export function createRenderer(ctx, config) {
         ctx.arc(obj.x + obj.w/2 + 12, obj.y + 76, 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Damage marks based on jump count
         if (jumpCount > 0) {
           ctx.strokeStyle = 'rgba(44,44,44,0.6)';
           ctx.lineWidth = 2;
-          // Add cracks as jumps progress
           if (jumpCount >= 3) {
             ctx.beginPath();
             ctx.moveTo(obj.x + 40, obj.y + 40);
@@ -539,7 +575,6 @@ export function createRenderer(ctx, config) {
           }
         }
 
-        // Counter display
         const jumpPercent = Math.round((jumpCount / (requiredJumps || 8)) * 100);
         ctx.fillStyle = jumpPercent >= 100 ? '#E8967E' : '#E8D4B8';
         ctx.font = 'bold 32px monospace';
@@ -550,55 +585,7 @@ export function createRenderer(ctx, config) {
         ctx.fillText(`${jumpPercent}%`, obj.x + obj.w/2, obj.y + obj.h/2 + 50);
         ctx.textAlign = 'left';
 
-        // Draw escaping cat when complete
-        if (isComplete) {
-          ctx.restore();
-
-          // Cat jumping out from the tilted box
-          const escapeT = (gameTime - levelState.levelCompleteTime) / 1000; // Animation time since completion
-          const catX = obj.x + obj.w/2 + Math.sin(gameTime * 3) * 15; // Slight wobble
-          const catY = obj.y - 100 - escapeT * 300; // Rising up
-
-          if (escapeT < 1.5) {
-            // Draw simple cat head
-            ctx.fillStyle = '#26221D';
-            ctx.beginPath();
-            ctx.arc(catX, catY, 12, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Eyes wide (excited)
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(catX - 6, catY - 3, 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(catX + 6, catY - 3, 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Pupils looking up (escape!)
-            ctx.fillStyle = '#26221D';
-            ctx.beginPath();
-            ctx.arc(catX - 6, catY - 4, 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(catX + 6, catY - 4, 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Trail particles
-            ctx.fillStyle = 'rgba(139,111,71,0.3)';
-            for (let i = 0; i < 3; i++) {
-              const trailY = catY + i * 20;
-              ctx.beginPath();
-              ctx.arc(catX + (Math.random() - 0.5) * 20, trailY, 3, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-
-          continue; // DON'T draw the box when escaping
-        }
-
         ctx.restore();
-
         continue;
       }
 
