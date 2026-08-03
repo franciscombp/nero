@@ -5,12 +5,13 @@ import { CONFIG } from './core.js';
 const { WORLD_W, GRAV, JUMP_VX, JUMP_VY, BIG_VY } = CONFIG;
 
 // Salto normal / super / wall-jump desde deslizamiento / trepar o saltar desde cuelgue.
+// `mods` escala velocidad/salto (mecánica de gatito bebé: { speed, jump }).
 // Devuelve true si el gato saltó (el caller decide ocultar hints, sonidos, etc.)
-export function doJump(cat, dir, big) {
+export function doJump(cat, dir, big, mods = { speed: 1, jump: 1 }) {
   if (cat.state === 'slide' && !cat.onGround) {
     const away = -cat.slideSide;
-    cat.vx = away * JUMP_VX * 1.2;
-    cat.vy = -JUMP_VY;
+    cat.vx = away * JUMP_VX * 1.2 * mods.speed;
+    cat.vy = -JUMP_VY * mods.jump;
     cat.facing = away;
     cat.state = 'air';
     cat.squash = 1.25;
@@ -21,15 +22,15 @@ export function doJump(cat, dir, big) {
       cat.state = 'air';
       cat.onGround = false;
       cat.hangPlat = null;
-      cat.vy = -BIG_VY * 0.85;
-      cat.vx = dir * JUMP_VX * 1.35;
+      cat.vy = -BIG_VY * 0.85 * mods.jump;
+      cat.vx = dir * JUMP_VX * 1.35 * mods.speed;
       cat.facing = dir;
       cat.squash = 1.3;
       return true;
     }
     cat.y = cat.hangPlat.y;
     cat.x += cat.hangSide * 20;
-    cat.vy = -420;
+    cat.vy = -420 * mods.jump;
     cat.vx = 0;
     cat.state = 'air';
     cat.onGround = false;
@@ -42,8 +43,8 @@ export function doJump(cat, dir, big) {
   const boost = 1 + 0.12 * cat.combo;
   cat.onGround = false;
   cat.state = 'air';
-  cat.vy = -(big ? BIG_VY : JUMP_VY) * boost;
-  cat.vx = dir * JUMP_VX;
+  cat.vy = -(big ? BIG_VY : JUMP_VY) * boost * mods.jump;
+  cat.vx = dir * JUMP_VX * mods.speed;
   if (dir !== 0) cat.facing = dir;
   cat.squash = 1.25 + 0.05 * cat.combo;
   return true;
@@ -101,9 +102,9 @@ export function doDrop(cat, platforms) {
 }
 
 // Andar sigiloso sobre la plataforma actual; se cae del borde si deja de haber soporte.
-export function applySneak(cat, platforms, sneakDir, dt) {
+export function applySneak(cat, platforms, sneakDir, dt, speedMod = 1) {
   if (!cat.onGround || sneakDir === 0) return;
-  cat.x += sneakDir * 115 * dt;
+  cat.x += sneakDir * 115 * speedMod * dt;
   cat.x = Math.max(cat.w / 2, Math.min(WORLD_W - cat.w / 2, cat.x));
   cat.facing = sneakDir;
   cat.state = 'sneak';

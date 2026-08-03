@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nero-pwa-v3';
+const CACHE_NAME = 'nero-pwa-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -26,8 +26,6 @@ const ASSETS = [
   './assets/nero.glb',
   './data/scenes.json',
   './data/stories.json',
-  './data/scenes3d.json',
-  './data/stories3d.json',
   './data/story_origins.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

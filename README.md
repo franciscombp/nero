@@ -10,12 +10,12 @@ Arquitectura modular, sin dependencias externas, totalmente configurable y escal
 
 | Página | Qué es |
 |---|---|
-| `index.html` | El juego 2D (canvas): historia de origen + niveles narrativos en desarrollo |
-| `prototype3d.html` | **Prototipo 2.5D** con Three.js: los 3 actos clásicos con render 3D estilo soft (ref. iconos Airbnb) y el modelo rigeado de Nero (`assets/nero.glb`). Mismo gameplay y física que el 2D |
-| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 2D (`?draft=1`) o 3D al instante |
+| `prototype3d.html` | **El juego completo en el motor 3D** (Three.js): las 9 escenas de `data/scenes.json` — prólogo de la caja, callejón con ramas A/B y contrarreloj, cinemáticas, y los 3 actos clásicos — con render 2.5D estilo soft (ref. iconos Airbnb) y el modelo rigeado de Nero (`assets/nero.glb`) |
+| `index.html` | La versión 2D (canvas) del mismo contenido; comparte `core.js`, `physics.js` y los datos |
+| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 2D o 3D al instante (`?draft=1`) |
 
-> El prototipo 3D usa su propio snapshot de datos (`data/scenes3d.json` + `data/stories3d.json`)
-> para evolucionar en paralelo sin romperse mientras el juego 2D experimenta con nuevas mecánicas.
+> Ambos frontends leen los mismos `data/scenes.json` + `data/stories.json` y comparten motor:
+> lo que edites en el editor o en los datos aplica al 2D y al 3D por igual.
 
 ## La historia
 
