@@ -6,16 +6,25 @@ Juego de exploración doméstica protagonizado por un gato negro "líquido".
 
 Arquitectura modular, sin dependencias externas, totalmente configurable y escalable.
 
-## Las tres páginas del proyecto
+## Las páginas del proyecto
 
 | Página | Qué es |
 |---|---|
-| `prototype3d.html` | **El juego completo en el motor 3D** (Three.js): las 9 escenas de `data/scenes.json` — prólogo de la caja, callejón con ramas A/B y contrarreloj, cinemáticas, y los 3 actos clásicos — con render 2.5D estilo soft (ref. iconos Airbnb) y el modelo rigeado de Nero (`assets/nero.glb`) |
-| `index.html` | La versión 2D (canvas) del mismo contenido; comparte `core.js`, `physics.js` y los datos |
-| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 2D o 3D al instante (`?draft=1`) |
+| `index.html` | **El juego** (motor 3D con Three.js): las 9 escenas de `data/scenes.json` — prólogo de la caja, callejón con la camioneta (ramas A/B y contrarreloj), cinemáticas, y los 3 actos clásicos — con render 2.5D estilo soft y el modelo rigeado de Nero (`assets/nero.glb`) |
+| `2d.html` | La versión 2D clásica (canvas) del mismo contenido; comparte `core.js`, `physics.js` y los datos |
+| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 3D o 2D al instante (`?draft=1`) |
 
 > Ambos frontends leen los mismos `data/scenes.json` + `data/stories.json` y comparten motor:
-> lo que edites en el editor o en los datos aplica al 2D y al 3D por igual.
+> lo que edites en el editor o en los datos aplica al 3D y al 2D por igual.
+
+### El prólogo, como lo cuenta [STORY.md](STORY.md)
+
+- **Acto 0 · La caja**: Nero (cachorro, visible dentro de la caja en corte) salta una y otra vez;
+  con cada golpe las solapas se abren un poco más y entra más luz. Al octavo salto, salta fuera.
+- **Acto 1 · El callejón**: la camioneta está estacionada con el motor apagado. El camino del
+  jugador es el de la historia: bolsa de basura → escombros → **espejo lateral** → el balde.
+  45 segundos. Si lo logra, Rama A (viaja en la camioneta); si el tiempo se agota, Rama B
+  (el conductor lo encuentra y lo recoge). Ambas convergen en la cocina.
 
 ## La historia
 

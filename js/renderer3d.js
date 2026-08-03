@@ -145,7 +145,47 @@ export function createRenderer3D(canvas) {
     }
     room.add(ceil);
 
-    if (!domestic) return;   // el amanecer del prólogo no lleva decoración de casa
+    if (!domestic) {
+      // ---- ambientación del callejón al amanecer ----
+      // siluetas de edificios con alguna ventana encendida
+      for (const [bx, bw2, bh2] of [[-330, 260, 980], [0, 310, 1260], [330, 240, 860]]) {
+        const bld = pbox(bw2, bh2, 16, 0x45454E);
+        bld.receiveShadow = false;
+        put(bld, bx, bh2 / 2 - 40, WALL_Z + 2);
+        room.add(bld);
+        for (let wi = 0; wi < 5; wi++) {
+          if ((wi * 7 + bx) % 3 === 0) continue;   // no todas encendidas
+          const win = pbox(18, 24, 4, COL.butter, { emissive: 0xF0C987, ei: 0.75, noCache: true });
+          win.receiveShadow = false;
+          put(win, bx - bw2 / 2 + 40 + (wi % 2) * (bw2 - 80), 160 + wi * (bh2 / 6), WALL_Z + 12);
+          room.add(win);
+        }
+      }
+      // franja de amanecer sobre los tejados
+      const dawnGlow = pbox(W2 + 280, 240, 4, 0x707688, { noCache: true });
+      dawnGlow.material.emissive = new THREE.Color(0x5A6078);
+      dawnGlow.material.emissiveIntensity = 0.5;
+      dawnGlow.receiveShadow = false;
+      put(dawnGlow, 0, 1420, WALL_Z + 1);
+      room.add(dawnGlow);
+      // farola cálida
+      const pole = cyl(6, 8, 540, 0x3A3A40);
+      put(pole, 250, 270, -190);
+      const head = rbox(38, 22, 38, 0x3A3A40, 6);
+      put(head, 250, 552, -190);
+      const bulb = sph(14, COL.butter, { emissive: 0xF0C987, ei: 1.5 });
+      put(bulb, 250, 536, -190);
+      const pool = disc(120, 3, COL.butter, { emissive: 0xF0C987, ei: 0.35, opacity: 0.22, noCache: true });
+      put(pool, 250, 2, -150);
+      pool.receiveShadow = false;
+      room.add(pole, head, bulb, pool);
+      // charco
+      const puddle = disc(90, 2, 0x394050, { rough: 0.15, opacity: 0.85, noCache: true });
+      puddle.scale.z = 0.5;
+      put(puddle, -180, 1.6, 120);
+      room.add(puddle);
+      return;
+    }
 
     // alfombra (tres elipses apiladas)
     const rug1 = disc(185, 5, accent); rug1.scale.z = 0.55; put(rug1, 0, 2.5, 70);
@@ -223,6 +263,78 @@ export function createRenderer3D(canvas) {
         // listones para leerlo como caja
         g.add(put(rbox(p.w - 16, 8, 306, isDomestic(L.time) ? COL.woodDk : COL.crateDk, 3), 0, -bh * 0.35, SURF_Z));
         if (bh > 120) g.add(put(rbox(p.w - 16, 8, 306, isDomestic(L.time) ? COL.woodDk : COL.crateDk, 3), 0, -bh * 0.7, SURF_Z));
+        break;
+      }
+      case 'trashbag': {
+        // pila de bolsas de basura (superficie pisable arriba)
+        const r0 = drop * 0.46;
+        const b0 = sph(r0, 0x43434B, { rough: 0.5 });
+        b0.scale.set(1.35, 1, 1.15);
+        put(b0, 0, -drop + r0 * 0.95, 0);
+        const r1 = drop * 0.34;
+        const b1 = sph(r1, 0x4A4A54, { rough: 0.5 });
+        b1.scale.set(1.3, 0.85, 1.1);
+        put(b1, 6, -r1 * 0.6, 0);
+        const knot = shadowed(new THREE.Mesh(new THREE.ConeGeometry(11, 18, 10), M(0x3A3A42)));
+        put(knot, 6, 8, 0);
+        const b2 = sph(26, 0x3E3E46, { rough: 0.5 });
+        b2.scale.set(1.2, 0.9, 1);
+        put(b2, -p.w / 2 - 24, -drop + 24, 60);
+        g.add(b0, b1, knot, b2);
+        break;
+      }
+      case 'crate': {
+        // caja de escombros del callejón (bloque completo hasta su base)
+        const bh = Math.max(p.h, 40);
+        g.add(put(rbox(p.w, bh, 290, COL.crate, 6), 0, -bh / 2, SURF_Z + 20));
+        g.add(put(rbox(p.w - 14, 9, 296, COL.crateDk, 3), 0, -bh * 0.32, SURF_Z + 20));
+        if (bh > 130) g.add(put(rbox(p.w - 14, 9, 296, COL.crateDk, 3), 0, -bh * 0.68, SURF_Z + 20));
+        g.add(put(pbox(12, bh - 14, 5, COL.crateDk), -p.w / 2 + 14, -bh / 2, SURF_Z + 168));
+        g.add(put(pbox(12, bh - 14, 5, COL.crateDk), p.w / 2 - 14, -bh / 2, SURF_Z + 168));
+        break;
+      }
+      case 'mirror': {
+        // espejo lateral de la camioneta: sobresale de la cabina hacia el carril de juego
+        g.add(put(rbox(p.w, 14, 92, 0x6E6A63, 6), 0, -7, 0));
+        g.add(put(rbox(p.w - 18, 5, 72, COL.sky, 3, { emissive: 0xBFD3DB, ei: 0.35 }), 0, 1, 0));
+        const arm = cyl(6, 6, 120, 0x54504A);
+        arm.rotation.z = Math.PI / 2;
+        arm.rotation.y = -0.55;      // en diagonal hacia la cabina (que está al fondo)
+        put(arm, p.w / 2 + 40, -12, -34);
+        g.add(arm);
+        break;
+      }
+      case 'truckbed': {
+        // la camioneta completa; la plataforma es el balde trasero
+        const bw = p.w;
+        const warm = 0xE8967E, warmDk = 0xC96A55;
+        g.add(put(rbox(bw, 18, 300, warmDk, 6), 0, -9, 0));                    // piso del balde
+        g.add(put(rbox(16, 38, 300, warm, 7), -bw / 2 + 8, 6, 0));            // compuerta trasera (baja)
+        g.add(put(rbox(bw, 54, 14, warm, 7), 0, 10, 149));                    // baranda frontal
+        g.add(put(rbox(bw, 54, 14, warm, 7), 0, 10, -149));                   // baranda trasera
+        g.add(put(rbox(bw + 24, 130, 320, warm, 14), 0, -78, 0));             // carrocería
+        g.add(put(rbox(bw + 8, 250, 300, warmDk, 10), 0, -262, 0));           // faldón/chasis
+        // cabina detrás del plano de juego: el gato pasa por delante y el
+        // espejo lateral sobresale hacia el carril donde se juega
+        const cab = new THREE.Group();
+        cab.position.set(-bw / 2 - 84, 0, -170);
+        cab.add(put(rbox(168, 560, 306, warm, 22), 0, -118, 0));
+        cab.add(put(rbox(176, 30, 312, warmDk, 10), 0, 172, 0));              // techo
+        cab.add(put(rbox(146, 88, 310, COL.sky, 10, { emissive: 0xBFD3DB, ei: 0.3 }), 0, 108, 0));
+        // faros medio embebidos en el frente, a la altura del morro
+        cab.add(put(sph(13, COL.butter, { emissive: 0xF0C987, ei: 1.2 }), -80, -200, 96));
+        cab.add(put(sph(13, COL.butter, { emissive: 0xF0C987, ei: 1.2 }), -80, -200, -96));
+        g.add(cab);
+        // ruedas de juguete
+        for (const [wx2, wz] of [[bw / 2 - 36, 154], [bw / 2 - 36, -154], [-bw / 2 - 84, -16], [-bw / 2 - 84, -324]]) {
+          const wheel = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(95, 95, 58, 24), M(0x3A3A40, { rough: 0.7 })));
+          wheel.rotation.x = Math.PI / 2;
+          put(wheel, wx2, -(drop - 95), wz);
+          const hub = disc(38, 62, 0xD8D2C8);
+          hub.rotation.x = Math.PI / 2;
+          put(hub, wx2, -(drop - 95), wz);
+          g.add(wheel, hub);
+        }
         break;
       }
       case 'wall': case 'wall_left': case 'wall_right': {
@@ -422,29 +534,35 @@ export function createRenderer3D(canvas) {
   }
 
   function buildPushable(obj) {
-    const g = new THREE.Group();
+    const g = new THREE.Group();   // origen = centro geométrico del objeto
     if (obj.id === 'caja' || obj.w >= 250) {
-      // caja de cartón del prólogo, con ojos asomando
-      const body = rbox(obj.w, obj.h, 300, COL.carton, 10);
-      g.add(put(body, 0, 0, 0));
-      // borde superior más claro (solapa interior)
-      g.add(put(rbox(obj.w - 12, 26, 290, 0xA08258, 6), 0, obj.h / 2 - 14, 0));
-      // solapas abiertas
-      const flapL = rbox(obj.w * 0.44, 8, 290, COL.cartonDk, 3);
-      put(flapL, -obj.w * 0.3, obj.h / 2 + 18, 0);
-      flapL.rotation.z = 0.45;
-      const flapR = rbox(obj.w * 0.44, 8, 290, COL.cartonDk, 3);
-      put(flapR, obj.w * 0.3, obj.h / 2 + 18, 0);
-      flapR.rotation.z = -0.45;
+      // Caja de cartón en corte (cutaway): Nero es visible dentro.
+      // Las solapas superiores se abren con cada salto — el progreso se VE.
+      const w = obj.w, h = obj.h, d = 300, t = 14;
+      g.add(put(rbox(w, t, d, COL.carton, 5), 0, -h / 2 + t / 2, 0));            // fondo
+      g.add(put(rbox(w, h, t, COL.carton, 8), 0, 0, -d / 2 + t / 2));            // pared trasera
+      g.add(put(rbox(t, h, d, COL.carton, 8), -w / 2 + t / 2, 0, 0));            // pared izquierda
+      g.add(put(rbox(t, h, d, COL.carton, 8), w / 2 - t / 2, 0, 0));             // pared derecha
+      g.add(put(rbox(w, 30, t, COL.cartonDk, 5), 0, -h / 2 + 15, d / 2 - t / 2)); // labio frontal bajo
+
+      // solapas animadas (bisagra en el borde superior de cada pared lateral)
+      const flapL = new THREE.Group();
+      flapL.position.set(-w / 2 + t / 2, h / 2, 0);
+      flapL.add(put(rbox(w * 0.52, 10, d - 24, COL.cartonDk, 4), w * 0.26, 0, 0));
+      const flapR = new THREE.Group();
+      flapR.position.set(w / 2 - t / 2, h / 2, 0);
+      flapR.add(put(rbox(w * 0.52, 10, d - 24, COL.cartonDk, 4), -w * 0.26, 0, 0));
       g.add(flapL, flapR);
-      // ojos de Nero asomando en la cara frontal
-      const eyeW1 = sph(11, 0xFFFFFF, { rough: 0.4 }); put(eyeW1, -20, obj.h * 0.12, 152);
-      const eyeW2 = eyeW1.clone(); eyeW2.position.x = 20;
-      const pup1 = sph(5, 0x26221D); put(pup1, -20, obj.h * 0.12, 162);
-      const pup2 = pup1.clone(); pup2.position.x = 20;
-      g.add(eyeW1, eyeW2, pup1, pup2);
-      g.userData.isBox = true;
-      g.userData.pivotY = obj.h * 0.65;   // mismo pivote de giro que el 2D
+
+      // haz de luz que entra por la abertura (crece con el progreso)
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(w * 0.40, w * 0.14, h * 0.92, 20, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0xFFF3D8, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide })
+      );
+      put(shaft, 0, h * 0.04, 0);
+      g.add(shaft);
+
+      g.userData = { isBox: true, flapL, flapR, shaft };
     } else {
       // pushable genérico: caja de madera
       g.add(put(rbox(obj.w, obj.h, Math.min(obj.w, 260), COL.wood, 8), 0, 0, 0));
@@ -606,9 +724,14 @@ export function createRenderer3D(canvas) {
     console.warn('No se pudo cargar assets/nero.glb — se mantiene el gato placeholder.', err);
   });
 
-  function updateCat(cat, dt) {
+  function updateCat(cat, dt, baby) {
     const { g, body, eyeL, eyeR, tail } = catRig;
     g.position.set(tX(cat.x), tY(cat.y), 0);
+
+    // en el prólogo Nero es un cachorro: más pequeño
+    const targetScale = baby ? 0.7 : 1;
+    const cs = g.scale.x + (targetScale - g.scale.x) * Math.min(1, dt * 5);
+    g.scale.setScalar(cs);
 
     // pose objetivo según estado
     let sy = 1, sx = 1, rotZ = 0, oy = 0;
@@ -699,7 +822,7 @@ export function createRenderer3D(canvas) {
   function update(dt, state) {
     time += dt;
     const cat = state.cat;
-    updateCat(cat, dt);
+    updateCat(cat, dt, !!state.baby);
 
     // props
     if (yarnMesh && state.yarn) {
@@ -734,31 +857,32 @@ export function createRenderer3D(canvas) {
       const g = pushMeshes[i];
       if (!g) return;
       if (obj.broken) { g.visible = false; return; }
+      g.position.set(tX(obj.x + obj.w / 2), tY(obj.y + obj.h / 2), 0);
       if (g.userData.isBox) {
         const jc = state.jumpCounter;
-        g.visible = true;                          // la caja queda volcada tras el escape
-        // pivote de giro al 65% de la altura, como en 2D
-        const cx2 = obj.x + obj.w / 2, py2 = obj.y + g.userData.pivotY;
-        g.position.set(tX(cx2), tY(py2), 0);
+        const progress = jc ? Math.min(1, jc.count / jc.required) : 0;
+        const pop = state.boxPulse || 0;
+        // apertura de solapas: crece con los saltos, con un empujón extra en cada golpe
+        const open01 = jc?.complete ? 1 : Math.min(1, progress * 0.8 + pop * 0.22);
+        const { flapL, flapR, shaft } = g.userData;
+        const k3 = 1 - Math.pow(0.001, dt);
+        const targetL = 0.10 + (2.35 - 0.10) * open01;
+        flapL.rotation.z += (targetL - flapL.rotation.z) * k3;
+        flapR.rotation.z = -flapL.rotation.z;
+        shaft.material.opacity = 0.04 + 0.34 * open01 + 0.18 * pop;
+        // sacudida al saltar
         g.rotation.z = -(state.boxTilt || 0);
-        // el grupo se construyó con el cuerpo centrado en su origen: desplazar los
-        // hijos para que el origen del grupo coincida con el pivote de giro
-        const centerOffset = g.userData.pivotY - obj.h / 2;
-        g.children.forEach(c => {
-          if (c.userData.baseY === undefined) c.userData.baseY = c.position.y;
-          c.position.y = c.userData.baseY + centerOffset;
-        });
+        g.scale.y = 1 + pop * 0.05;
+        g.scale.x = 1 - pop * 0.03;
         if (counterSprite) {
           counterSprite.spr.visible = !!jc && !jc.complete;
           if (jc && !jc.complete) {
-            counterSprite.spr.position.set(tX(cx2), tY(obj.y) + 70, 60);
+            counterSprite.spr.position.set(tX(obj.x + obj.w / 2), tY(obj.y) + 70, 60);
             const txt = `${jc.count}/${jc.required}`;
-            const sub = `${Math.round((jc.count / jc.required) * 100)}%`;
+            const sub = `${Math.round(progress * 100)}%`;
             if (counterLast !== txt) { counterSprite.draw(txt, sub); counterLast = txt; }
           }
         }
-      } else {
-        g.position.set(tX(obj.x + obj.w / 2), tY(obj.y + obj.h / 2), 0);
       }
     });
 

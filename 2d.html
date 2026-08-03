@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Nero 2D · una historia de gato</title>
+<link rel="stylesheet" href="styles/main.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F4ECE3">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="pill" id="acto">—</div>
+  <div class="pill" id="paws"></div>
+  <a class="pill" id="modeswap" href="index.html" title="Versión 3D">3D</a>
+  <div class="pill" id="reset">↺</div>
+  <div id="level-selector" style="display: none; position: fixed; top: 60px; right: 20px; z-index: 1000; background: rgba(0,0,0,0.9); border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto; pointer-events: auto;">
+    <div style="color: #fff; font-size: 12px; margin-bottom: 8px; font-weight: bold;">NIVEL:</div>
+    <div id="level-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
+    <button id="close-levels" style="width: 100%; margin-top: 8px; padding: 6px; background: #666; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Cerrar</button>
+  </div>
+  <button id="dev-levels" style="position: fixed; top: 20px; right: 20px; z-index: 999; padding: 6px 12px; background: rgba(100,100,100,0.8); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">🎮 NIVELES</button>
+</div>
+<div id="memory"></div>
+<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
+<div id="overlay"><div id="ocard">
+  <div class="catface" id="oface">🐈‍⬛</div>
+  <div class="kicker" id="okicker"></div>
+  <h1 id="otitle"></h1>
+  <h2 id="osub"></h2>
+  <p id="otext"></p>
+  <button id="obtn"></button>
+</div></div>
+
+<script src="js/polyfills.js"></script>
+<script type="module">
+import { CONFIG, createCat, createCamera, createLevelState, loadLevel, resetCat, resetCamera, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, createPushable, checkPuzzleCondition } from './js/core.js';
+import { createRenderer } from './js/renderer.js';
+import { createPhysics } from './js/physics.js';
+import { createUI } from './js/ui.js';
+import { createInputManager } from './js/input.js';
+import { createLevelEditor } from './js/levelEditor.js';
+import { loadAssets } from './js/assetLoader.js';
+
+async function main() {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Load game data — con soporte de borrador del editor (?draft=1 + localStorage)
+  const useDraft = new URLSearchParams(location.search).has('draft');
+  const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
+  const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
+  const [levelsRes, storiesRes] = await Promise.all([
+    fetch('data/scenes.json'),
+    fetch('data/stories.json')
+  ]);
+  const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
+
+  // Cargar SVG assets
+  const assets = await loadAssets();
+  console.log("✅ Assets cargados:", assets);
+  const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
+
+  // Create game systems
+  const config = { ...CONFIG, W, H, currentLevel: 0 };
+  const renderer = createRenderer(ctx, config);
+  const physics = createPhysics(config);
+  const ui = createUI();
+  const cat = createCat();
+  const cam = createCamera();
+  const levelState = createLevelState();
+  const levelEditor = createLevelEditor(canvas, ctx, config, levels);
+
+  // Cinematics for origin story
+  const cinematics = {
+    2: { // Nivel 1B: El Encuentro (Rama B)
+      text: `Nero no logró subirse a tiempo. Resbala. Cae.<br><br>Una sombra enorme lo cubre.<br>Una voz profunda dice: "¿Qué haces aquí, pequeño?"<br><br>Manos suaves lo levantan.<br>Nero está asustado pero... seguro.`,
+      duration: 4000
+    },
+    5: { // Nivel 4: Amanecer
+      text: `<b>Un nuevo amanecer.</b><br><br>El dueño prepara café.<br>Nero baja del sofá, estirándose.<br><br>La cocina es la misma que ayer.<br>Pero Nero es diferente. El dueño es diferente.<br><br><b>La aventura verdadera comienza.</b>`,
+      duration: 5000
+    }
+  };
+
+  // Branch tracking (Rama A vs B del prólogo)
+  function recordBranch(branchId) {
+    try {
+      const data = JSON.parse(localStorage.getItem('nero_branches') || '{}');
+      data.origin = branchId;
+      data.timestamp = new Date().toISOString();
+      localStorage.setItem('nero_branches', JSON.stringify(data));
+      console.log('🌳 Branch saved:', branchId);
+    } catch (e) {
+      console.warn('Could not save branch:', e);
+    }
+  }
+
+  function getBranch() {
+    try {
+      const data = JSON.parse(localStorage.getItem('nero_branches') || '{}');
+      return data.origin;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Input setup
+  const inputMgr = createInputManager(canvas, config);
+  let hintShown = true;
+
+  inputMgr.setCallbacks({
+    onJump: ({ dir, big }) => {
+      const result = doJump(dir, big);
+      hintShown = result.hintShown;
+    },
+    onDrop: () => doDrop(),
+    onTargetJump: ({ x, y }) => tryTargetJump(x, y),
+    onChargeStart: () => {
+      if (levelState.mode === 'play' && cat.onGround && cat.state !== 'hang') {
+        cat.state = 'charge';
+        cat.squash = 0.8;
+      }
+    },
+    onHideHint: () => {
+      if (hintShown) {
+        hintShown = false;
+        ui.hideHint();
+      }
+    },
+    onReset: () => {
+      if (levelState.mode === 'play') {
+        resetLevel();
+      }
+    },
+    cat,
+    cam
+  });
+
+  ui.onResetClick(() => {
+    if (levelState.mode === 'play') {
+      resetLevel();
+    }
+  });
+
+  // Editor disabled for now - focusing on puzzle gameplay
+  // document.getElementById('editor-btn').addEventListener('click', () => {
+  //   levelEditor.openEditor();
+  // });
+
+  // Get movement modifiers for current level
+  function getMovementMods() {
+    const currentLevel = levels[levelState.level];
+    if (!currentLevel?.mechanics?.babyKitten) return { speed: 1, jump: 1 };
+    return {
+      speed: currentLevel.mechanics.speed || 0.7,
+      jump: currentLevel.mechanics.jumpHeight || 0.8
+    };
+  }
+
+  function doJump(dir, big) {
+    if (levelState.mode !== 'play') return { hintShown };
+
+    // Count jumps for Level 0
+    const currentLevel = levels[levelState.level];
+    if (currentLevel?.goalKind === 'jumps_counted' && cat.onGround) {
+      levelState.jumpCount++;
+      levelState.lastJumpDir = dir; // Track jump direction (left/right)
+      levelState.boxAnimT = 0.001; // Start new animation (tiny value to trigger)
+      const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
+      console.log(`⬆️ Salto ${levelState.jumpCount}/${requiredJumps} (dir: ${dir})`);
+    }
+
+    const mods = getMovementMods();
+
+    if (cat.state === 'slide' && !cat.onGround) {
+      const away = -cat.slideSide;
+      cat.vx = away * CONFIG.JUMP_VX * 1.2 * mods.speed;
+      cat.vy = -CONFIG.JUMP_VY * mods.jump;
+      cat.facing = away;
+      cat.state = 'air';
+      cat.squash = 1.25;
+      return { hintShown };
+    }
+    if (cat.state === 'hang') {
+      if (dir === -cat.hangSide) {
+        cat.state = 'air';
+        cat.onGround = false;
+        cat.hangPlat = null;
+        cat.vy = -CONFIG.BIG_VY * 0.85 * mods.jump;
+        cat.vx = dir * CONFIG.JUMP_VX * 1.35 * mods.speed;
+        cat.facing = dir;
+        cat.squash = 1.3;
+        return { hintShown };
+      }
+      cat.y = cat.hangPlat.y;
+      cat.x += cat.hangSide * 20;
+      cat.vy = -420 * mods.jump;
+      cat.vx = 0;
+      cat.state = 'air';
+      cat.onGround = false;
+      cat.hangPlat = null;
+      return { hintShown };
+    }
+    if (!cat.onGround) return { hintShown };
+    if (cat.landAge < 0.22) cat.combo = Math.min(cat.combo + 1, 3);
+    else cat.combo = 0;
+    const boost = 1 + 0.12 * cat.combo;
+    cat.onGround = false;
+    cat.state = 'air';
+    cat.vy = -(big ? CONFIG.BIG_VY : CONFIG.JUMP_VY) * boost * mods.jump;
+    cat.vx = dir * CONFIG.JUMP_VX * mods.speed;
+    if (dir !== 0) cat.facing = dir;
+    cat.squash = 1.25 + 0.05 * cat.combo;
+    if (hintShown) {
+      hintShown = false;
+      ui.hideHint();
+    }
+    return { hintShown };
+  }
+
+  function tryTargetJump(wx, wy) {
+    if (levelState.mode !== 'play' || !cat.onGround) return false;
+    let best = null;
+    for (const p of levelState.platforms) {
+      if (Math.abs(p.y - wy) > 70) continue;
+      const tx = Math.max(p.x + 14, Math.min(p.x + p.w - 14, wx));
+      if (Math.abs(tx - wx) > 70) continue;
+      if (p.y === cat.y && Math.abs(tx - cat.x) < 30) continue;
+      const d = Math.hypot(tx - cat.x, p.y - cat.y);
+      if (!best || d < best.d) best = { tx, ty: p.y, d };
+    }
+    if (!best) return false;
+    const rise = Math.max(cat.y - best.ty, 0) + 40;
+    const vy = -Math.sqrt(2 * CONFIG.GRAV * rise);
+    if (-vy > CONFIG.BIG_VY * 1.2) return false;
+    const disc = vy * vy + 2 * CONFIG.GRAV * (best.ty - cat.y);
+    if (disc < 0) return false;
+    const t = (-vy + Math.sqrt(disc)) / CONFIG.GRAV;
+    const vx = (best.tx - cat.x) / t;
+    if (Math.abs(vx) > 430) return false;
+    cat.onGround = false;
+    cat.state = 'air';
+    cat.vy = vy;
+    cat.vx = vx;
+    if (Math.abs(vx) > 20) cat.facing = Math.sign(vx);
+    cat.squash = 1.25;
+    if (hintShown) {
+      hintShown = false;
+      ui.hideHint();
+    }
+    return true;
+  }
+
+  function doDrop() {
+    if (levelState.mode !== 'play') return;
+    if (cat.state === 'hang') {
+      cat.state = 'air';
+      cat.hangPlat = null;
+      cat.vy = 100;
+      return;
+    }
+    if (cat.onGround) {
+      const p = levelState.platforms.find(p => cat.y === p.y);
+      if (!p || p.kind === 'floor') return;
+      cat.y += 3;
+      cat.vy = 180;
+      cat.onGround = false;
+      cat.state = 'air';
+      cat.squash = 1.15;
+    } else {
+      cat.vy += 500;
+    }
+  }
+
+  function startLevel(idx) {
+    levelState.level = idx;
+    resetCat(cat);
+    resetCamera(cam);
+    loadLevel(levelState, levels[idx]);
+
+    // Load pushables
+    const level = levels[idx];
+    levelState.pushables = [];
+    if (level.pushables && level.pushables.length > 0) {
+      levelState.pushables = level.pushables.map(p => {
+        const obj = createPushable(p);
+        obj.startX = p.x;
+        obj.startY = p.y;
+        return obj;
+      });
+    }
+
+    // Load puzzles
+    levelState.puzzles = level.puzzles || [];
+    levelState.puzzleSolved = {};
+    console.log('✅ Puzzles loaded:', levelState.puzzles.length);
+
+    renderer.updatePalette(levelState.level, levels);
+    ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
+    ui.resetHint();
+    hintShown = true;
+    levelState.mode = 'play';
+
+    // Handle timer challenges
+    const currentLevel = levels[idx];
+    if (currentLevel?.mechanics?.timerChallenge) {
+      ui.stopLevelTimer();
+      ui.startLevelTimer(currentLevel.mechanics.timerChallenge, () => {
+        // Timer expired: handle branch_b automatically
+        if (currentLevel.mechanics?.branchId === 'branch_a') {
+          recordBranch('branch_b');
+          levelState.levelDone = true;
+          levelState.level = 2; // Skip 1A, go to 1B (converge at level 2)
+          cinematicShown = false; // Reset for next level's cinematic
+          completeLevel();
+        }
+      });
+    } else {
+      ui.stopLevelTimer();
+    }
+  }
+
+  function resetLevel() {
+    startLevel(levelState.level);
+  }
+
+  function completeLevel() {
+    ui.stopLevelTimer();
+    if (levelState.level + 1 < levels.length) {
+      levelState.level++;
+      setTimeout(() => {
+        startLevel(levelState.level);
+        ui.showAct(levelState.level, levels, story);
+      }, 1600);
+    } else {
+      setTimeout(() => {
+        ui.showEnding(levelState.totalFound, levels, story);
+      }, 1600);
+    }
+  }
+
+  function showTitle() {
+    levelState.mode = 'ui';
+    ui.showTitle(story);
+    setTimeout(() => {
+      ui.elements.obtn.onclick = () => {
+        ui.hideCard();
+        showAct();
+      };
+    }, 100);
+  }
+
+  function showAct() {
+    ui.showAct(levelState.level, levels, story);
+    setTimeout(() => {
+      ui.elements.obtn.onclick = () => {
+        ui.hideCard();
+        startLevel(levelState.level);
+      };
+    }, 100);
+  }
+
+  // Game loop
+  let last = performance.now();
+  let cinematicShown = false;
+  let cinematicEndTime = 0;
+
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    const currentLevel = levels[levelState.level];
+
+    if (levelState.mode === 'play' && !levelState.levelDone) {
+      // Handle cinematic-only levels
+      if (currentLevel?.mechanics?.cinematicOnly) {
+        if (!cinematicShown) {
+          const cinematic = cinematics[levelState.level];
+          if (cinematic) {
+            ui.showCinematic(cinematic.text, cinematic.duration);
+            cinematicEndTime = now + cinematic.duration;
+          }
+          cinematicShown = true;
+        }
+        // Auto-complete after cinematic duration
+        if (now >= cinematicEndTime && cinematicShown) {
+          levelState.levelDone = true;
+          completeLevel();
+        }
+        // Still render the scene in background
+        renderer.drawBackground(levelState.level, levels, cat, cam);
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      cinematicShown = false;
+      // Check memory triggers
+      const memoryTriggers = checkMemoryTriggers(cat, levelState, levelState.platforms);
+      for (const id of memoryTriggers) {
+        if (!levelState.found[id]) {
+          levelState.found[id] = true;
+          levelState.totalFound++;
+          const m = levelState.memories.find(m => m.id === id);
+          if (m) ui.showMemory(m.text);
+          ui.updatePaws(levelState.memories, levelState.found);
+        }
+      }
+
+      // Check knock trigger
+      if (checkKnockTrigger(cat, levelState.knock)) {
+        levelState.knock.falling = true;
+        levelState.knock.vx = (levelState.knock.x > cat.x ? 1 : -1) * 120;
+        levelState.knock.vy = -80;
+      }
+
+      // Physics
+      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, currentLevel, levelState.pushables);
+      physics.stepKnock(levelState.knock, dt);
+      physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
+      if (levelState.pushables.length > 0) {
+        physics.stepPushables(levelState.pushables, cat, levelState.platforms, dt, currentLevel);
+      }
+
+      // Smooth box tilt animation for Level 0
+      // Box swing animation for Level 0
+      if (currentLevel?.goalKind === 'jumps_counted') {
+        const requiredJumps = currentLevel.goalParams?.requiredJumps || 8;
+
+        if (levelState.jumpCount >= requiredJumps) {
+          // Final jump: stay tilted and stable
+          const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
+          levelState.boxTiltAngle = (Math.PI / 2) * dirSign;
+        } else if (levelState.boxAnimT > 0 && levelState.boxAnimT < 1) {
+          // Mid-animation: apply easing curves
+          levelState.boxAnimT += dt / levelState.boxAnimDuration;
+          const t = Math.min(levelState.boxAnimT, 1);
+          const dirSign = levelState.lastJumpDir === 0 ? 1 : Math.sign(levelState.lastJumpDir);
+          const maxTilt = (levelState.jumpCount / requiredJumps) * (Math.PI / 2);
+
+          // Easing: ease-out on swing (fast start), ease-in on return (slow end)
+          let eased;
+          if (t < 0.4) {
+            // Swing phase (0-0.4): ease-out cubic
+            const swingT = t / 0.4;
+            eased = 1 - Math.pow(1 - swingT, 3); // Ease-out
+          } else {
+            // Return phase (0.4-1): ease-in cubic (NO overshoot - goes back to exactly 0)
+            const returnT = (t - 0.4) / 0.6;
+            eased = 1 - Math.pow(1 - returnT, 2); // Ease-in quadratic
+          }
+
+          levelState.boxTiltAngle = maxTilt * dirSign * eased;
+
+          // Animation complete: snap to 0
+          if (t >= 1) {
+            levelState.boxTiltAngle = 0;
+            levelState.boxAnimT = 0;
+          }
+        } else {
+          // Idle: keep centered
+          levelState.boxTiltAngle = 0;
+        }
+      }
+
+      // Handle sneak movement
+      const sneakDir = inputMgr.getSneakDir();
+      if (cat.onGround && sneakDir !== 0) {
+        const mods = getMovementMods();
+        cat.x += sneakDir * 115 * mods.speed * dt;
+        cat.x = Math.max(cat.w/2, Math.min(CONFIG.WORLD_W - cat.w/2, cat.x));
+        cat.facing = sneakDir;
+        cat.state = 'sneak';
+        const supported = levelState.platforms.some(p =>
+          cat.y === p.y && cat.x + cat.w*0.35 > p.x && cat.x - cat.w*0.35 < p.x + p.w);
+        if (!supported) { cat.onGround = false; cat.state = 'air'; }
+      }
+
+      // Check puzzle conditions
+      for (const puzzle of levelState.puzzles) {
+        if (!levelState.puzzleSolved[puzzle.id]) {
+          if (checkPuzzleCondition(puzzle, levelState)) {
+            levelState.puzzleSolved[puzzle.id] = true;
+            ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
+          }
+        }
+      }
+
+      // Check goal
+      if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind, levelState)) {
+        if (!levelState.levelDone) {
+          levelState.levelCompleteTime = now; // Record completion time
+          const goalMemory = levelState.memories.find(m => m.trigger === 'goal');
+          if (goalMemory && !levelState.found[goalMemory.id]) {
+            levelState.found[goalMemory.id] = true;
+            levelState.totalFound++;
+            ui.showMemory(goalMemory.text);
+            ui.updatePaws(levelState.memories, levelState.found);
+          }
+
+          // Record branch if origin story level
+          if (levelState.level === 1 && currentLevel?.mechanics?.branchId === 'branch_a') {
+            recordBranch('branch_a');
+          }
+
+          levelState.levelDone = true;
+          // Delay level completion for escape animation
+          setTimeout(() => completeLevel(), 1500);
+        }
+      }
+
+      physics.stepCam(cam, cat, W, H);
+    } else if (levelState.mode === 'ui') {
+      cat.tailT += dt;
+    }
+
+    // Render
+    renderer.drawBackground(levelState.level, levels, cat, cam);
+    ctx.save();
+    ctx.scale(cam.scale, cam.scale);
+    ctx.translate(-cam.x, -cam.y);
+
+    // Draw level-specific visuals
+    if (levelState.level === 0) {
+      renderer.drawBoxWalls();
+    }
+
+    for (const p of levelState.platforms) renderer.drawPlatform(p);
+    const topShelf = levelState.platforms.find(p => p.kind === 'top');
+    if (topShelf) renderer.drawPlant(topShelf.x + topShelf.w - 55, topShelf.y);
+    renderer.drawKnock(levelState.knock);
+    renderer.drawProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms);
+    if (levelState.pushables && levelState.pushables.length > 0) {
+      renderer.drawPushables(levelState.pushables, currentLevel?.goalKind === 'jumps_counted', levelState.jumpCount, currentLevel?.goalParams?.requiredJumps, levelState.boxTiltAngle || 0, now, levelState);
+    }
+    // Don't draw cat if in Level 0 (inside box)
+    if (currentLevel?.goalKind !== 'jumps_counted') {
+      renderer.drawCat(cat);
+    }
+
+    ctx.restore();
+
+    // Render editor overlay if active
+    if (levelEditor.isEditing()) {
+      ctx.save();
+      ctx.scale(1 / cam.scale, 1 / cam.scale);
+      levelEditor.render();
+      ctx.restore();
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // Start game - Show title first
+  loadLevel(levelState, levels[0]);
+  renderer.updatePalette(0, levels);
+  ui.updateHUD(0, levels, levelState.memories, levelState.found);
+  ui.setHintText(story?.ui?.hint ?? 'Salta ↑ para saltar · ↖ ↗ para saltar diagonalmente<br>8 saltos = escapa de la caja');
+  showTitle();
+  requestAnimationFrame(frame);
+
+  // Expose globals for testing/debugging
+  window.CONFIG = CONFIG;
+  window.cat = cat;
+  window.cam = cam;
+  window.levelState = levelState;
+  window.levels = levels;
+  window.story = story;
+
+  // Level selector for testing
+  const devBtn = document.getElementById('dev-levels');
+  const selector = document.getElementById('level-selector');
+  const levelList = document.getElementById('level-list');
+  const closeBtn = document.getElementById('close-levels');
+
+  devBtn.addEventListener('click', () => {
+    if (selector.style.display === 'none') {
+      selector.style.display = 'block';
+      levelList.innerHTML = '';
+      levels.forEach((lvl, idx) => {
+        const btn = document.createElement('button');
+        btn.textContent = `Lv ${idx}: ${lvl.name}`;
+        btn.style.cssText = `
+          width: 100%;
+          padding: 6px 8px;
+          background: ${levelState.level === idx ? '#888' : '#555'};
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 11px;
+          text-align: left;
+          transition: background 0.2s;
+        `;
+        btn.onmouseover = () => btn.style.background = '#777';
+        btn.onmouseout = () => btn.style.background = levelState.level === idx ? '#888' : '#555';
+        btn.onclick = () => {
+          if (levelState.mode === 'play' || levelState.mode === 'ui') {
+            levelState.levelDone = false;
+            startLevel(idx);
+            selector.style.display = 'none';
+          }
+        };
+        levelList.appendChild(btn);
+      });
+    } else {
+      selector.style.display = 'none';
+    }
+  });
+
+  closeBtn.addEventListener('click', () => {
+    selector.style.display = 'none';
+  });
+
+  // Debug pushables on keypress
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'd') {
+      console.log('🎲 Current pushables:', levelState.pushables);
+      levelState.pushables.forEach(p => {
+        console.log(`  ${p.id}: x=${p.x}, y=${p.y}, onGround=${p.onGround}, durability=${p.durability}/${p.maxDurability}, broken=${p.broken}`);
+      });
+    }
+    if (e.key === 'r') {
+      resetLevel();
+    }
+  });
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+main().catch(console.error);
+</script>
+</body>
+</html>
