@@ -1,12 +1,36 @@
-const CACHE_NAME = 'nero-pwa-v1';
+const CACHE_NAME = 'nero-pwa-v3';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css',
+  './prototype3d.html',
+  './editor.html',
+  './styles/main.css',
   './manifest.webmanifest',
-  './js/engine.js',
+  './js/polyfills.js',
+  './js/core.js',
+  './js/actions.js',
+  './js/physics.js',
+  './js/renderer.js',
+  './js/renderer3d.js',
+  './js/input.js',
+  './js/ui.js',
+  './js/editor.js',
+  './js/levelEditor.js',
+  './js/assetLoader.js',
+  './js/vendor/three.module.min.js',
+  './js/vendor/three.core.min.js',
+  './js/vendor/RoundedBoxGeometry.js',
+  './js/vendor/GLTFLoader.js',
+  './js/vendor/utils/BufferGeometryUtils.js',
+  './js/vendor/utils/SkeletonUtils.js',
+  './assets/nero.glb',
   './data/scenes.json',
-  './data/stories.json'
+  './data/stories.json',
+  './data/scenes3d.json',
+  './data/stories3d.json',
+  './data/story_origins.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -19,6 +43,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Red primero, caché como respaldo (para jugar sin conexión una vez visitado).
 self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then((match) => match || caches.match('./index.html'))));
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(event.request).then((match) => match || caches.match('./index.html')))
+  );
 });

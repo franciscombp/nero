@@ -1,0 +1,85 @@
+[
+  {
+    "name": "La cocina",
+    "kicker": "Acto I",
+    "time": "morning",
+    "tint": { "bg": "#F6EEE2", "band": "#F0E2CF" },
+    "intro": "La casa está en silencio. Nero se despierta solo: la familia salió temprano. Pero la cocina todavía huele a mañana… y alguien dejó su taza sin lavar.",
+    "platforms": [
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
+      { "x": 90, "y": 1545, "w": 150, "h": 16, "kind": "chair" },
+      { "x": 330, "y": 1400, "w": 300, "h": 22, "kind": "table" },
+      { "x": 700, "y": 1260, "w": 200, "h": 26, "kind": "counter" },
+      { "x": 480, "y": 1110, "w": 170, "h": 14, "kind": "shelf" },
+      { "x": 150, "y": 960, "w": 190, "h": 14, "kind": "shelf" },
+      { "x": 470, "y": 810, "w": 180, "h": 14, "kind": "shelf" },
+      { "x": 130, "y": 660, "w": 160, "h": 14, "kind": "shelf" },
+      { "x": 430, "y": 500, "w": 220, "h": 18, "kind": "top" },
+      { "x": 60, "y": 340, "w": 250, "h": 20, "kind": "window" }
+    ],
+    "goalKind": "window",
+    "knock": { "platform": 3, "offset": 60, "type": "mug", "memoryId": "taza" },
+    "yarn": true,
+    "bookShelf": 5,
+    "memories": [
+      { "id": "taza", "trigger": "knock", "x": 130, "y": 470, "text": "La taza favorita del abuelo se hizo pedazos.<br><b>Nadie la usaba… pero nadie se atrevía a guardarla.</b>" },
+      { "id": "planta", "trigger": "platform", "pi": 8, "x": 380, "y": 390, "text": "La monstera que mamá riega cada domingo.<br><b>«No la toques, Nero», dice siempre. Demasiado tarde.</b>" },
+      { "id": "ventana", "trigger": "goal", "x": 610, "y": 290, "text": "Desde la ventana se ve el camino a la escuela.<br><b>Por ahí se fueron todos esta mañana.</b>" }
+    ]
+  },
+  {
+    "name": "La sala",
+    "kicker": "Acto II",
+    "time": "afternoon",
+    "tint": { "bg": "#F7E8DF", "band": "#F1DACE" },
+    "intro": "La tarde entra baja por las cortinas. Los cojines del sofá aún guardan la forma de la última siesta juntos. Nero busca los rincones donde la familia deja sus huellas.",
+    "platforms": [
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
+      { "x": 540, "y": 1550, "w": 280, "h": 20, "kind": "sofa" },
+      { "x": 230, "y": 1410, "w": 190, "h": 16, "kind": "table" },
+      { "x": 620, "y": 1260, "w": 180, "h": 14, "kind": "shelf" },
+      { "x": 300, "y": 1115, "w": 180, "h": 14, "kind": "frameshelf" },
+      { "x": 40, "y": 970, "w": 160, "h": 14, "kind": "shelf" },
+      { "x": 420, "y": 820, "w": 190, "h": 14, "kind": "shelf" },
+      { "x": 110, "y": 670, "w": 150, "h": 14, "kind": "shelf" },
+      { "x": 470, "y": 510, "w": 200, "h": 18, "kind": "top" },
+      { "x": 90, "y": 350, "w": 230, "h": 20, "kind": "door" }
+    ],
+    "goalKind": "door",
+    "knock": null,
+    "yarn": true,
+    "bookShelf": 6,
+    "memories": [
+      { "id": "manta", "trigger": "platform", "pi": 1, "x": 180, "y": 470, "text": "La manta del sofá huele a todos a la vez.<br><b>Aquí caben cuatro personas y un gato, apretados y felices.</b>" },
+      { "id": "retrato", "trigger": "platform", "pi": 4, "x": 420, "y": 390, "text": "El retrato de la playa, un poco torcido.<br><b>Ese día Nero era apenas una bolita negra en la arena.</b>" },
+      { "id": "puerta", "trigger": "goal", "x": 670, "y": 300, "text": "La puerta del pasillo quedó entreabierta.<br><b>Del otro lado, el cuarto de la niña. Su lugar favorito.</b>" }
+    ]
+  },
+  {
+    "name": "El cuarto",
+    "kicker": "Acto III",
+    "time": "night",
+    "tint": { "bg": "#E7E3F0", "band": "#DBD6E9" },
+    "intro": "Ya es de noche y la casa suspira. En el cuarto de la niña la luna dibuja las cosas con luz suave. Escaleras de muebles llevan hasta la cama alta. Falta poco para que vuelvan.",
+    "platforms": [
+      { "x": 0, "y": 1690, "w": 900, "h": 60, "kind": "floor" },
+      { "x": 610, "y": 1550, "w": 170, "h": 16, "kind": "chair" },
+      { "x": 250, "y": 1405, "w": 230, "h": 18, "kind": "desk" },
+      { "x": 20, "y": 1260, "w": 180, "h": 16, "kind": "dresser" },
+      { "x": 360, "y": 1110, "w": 160, "h": 14, "kind": "shelf" },
+      { "x": 650, "y": 960, "w": 170, "h": 14, "kind": "shelf" },
+      { "x": 290, "y": 805, "w": 170, "h": 14, "kind": "starshelf" },
+      { "x": 600, "y": 650, "w": 160, "h": 14, "kind": "shelf" },
+      { "x": 180, "y": 490, "w": 300, "h": 26, "kind": "bed" }
+    ],
+    "goalKind": "bed",
+    "knock": { "platform": 2, "offset": 50, "type": "toy", "memoryId": "juguete" },
+    "yarn": false,
+    "bookShelf": 4,
+    "memories": [
+      { "id": "juguete", "trigger": "knock", "x": 180, "y": 470, "text": "El ratón de trapo rodó bajo el escritorio.<br><b>Fue el primer regalo de la niña. Ya casi no tiene orejas.</b>" },
+      { "id": "estrellas", "trigger": "platform", "pi": 6, "x": 390, "y": 390, "text": "El móvil de estrellas gira despacito.<br><b>Cada noche la niña le pide un deseo. Casi siempre es sobre Nero.</b>" },
+      { "id": "cama", "trigger": "goal", "x": 660, "y": 300, "text": "La cama alta, tibia de tantas noches.<br><b>Se oye la puerta de casa: ya volvieron. Nero cierra los ojos.</b>" }
+    ]
+  }
+]

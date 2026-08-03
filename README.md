@@ -1,10 +1,21 @@
 # Nero · una historia de gato 🐈‍⬛
 
-Juego de exploración doméstica en **tres actos**, protagonizado por un gato negro "líquido".
+Juego de exploración doméstica protagonizado por un gato negro "líquido".
 
 **Jugable:** [nero.maldonado.pro](https://nero.maldonado.pro) ✨
 
 Arquitectura modular, sin dependencias externas, totalmente configurable y escalable.
+
+## Las tres páginas del proyecto
+
+| Página | Qué es |
+|---|---|
+| `index.html` | El juego 2D (canvas): historia de origen + niveles narrativos en desarrollo |
+| `prototype3d.html` | **Prototipo 2.5D** con Three.js: los 3 actos clásicos con render 3D estilo soft (ref. iconos Airbnb) y el modelo rigeado de Nero (`assets/nero.glb`). Mismo gameplay y física que el 2D |
+| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 2D (`?draft=1`) o 3D al instante |
+
+> El prototipo 3D usa su propio snapshot de datos (`data/scenes3d.json` + `data/stories3d.json`)
+> para evolucionar en paralelo sin romperse mientras el juego 2D experimenta con nuevas mecánicas.
 
 ## La historia
 

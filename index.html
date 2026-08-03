@@ -58,17 +58,20 @@ async function main() {
   window.addEventListener('resize', resize);
   resize();
 
-  // Load game data
+  // Load game data — con soporte de borrador del editor (?draft=1 + localStorage)
+  const useDraft = new URLSearchParams(location.search).has('draft');
+  const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
+  const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
   const [levelsRes, storiesRes] = await Promise.all([
     fetch('data/scenes.json'),
     fetch('data/stories.json')
   ]);
-  const levels = await levelsRes.json();
-  
+  const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
+
   // Cargar SVG assets
   const assets = await loadAssets();
   console.log("✅ Assets cargados:", assets);
-  const story = await storiesRes.json();
+  const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
 
   // Create game systems
   const config = { ...CONFIG, W, H, currentLevel: 0 };

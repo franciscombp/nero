@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Nero 3D · prototipo 2.5D</title>
+<link rel="stylesheet" href="styles/main.css">
+<meta name="theme-color" content="#F4ECE3">
+<script type="importmap">
+{ "imports": { "three": "./js/vendor/three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="pill" id="acto">—</div>
+  <div class="pill" id="paws"></div>
+  <a class="pill" id="modeswap" href="index.html" title="Volver a la versión 2D">2D</a>
+  <div class="pill" id="reset">↺</div>
+</div>
+<div id="memory"></div>
+<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
+<div id="overlay"><div id="ocard">
+  <div class="catface" id="oface">🐈‍⬛</div>
+  <div class="kicker" id="okicker"></div>
+  <h1 id="otitle"></h1>
+  <h2 id="osub"></h2>
+  <p id="otext"></p>
+  <button id="obtn"></button>
+</div></div>
+
+<script type="module">
+import { CONFIG, createCat, createLevelState, loadLevel, resetCat, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger } from './js/core.js';
+import { createPhysics } from './js/physics.js';
+import { createUI } from './js/ui.js';
+import { createRenderer3D } from './js/renderer3d.js';
+import { doJump as jumpAction, tryTargetJump as targetJumpAction, doDrop as dropAction, applySneak } from './js/actions.js';
+
+async function main() {
+  const canvas = document.getElementById('game');
+
+  // Datos: el prototipo 3D usa su propio snapshot de los 3 actos clásicos (scenes3d.json)
+  // para no depender de los experimentos del juego 2D. Soporta borradores (?draft=1).
+  const useDraft = new URLSearchParams(location.search).has('draft');
+  const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
+  const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
+  const [levelsRes, storiesRes] = await Promise.all([
+    fetch('data/scenes3d.json'),
+    fetch('data/stories3d.json')
+  ]);
+  const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
+  const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
+
+  const physics = createPhysics(CONFIG);
+  const ui = createUI();
+  const cat = createCat();
+  const levelState = createLevelState();
+  const r3d = createRenderer3D(canvas);
+
+  let W = window.innerWidth, H = window.innerHeight;
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    r3d.resize(W, H);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let hintShown = true;
+  function hideHintOnce() {
+    if (hintShown) { hintShown = false; ui.hideHint(); }
+  }
+
+  function doJump(dir, big) {
+    if (levelState.mode !== 'play') return;
+    if (jumpAction(cat, dir, big)) hideHintOnce();
+  }
+  function doDrop() {
+    if (levelState.mode !== 'play') return;
+    dropAction(cat, levelState.platforms);
+  }
+
+  // ---------- Input (gestos idénticos al 2D; el tap se proyecta al plano de juego) ----------
+  let pressT = null, pressZone = 0, pressStart = null, sneakTouch = 0;
+  const pointers = new Set();
+  const held = { l: false, r: false, shift: false };
+  const sneakDir = () => sneakTouch || (held.shift ? (held.r ? 1 : 0) - (held.l ? 1 : 0) : 0);
+
+  canvas.addEventListener('pointerdown', e => {
+    pointers.add(e.pointerId);
+    if (pointers.size >= 2) { doJump(pressZone, true); pressT = null; return; }
+    pressZone = e.clientX < W / 3 ? -1 : (e.clientX > 2 * W / 3 ? 1 : 0);
+    pressT = performance.now();
+    pressStart = { x: e.clientX, y: e.clientY };
+    if (levelState.mode === 'play' && cat.onGround && cat.state !== 'hang') {
+      cat.state = 'charge'; cat.squash = 0.8;
+    }
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!pressStart || pointers.size !== 1) return;
+    const dx = e.clientX - pressStart.x, dy = e.clientY - pressStart.y;
+    if (Math.abs(dx) > 22 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      sneakTouch = Math.sign(dx);
+      pressT = null;
+      hideHintOnce();
+    }
+  });
+  function releasePointer(e) {
+    pointers.delete(e.pointerId);
+    const start = pressStart;
+    if (pointers.size === 0) { sneakTouch = 0; pressStart = null; }
+    if (pressT === null) return;
+    const heldMs = performance.now() - pressT;
+    pressT = null;
+    if (start && e.clientX !== undefined) {
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (dy < -30) {
+        const dir = dx > 36 ? 1 : dx < -36 ? -1 : 0;
+        const big = -dy > 130 || (heldMs < 180 && -dy > 70);
+        doJump(dir, big);
+        return;
+      }
+      if (dy > 30 && Math.abs(dy) > Math.abs(dx)) { doDrop(); return; }
+    }
+    const { wx, wy } = r3d.screenToWorld(e.clientX, e.clientY);
+    if (levelState.mode === 'play' && targetJumpAction(cat, levelState.platforms, wx, wy)) {
+      hideHintOnce();
+    } else {
+      const dir = Math.abs(wx - cat.x) > 40 ? Math.sign(wx - cat.x) : 0;
+      doJump(dir, heldMs > 350);
+    }
+  }
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Shift') held.shift = true;
+    if (e.key === 'ArrowLeft') held.l = true;
+    if (e.key === 'ArrowRight') held.r = true;
+    if (e.repeat) return;
+    if (e.key === 'ArrowLeft') { if (!e.shiftKey) doJump(-1, false); }
+    else if (e.key === 'ArrowRight') { if (!e.shiftKey) doJump(1, false); }
+    else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
+    else if (e.key === 'ArrowDown') doDrop();
+    else if (e.key === 'r' || e.key === 'R') { if (levelState.mode === 'play') resetLevel(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'Shift') held.shift = false;
+    if (e.key === 'ArrowLeft') held.l = false;
+    if (e.key === 'ArrowRight') held.r = false;
+  });
+  ui.onResetClick(() => { if (levelState.mode === 'play') resetLevel(); });
+
+  // ---------- Flujo de niveles ----------
+  function startLevel(idx) {
+    levelState.level = idx;
+    resetCat(cat);
+    loadLevel(levelState, levels[idx]);
+    r3d.loadScene(levels[idx], levelState);
+    ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found);
+    ui.resetHint();
+    hintShown = true;
+  }
+  function resetLevel() {
+    startLevel(levelState.level);
+    levelState.mode = 'play';
+  }
+  function completeLevel() {
+    if (levelState.level + 1 < levels.length) {
+      levelState.level++;
+      setTimeout(showAct, 1600);
+    } else {
+      const total = levels.reduce((sum, s) => sum + s.memories.length, 0);
+      setTimeout(() => ui.showCard({
+        face: '🌙', kicker: 'fin', sub: 'La casa llena',
+        text: `${story?.ui?.final ?? ''}<br><br>🐾 Recuerdos encontrados: <b>${levelState.totalFound} / ${total}</b>`,
+        btn: 'Jugar otra vez',
+        then: () => { levelState.totalFound = 0; levelState.level = 0; showAct(); }
+      }), 1600);
+    }
+  }
+  function showTitle() {
+    levelState.mode = 'ui';
+    ui.showCard({
+      kicker: story?.title?.kicker ?? 'una historia de gato en tres actos',
+      title: story?.title?.title ?? 'N E R O',
+      text: story?.title?.body ?? '',
+      btn: 'Empezar',
+      then: showAct
+    });
+  }
+  function showAct() {
+    levelState.mode = 'ui';
+    startLevel(levelState.level);
+    const L = levels[levelState.level];
+    ui.showCard({
+      kicker: L.kicker, sub: L.name, text: L.intro, btn: 'Jugar',
+      then: () => { levelState.mode = 'play'; }
+    });
+  }
+
+  function collect(id) {
+    if (levelState.found[id]) return;
+    levelState.found[id] = true;
+    levelState.totalFound++;
+    const m = levelState.memories.find(m => m.id === id);
+    if (m) ui.showMemory(m.text);
+    ui.updatePaws(levelState.memories, levelState.found);
+  }
+
+  // ---------- Loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    if (levelState.mode === 'play' && !levelState.levelDone) {
+      for (const id of checkMemoryTriggers(cat, levelState, levelState.platforms)) collect(id);
+
+      if (checkKnockTrigger(cat, levelState.knock)) {
+        levelState.knock.falling = true;
+        levelState.knock.vx = (levelState.knock.x > cat.x ? 1 : -1) * 120;
+        levelState.knock.vy = -80;
+      }
+
+      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, levels[levelState.level]);
+      physics.stepKnock(levelState.knock, dt);
+      physics.stepProps(levelState.yarn, levelState.books, levelState.bookShelfIdx, levelState.platforms, cat, dt);
+      applySneak(cat, levelState.platforms, sneakDir(), dt);
+
+      const kn = levelState.knock;
+      if (kn && kn.broken && kn.memoryId) collect(kn.memoryId);
+
+      if (checkGoalTrigger(cat, levelState.platforms, levels[levelState.level].goalKind, levelState)) {
+        const gm = levelState.memories.find(m => m.trigger === 'goal');
+        if (gm) collect(gm.id);
+        levelState.levelDone = true;
+        completeLevel();
+      }
+    } else {
+      cat.tailT += dt;
+    }
+
+    r3d.update(dt, {
+      cat,
+      knock: levelState.knock,
+      yarn: levelState.yarn,
+      books: levelState.books,
+      bookShelfIdx: levelState.bookShelfIdx,
+      platforms: levelState.platforms
+    });
+    r3d.render();
+    requestAnimationFrame(frame);
+  }
+
+  startLevel(0);
+  ui.setHintText(story?.ui?.hint ?? '');
+  showTitle();
+  requestAnimationFrame(frame);
+
+  // Globals para testing/debug
+  window.CONFIG = CONFIG;
+  window.cat = cat;
+  window.levelState = levelState;
+  window.levels = levels;
+}
+
+main().catch(err => {
+  console.error(err);
+  document.body.insertAdjacentHTML('beforeend',
+    `<div style="position:fixed;inset:auto 10px 10px;background:#FBF6EE;border-radius:12px;padding:12px;color:#4A4139;font-size:13px">Error al cargar el prototipo 3D: ${err.message}</div>`);
+});
+</script>
+</body>
+</html>
