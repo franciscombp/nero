@@ -539,11 +539,16 @@ export function createRenderer3D(canvas) {
       // Caja de cartón en corte (cutaway): Nero es visible dentro.
       // Las solapas superiores se abren con cada salto — el progreso se VE.
       const w = obj.w, h = obj.h, d = 300, t = 14;
-      g.add(put(rbox(w, t, d, COL.carton, 5), 0, -h / 2 + t / 2, 0));            // fondo
-      g.add(put(rbox(w, h, t, COL.carton, 8), 0, 0, -d / 2 + t / 2));            // pared trasera
+      g.add(put(rbox(w, t, d, 0xA08258, 5), 0, -h / 2 + t / 2, 0));              // fondo (claro)
+      g.add(put(rbox(w, h, t, 0xA08258, 8), 0, 0, -d / 2 + t / 2));              // pared trasera (clara)
       g.add(put(rbox(t, h, d, COL.carton, 8), -w / 2 + t / 2, 0, 0));            // pared izquierda
       g.add(put(rbox(t, h, d, COL.carton, 8), w / 2 - t / 2, 0, 0));             // pared derecha
       g.add(put(rbox(w, 30, t, COL.cartonDk, 5), 0, -h / 2 + 15, d / 2 - t / 2)); // labio frontal bajo
+      // luz interior: una rendija al principio, un chorro de luz al abrirse
+      const glow = new THREE.PointLight(0xFFE8C0, 1.4, 700, 1.1);
+      glow.position.set(0, h * 0.12, 70);
+      g.add(glow);
+      g.userData.glow = glow;
 
       // solapas animadas (bisagra en el borde superior de cada pared lateral)
       const flapL = new THREE.Group();
@@ -648,6 +653,65 @@ export function createRenderer3D(canvas) {
   scene.add(catRig.g);
   let blinkT = 0, blinkUntil = 0;
   let catMixer = null;
+  let catAction = null;
+  let catBones = null;
+
+  // ---------- capa de poses procedurales sobre el esqueleto ----------
+  // Offsets aditivos aplicados DESPUÉS del mixer (el clip horneado pone la base,
+  // estas rotaciones esculpen la pose del estado encima).
+  // El take del GLB es un ciclo de caminata de 1s. Cada estado o bien lo reproduce
+  // (sneak) o lo congela en un frame útil (freeze) y esculpe la pose encima:
+  //   patas: eje z (positivo = barrer hacia atrás) · cola: x (positivo = levantar)
+  //   cabeza: x (positivo = agachar)
+  const POSES = {
+    idle:   { fl: 0,     bl: 0,     head: 0,     tail: 0.12,  ear: 0,    speed: 0,    freeze: 0.4 },
+    charge: { fl: 0.35,  bl: -0.30, head: 0.28,  tail: -0.10, ear: 0.30, speed: 0,    freeze: 0.4 },
+    air:    { fl: -0.55, bl: 0.45,  head: -0.30, tail: 0.45,  ear: 0.40, speed: 0,    freeze: 0 },
+    land:   { fl: 0.40,  bl: -0.35, head: 0.22,  tail: 0.08,  ear: 0.20, speed: 0,    freeze: 0.4 },
+    sneak:  { fl: 0.20,  bl: -0.15, head: 0.15,  tail: -0.30, ear: 0.55, speed: 1.35 },
+    hang:   { fl: -0.75, bl: 0.25,  head: -0.45, tail: 0.30,  ear: 0.20, speed: 0,    freeze: 0.15 },
+    slide:  { fl: -0.50, bl: 0.35,  head: -0.40, tail: 0.50,  ear: 0.30, speed: 0,    freeze: 0.15 }
+  };
+  const poseCur = { fl: 0, bl: 0, head: 0, tail: 0, ear: 0 };
+  // Ejes de flexión calibrados contra el rig real (ver diagnóstico con __poseOverride)
+  const AXES = { legs: 'z', legSign: 1, tail: 'x', tailSway: 'y', head: 'x', ears: 'x' };
+
+  function applyPose(cat, dt) {
+    if (!catBones) return;
+    const t = POSES[cat.state] ?? POSES.idle;
+    if (catMixer) {
+      catMixer.timeScale = t.speed;
+      // con el ciclo congelado, deslizar el frame hacia el punto útil del take
+      if (t.speed === 0 && catAction && t.freeze != null) {
+        catAction.time += (t.freeze - catAction.time) * Math.min(1, dt * 8);
+      }
+    }
+    const k = 1 - Math.pow(0.0004, dt);
+    poseCur.fl += (t.fl - poseCur.fl) * k;
+    poseCur.bl += (t.bl - poseCur.bl) * k;
+    poseCur.head += (t.head - poseCur.head) * k;
+    poseCur.tail += (t.tail - poseCur.tail) * k;
+    poseCur.ear += (t.ear - poseCur.ear) * k;
+    if (typeof window !== 'undefined' && window.__poseOverride) Object.assign(poseCur, window.__poseOverride);
+
+    for (const { chain, sign } of catBones.legsF) {
+      if (chain[0]) chain[0].rotation[AXES.legs] += poseCur.fl * sign * AXES.legSign;
+      if (chain[1]) chain[1].rotation[AXES.legs] += poseCur.fl * sign * AXES.legSign * -0.55;
+    }
+    for (const { chain, sign } of catBones.legsB) {
+      if (chain[0]) chain[0].rotation[AXES.legs] += poseCur.bl * sign * AXES.legSign;
+      if (chain[1]) chain[1].rotation[AXES.legs] += poseCur.bl * sign * AXES.legSign * -0.5;
+    }
+    if (catBones.head) catBones.head.rotation[AXES.head] += poseCur.head;
+    if (catBones.chest && cat.state === 'idle') {
+      catBones.chest.rotation.x += Math.sin(time * 2.4) * 0.02;        // respiración
+    }
+    catBones.tail.forEach((tb, i) => {
+      tb.rotation[AXES.tail] += poseCur.tail * (0.30 + i * 0.14);
+      tb.rotation[AXES.tailSway] += Math.sin(time * 2.2 + i * 0.65) * (0.09 + (cat.state === 'idle' ? 0.07 : 0));
+    });
+    for (const eb of catBones.ears) eb.rotation[AXES.ears] += poseCur.ear * 0.8;
+  }
 
   function buildCat() {
     const g = new THREE.Group();
@@ -697,11 +761,21 @@ export function createRenderer3D(canvas) {
         }
       }
     });
-    // Auto-escala a la altura del gameplay y pies apoyados en y=0
+    // Escala consistente con el escenario: se mide el CUERPO (suelo → hueso de la
+    // cabeza), no el bbox — la cola levantada lo inflaba y encogía al gato.
+    model.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
-    // El bbox incluye la cola levantada; compensamos para que el cuerpo quede a escala del gameplay
-    const s = 105 / size.y;
+    const headBone = model.getObjectByName('head');
+    let s;
+    if (headBone) {
+      const hp = new THREE.Vector3();
+      headBone.getWorldPosition(hp);
+      const bodyH = hp.y - box.min.y;
+      s = 84 / bodyH;               // cabeza del gato adulto a ~84u (silla: asiento a 145u)
+    } else {
+      s = 128 / size.y;
+    }
     model.scale.setScalar(s);
     box.setFromObject(model);
     model.position.set(
@@ -716,9 +790,31 @@ export function createRenderer3D(canvas) {
     catRig.ph.visible = false;
     catRig.body.add(wrap);
 
+    // Captura del esqueleto para la capa de poses procedurales
+    const bn = {};
+    model.traverse(n => { if (n.isBone) bn[n.name] = n; });
+    catBones = {
+      chest: bn.chest,
+      head: bn.head,
+      tail: ['tailstart', 'tail1', 'tail2', 'tail3'].map(k => bn[k]).filter(Boolean),
+      ears: [bn.earend, bn.R_earend].filter(Boolean),
+      legsF: [
+        { chain: ['frontleg', 'frontleg0', 'frontleg1'].map(k => bn[k]).filter(Boolean), sign: 1 },
+        { chain: ['R_frontleg', 'R_frontleg0', 'R_frontleg1'].map(k => bn[k]).filter(Boolean), sign: 1 }
+      ],
+      legsB: [
+        { chain: ['backleg', 'backleg0', 'backleg1'].map(k => bn[k]).filter(Boolean), sign: 1 },
+        { chain: ['R_backleg', 'R_backleg0', 'R_backleg1'].map(k => bn[k]).filter(Boolean), sign: 1 }
+      ]
+    };
+
     if (gltf.animations && gltf.animations.length) {
       catMixer = new THREE.AnimationMixer(model);
-      catMixer.clipAction(gltf.animations[0]).play();
+      catAction = catMixer.clipAction(gltf.animations[0]);
+      catAction.play();
+      if (typeof window !== 'undefined') {
+        window.__nero3d.anim = { mixer: catMixer, action: catAction, duration: gltf.animations[0].duration };
+      }
     }
   }, undefined, (err) => {
     console.warn('No se pudo cargar assets/nero.glb — se mantiene el gato placeholder.', err);
@@ -728,8 +824,8 @@ export function createRenderer3D(canvas) {
     const { g, body, eyeL, eyeR, tail } = catRig;
     g.position.set(tX(cat.x), tY(cat.y), 0);
 
-    // en el prólogo Nero es un cachorro: más pequeño
-    const targetScale = baby ? 0.7 : 1;
+    // en el prólogo Nero es un cachorro: más pequeño (pero no diminuto)
+    const targetScale = baby ? 0.8 : 1;
     const cs = g.scale.x + (targetScale - g.scale.x) * Math.min(1, dt * 5);
     g.scale.setScalar(cs);
 
@@ -765,6 +861,7 @@ export function createRenderer3D(canvas) {
       eyeR.scale.y = eyeL.scale.y;
     }
     if (catMixer) catMixer.update(dt);
+    applyPose(cat, dt);
   }
 
   // ---------- API ----------
@@ -864,12 +961,13 @@ export function createRenderer3D(canvas) {
         const pop = state.boxPulse || 0;
         // apertura de solapas: crece con los saltos, con un empujón extra en cada golpe
         const open01 = jc?.complete ? 1 : Math.min(1, progress * 0.8 + pop * 0.22);
-        const { flapL, flapR, shaft } = g.userData;
+        const { flapL, flapR, shaft, glow } = g.userData;
         const k3 = 1 - Math.pow(0.001, dt);
         const targetL = 0.10 + (2.35 - 0.10) * open01;
         flapL.rotation.z += (targetL - flapL.rotation.z) * k3;
         flapR.rotation.z = -flapL.rotation.z;
-        shaft.material.opacity = 0.04 + 0.34 * open01 + 0.18 * pop;
+        shaft.material.opacity = 0.10 + 0.30 * open01 + 0.18 * pop;
+        if (glow) glow.intensity = 1.4 + open01 * 5 + pop * 1.5;
         // sacudida al saltar
         g.rotation.z = -(state.boxTilt || 0);
         g.scale.y = 1 + pop * 0.05;
@@ -931,7 +1029,7 @@ export function createRenderer3D(canvas) {
     catRig.g.visible = v;
   }
 
-  if (typeof window !== 'undefined') window.__nero3d = { scene, camera, catRig: () => catRig };
+  if (typeof window !== 'undefined') window.__nero3d = { scene, camera, catRig: () => catRig, AXES, POSES };
 
   return { resize, loadScene, update, render, screenToWorld, setCatVisible };
 }
