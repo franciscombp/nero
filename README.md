@@ -43,6 +43,31 @@ así que la ruta interesante —silla, mesa, encimera, repisa— es la única.
 
 Guion completo en [`STORY.md`](STORY.md) · diseño de puzzles en [`PUZZLES.md`](PUZZLES.md).
 
+## Cómo se mueve Nero
+
+El modelo trae un esqueleto de 27 huesos y un único ciclo de caminata horneado.
+Todo lo demás es una capa procedural que se suma **encima** del clip, hueso a
+hueso: cada estado (reposo, carga, aire, aterrizaje, sigilo, cuelgue, resbalón)
+define flexión de patas, ángulo de almohadilla, curvatura de lomo, cabeceo,
+orejas, cola y su propia **rigidez** — aterrizar es un golpe seco, dormitar no.
+
+Los detalles que lo hacen parecer un gato y no un muñeco:
+
+- **Las almohadillas compensan.** El último hueso de cada pata (`*leg2`)
+  contrarresta la flexión para que la pata apoye plana en vez de apuntar al aire.
+- **Nada es simétrico.** Cada par de patas lleva un desfase izquierda/derecha, y
+  los cuartos traseros desfasan al revés que los delanteros.
+- **La cola no obedece, persigue.** Cinco tramos con muelle propio, cada uno más
+  lento que el anterior, empujados por la aceleración real del gato: late al
+  saltar y contrapesa al girar.
+- **Mira a donde va.** En el aire la cabeza gira hacia el vuelo; en el suelo, si
+  lleva rato parado, echa vistazos alrededor.
+- **Tics.** Sacudidas de oreja de una en una, respiración en el lomo, y a los
+  ocho segundos quieto, el estiramiento completo.
+
+El squash & stretch de la malla sigue ahí, pero al 45 %: quien actúa son los
+huesos.
+
 ## Las páginas del proyecto
 
 | Página | Qué es |

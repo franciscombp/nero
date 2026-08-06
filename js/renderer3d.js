@@ -988,18 +988,37 @@ export function createRenderer3D(canvas) {
   // (sneak) o lo congela en un frame útil (freeze) y esculpe la pose encima:
   //   patas: eje z (positivo = barrer hacia atrás) · cola: x (positivo = levantar)
   //   cabeza: x (positivo = agachar)
+  // Parámetros por pose:
+  //   fl/bl  flexión de patas delanteras / traseras
+  //   paw    ángulo de la almohadilla (el tercer hueso de cada pata, *leg2)
+  //   spine  curvatura del lomo: + encorva (agazapado), − estira (en el aire)
+  //   head   cabeceo · ear  orejas (+ hacia atrás, gato alerta o asustado)
+  //   tail   altura de la cola · spread  desfase izquierda/derecha (rompe la simetría)
+  //   stiff  rapidez con que se adopta la pose: aterrizar es un golpe, dormitar no
   const POSES = {
-    idle:   { fl: 0,     bl: 0,     head: 0,     tail: 0.12,  ear: 0,    speed: 0,    freeze: 0.4 },
-    charge: { fl: 0.35,  bl: -0.30, head: 0.28,  tail: -0.10, ear: 0.30, speed: 0,    freeze: 0.4 },
-    air:    { fl: -0.55, bl: 0.45,  head: -0.30, tail: 0.45,  ear: 0.40, speed: 0,    freeze: 0 },
-    land:   { fl: 0.40,  bl: -0.35, head: 0.22,  tail: 0.08,  ear: 0.20, speed: 0,    freeze: 0.4 },
-    sneak:  { fl: 0.20,  bl: -0.15, head: 0.15,  tail: -0.30, ear: 0.55, speed: 1.35 },
-    hang:   { fl: -0.75, bl: 0.25,  head: -0.45, tail: 0.30,  ear: 0.20, speed: 0,    freeze: 0.15 },
-    slide:  { fl: -0.50, bl: 0.35,  head: -0.40, tail: 0.50,  ear: 0.30, speed: 0,    freeze: 0.15 }
+    idle:   { fl: 0,     bl: 0,     paw: 0,     spine: 0.04,  head: 0,     tail: 0.12,  ear: 0,    spread: 0.05, stiff: 3.5,  speed: 0,    freeze: 0.4 },
+    charge: { fl: 0.35,  bl: -0.30, paw: -0.22, spine: 0.30,  head: 0.28,  tail: -0.10, ear: 0.30, spread: 0.14, stiff: 9,    speed: 0,    freeze: 0.4 },
+    air:    { fl: -0.55, bl: 0.45,  paw: 0.30,  spine: -0.26, head: -0.30, tail: 0.45,  ear: 0.40, spread: 0.20, stiff: 6,    speed: 0,    freeze: 0 },
+    land:   { fl: 0.40,  bl: -0.35, paw: -0.30, spine: 0.34,  head: 0.22,  tail: 0.08,  ear: 0.20, spread: 0.10, stiff: 18,   speed: 0,    freeze: 0.4 },
+    sneak:  { fl: 0.20,  bl: -0.15, paw: -0.10, spine: 0.22,  head: 0.15,  tail: -0.30, ear: 0.55, spread: 0,    stiff: 5,    speed: 1.35 },
+    hang:   { fl: -0.75, bl: 0.25,  paw: 0.45,  spine: -0.18, head: -0.45, tail: 0.30,  ear: 0.20, spread: 0.26, stiff: 7,    speed: 0,    freeze: 0.15 },
+    slide:  { fl: -0.50, bl: 0.35,  paw: 0.25,  spine: -0.10, head: -0.40, tail: 0.50,  ear: 0.30, spread: 0.18, stiff: 7,    speed: 0,    freeze: 0.15 }
   };
-  const poseCur = { fl: 0, bl: 0, head: 0, tail: 0, ear: 0 };
+  const poseCur = { fl: 0, bl: 0, paw: 0, spine: 0, head: 0, tail: 0, ear: 0, spread: 0 };
   // Ejes de flexión calibrados contra el rig real (ver diagnóstico con __poseOverride)
-  const AXES = { legs: 'z', legSign: 1, tail: 'x', tailSway: 'y', head: 'x', ears: 'x' };
+  const AXES = { legs: 'z', legSign: 1, tail: 'x', tailSway: 'y', head: 'x', headYaw: 'y', ears: 'x', spine: 'z' };
+
+  // Estado vivo entre fotogramas: la cola no obedece, persigue.
+  const tailWave = [];                       // muelle por segmento (posición y velocidad)
+  let earFlick = 0, earFlickT = 1.5, earSide = 0, stretchT = 0;
+  let lookYaw = 0, lookGoal = 0, lookT = 0;  // hacia dónde mira cuando no pasa nada
+  let idleAge = 0, prevVX = 0, prevVY = 0;
+
+  // Muelle crítico: sigue al objetivo con inercia, sin oscilar eternamente.
+  function spring(s, goal, dt, k = 90, d = 13) {
+    s.v += (goal - s.p) * k * dt - s.v * d * dt;
+    s.p += s.v * dt;
+  }
 
   function applyPose(cat, dt) {
     if (!catBones) return;
@@ -1011,31 +1030,87 @@ export function createRenderer3D(canvas) {
         catAction.time += (t.freeze - catAction.time) * Math.min(1, dt * 8);
       }
     }
-    const k = 1 - Math.pow(0.0004, dt);
-    poseCur.fl += (t.fl - poseCur.fl) * k;
-    poseCur.bl += (t.bl - poseCur.bl) * k;
-    poseCur.head += (t.head - poseCur.head) * k;
-    poseCur.tail += (t.tail - poseCur.tail) * k;
-    poseCur.ear += (t.ear - poseCur.ear) * k;
+    // cada pose llega a su ritmo: el aterrizaje es un golpe seco, el reposo no
+    const k = 1 - Math.exp(-(t.stiff ?? 6) * dt);
+    for (const key in poseCur) poseCur[key] += ((t[key] ?? 0) - poseCur[key]) * k;
     if (typeof window !== 'undefined' && window.__poseOverride) Object.assign(poseCur, window.__poseOverride);
 
-    for (const { chain, sign } of catBones.legsF) {
-      if (chain[0]) chain[0].rotation[AXES.legs] += poseCur.fl * sign * AXES.legSign;
-      if (chain[1]) chain[1].rotation[AXES.legs] += poseCur.fl * sign * AXES.legSign * -0.55;
+    // ---- gestos ociosos: un gato quieto nunca está quieto del todo ----
+    idleAge = cat.state === 'idle' ? idleAge + dt : 0;
+    lookT -= dt;
+    if (lookT <= 0) {
+      // mira alrededor de vez en cuando; más a menudo cuanto más lleva parado
+      lookGoal = idleAge > 3 ? (Math.random() - 0.5) * 0.9 : 0;
+      lookT = 1.6 + Math.random() * 2.8;
     }
-    for (const { chain, sign } of catBones.legsB) {
-      if (chain[0]) chain[0].rotation[AXES.legs] += poseCur.bl * sign * AXES.legSign;
-      if (chain[1]) chain[1].rotation[AXES.legs] += poseCur.bl * sign * AXES.legSign * -0.5;
+    if (cat.state !== 'idle') lookGoal = 0;
+    lookYaw += (lookGoal - lookYaw) * Math.min(1, dt * 3);
+
+    // estiramiento completo: si lleva mucho parado, arquea el lomo, estira las
+    // manos y baja la cabeza — el gesto más reconocible de un gato
+    if (stretchT > 0) stretchT -= dt;
+    else if (idleAge > 8 && cat.state === 'idle') { stretchT = 2.2; idleAge = 0; }
+    const stretch = stretchT > 0 ? Math.sin((1 - stretchT / 2.2) * Math.PI) : 0;
+
+    earFlickT -= dt;
+    if (earFlickT <= 0) {                    // sacudida de oreja: rápida y asimétrica
+      earFlick = 1; earSide = Math.random() < 0.5 ? 0 : 1;
+      earFlickT = 2.2 + Math.random() * 4;
     }
-    if (catBones.head) catBones.head.rotation[AXES.head] += poseCur.head;
-    if (catBones.chest && cat.state === 'idle') {
-      catBones.chest.rotation.x += Math.sin(time * 2.4) * 0.02;        // respiración
+    earFlick = Math.max(0, earFlick - dt * 5);
+
+    // ---- patas: cada lado con su propio desfase, y la almohadilla compensando ----
+    const applyLeg = (groups, amount, side0) => {
+      groups.forEach(({ chain }, i) => {
+        const off = (i === 0 ? 1 : -1) * poseCur.spread * side0;
+        const a = (amount + off) * AXES.legSign;
+        if (chain[0]) chain[0].rotation[AXES.legs] += a;
+        if (chain[1]) chain[1].rotation[AXES.legs] += a * -0.55;
+        if (chain.length > 3) chain[2].rotation[AXES.legs] += a * 0.25;
+        // el último hueso (*leg2) es la almohadilla: compensa para que la pata
+        // apoye plana en vez de apuntar al aire
+        const paw = chain[chain.length - 1];
+        if (chain.length > 2 && paw) paw.rotation[AXES.legs] += poseCur.paw - a * 0.35;
+      });
+    };
+    applyLeg(catBones.legsF, poseCur.fl - stretch * 0.55, 1);
+    applyLeg(catBones.legsB, poseCur.bl + stretch * 0.10, -1);   // los cuartos traseros desfasan al revés
+
+    // ---- lomo: el arco es la silueta del gato ----
+    if (catBones.chest) {
+      catBones.chest.rotation[AXES.spine] += poseCur.spine - stretch * 0.30;
+      if (cat.state === 'idle') catBones.chest.rotation.x += Math.sin(time * 2.4) * 0.02;  // respiración
     }
+
+    // ---- cabeza: cabecea con la pose y gira hacia donde va (o hacia lo que le llama) ----
+    if (catBones.head) {
+      catBones.head.rotation[AXES.head] += poseCur.head + stretch * 0.35;
+      const drift = cat.state === 'air' ? Math.max(-0.5, Math.min(0.5, cat.vx * 0.0012)) : lookYaw;
+      catBones.head.rotation[AXES.headYaw] += drift;
+    }
+    if (catBones.headend) catBones.headend.rotation[AXES.head] += poseCur.head * 0.25;
+
+    // ---- cola: no obedece, persigue. Contrapesa la aceleración del gato ----
+    const ax = (cat.vx - prevVX) / Math.max(dt, 1e-4);
+    const ay = (cat.vy - prevVY) / Math.max(dt, 1e-4);
+    prevVX = cat.vx; prevVY = cat.vy;
+    const whipX = Math.max(-0.6, Math.min(0.6, -ax * 0.00012 - cat.vx * 0.0008));
+    const whipY = Math.max(-0.5, Math.min(0.5, ay * 0.00008));
     catBones.tail.forEach((tb, i) => {
-      tb.rotation[AXES.tail] += poseCur.tail * (0.30 + i * 0.14);
-      tb.rotation[AXES.tailSway] += Math.sin(time * 2.2 + i * 0.65) * (0.09 + (cat.state === 'idle' ? 0.07 : 0));
+      const s = tailWave[i] || (tailWave[i] = { p: 0, v: 0 });
+      const lag = 1 + i * 0.55;                                   // la punta llega la última
+      spring(s, whipY + poseCur.tail * (0.30 + i * 0.14), dt, 120 / lag, 14);
+      tb.rotation[AXES.tail] += s.p;
+      const idleSway = cat.state === 'idle' ? 0.07 + Math.min(0.06, idleAge * 0.01) : 0;
+      tb.rotation[AXES.tailSway] +=
+        Math.sin(time * 2.2 + i * 0.65) * (0.09 + idleSway) + whipX * (0.25 + i * 0.2);
     });
-    for (const eb of catBones.ears) eb.rotation[AXES.ears] += poseCur.ear * 0.8;
+
+    // ---- orejas: la pose las echa atrás; el tic las mueve de una en una ----
+    catBones.ears.forEach((eb, i) => {
+      eb.rotation[AXES.ears] += poseCur.ear * 0.8
+        + (i === earSide ? Math.sin(earFlick * Math.PI) * 0.45 : 0);
+    });
   }
 
   function buildCat() {
@@ -1122,19 +1197,17 @@ export function createRenderer3D(canvas) {
     // Captura del esqueleto para la capa de poses procedurales
     const bn = {};
     model.traverse(n => { if (n.isBone) bn[n.name] = n; });
+    // Se usa el esqueleto entero: 3 falanges por pata (la última es la almohadilla),
+    // los 5 tramos de cola, el lomo, la nuca y las dos orejas por separado.
+    const chainOf = pre => [pre, pre + '0', pre + '1', pre + '2'].map(k => bn[k]).filter(Boolean);
     catBones = {
       chest: bn.chest,
       head: bn.head,
-      tail: ['tailstart', 'tail1', 'tail2', 'tail3'].map(k => bn[k]).filter(Boolean),
+      headend: bn.headend,
+      tail: ['tail', 'tailstart', 'tail1', 'tail2', 'tail3'].map(k => bn[k]).filter(Boolean),
       ears: [bn.earend, bn.R_earend].filter(Boolean),
-      legsF: [
-        { chain: ['frontleg', 'frontleg0', 'frontleg1'].map(k => bn[k]).filter(Boolean), sign: 1 },
-        { chain: ['R_frontleg', 'R_frontleg0', 'R_frontleg1'].map(k => bn[k]).filter(Boolean), sign: 1 }
-      ],
-      legsB: [
-        { chain: ['backleg', 'backleg0', 'backleg1'].map(k => bn[k]).filter(Boolean), sign: 1 },
-        { chain: ['R_backleg', 'R_backleg0', 'R_backleg1'].map(k => bn[k]).filter(Boolean), sign: 1 }
-      ]
+      legsF: [{ chain: chainOf('frontleg') }, { chain: chainOf('R_frontleg') }],
+      legsB: [{ chain: chainOf('backleg') }, { chain: chainOf('R_backleg') }]
     };
 
     if (gltf.animations && gltf.animations.length) {
@@ -1166,12 +1239,15 @@ export function createRenderer3D(canvas) {
     else if (cat.state === 'slide') { rotZ = 0.55; }
     else if (cat.state === 'idle') sy = 1 + Math.sin(time * 2.5) * 0.012; // respiración
 
+    // Con el esqueleto cargado el squash pasa a segundo plano: la deformación de
+    // la malla acompaña, pero quien actúa son los huesos.
+    const sq = catBones ? 1 + (cat.squash - 1) * 0.45 : cat.squash;
     const k = 1 - Math.pow(0.0001, dt);
-    const targetSy = cat.squash * sy;
-    const targetSx = (2 - cat.squash) * sx;
+    const targetSy = sq * sy;
+    const targetSx = (2 - sq) * sx;
     body.scale.x += (targetSx - body.scale.x) * k;
     body.scale.y += (targetSy - body.scale.y) * k;
-    body.scale.z += ((2 - cat.squash) - body.scale.z) * k;
+    body.scale.z += ((2 - sq) - body.scale.z) * k;
     body.rotation.z += (rotZ - body.rotation.z) * k;
     body.position.y += (oy - body.position.y) * k;
 
