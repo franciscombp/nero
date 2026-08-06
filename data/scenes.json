@@ -337,8 +337,8 @@
       "bg": "#F7E8DF",
       "band": "#F1DCC0"
     },
-    "intro": "Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva media hora mirándolo desde debajo del mueble. Subir es fácil. Decidirse, no.",
-    "hint": "Sube por la mesita y el sofá hasta la butaca",
+    "intro": "Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva media hora mirándolo desde debajo del mueble. Subir es fácil. Llegar con las manos vacías, no.",
+    "hint": "Sube a la repisa alta: hay algo ahí arriba que no se ve desde el suelo",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -425,14 +425,32 @@
         "text": "En el retrato hay una niña pequeña subida a los hombros de Aldo.<br><b>La casa no siempre estuvo tan callada.</b>"
       },
       {
+        "id": "e4_raton",
+        "trigger": "platform",
+        "pi": 6,
+        "x": 520,
+        "y": 360,
+        "text": "Sobre la repisa, donde nadie mira, hay un ratón de trapo con una oreja descosida.<br><b>Lleva ahí desde antes que él.</b>"
+      },
+      {
         "id": "e4_regazo",
         "trigger": "goal",
         "x": 670,
         "y": 300,
-        "text": "El pecho de Aldo sube y baja. Nero se enrosca ahí y cierra los ojos.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
+        "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
       }
     ],
-    "spawn": 150
+    "spawn": 150,
+    "carryables": [
+      {
+        "id": "raton",
+        "kind": "mouse",
+        "host": 6,
+        "offset": 150
+      }
+    ],
+    "goalCarry": "raton",
+    "carryHint": "Nero se queda mirándolo. Le falta algo en la boca."
   },
   {
     "name": "El invierno",
@@ -617,7 +635,7 @@
       "band": "#D9CFC4"
     },
     "intro": "La sala está llena de cajas de mudanza. El sofá tapado con una sábana. La butaca vacía. Nero no entiende lo que ve, pero entiende que algo se acabó: alguien guardó su ratón de trapo.",
-    "hint": "El suelo está bloqueado: hay que pasar por encima de las cajas",
+    "hint": "Las cajas se abren por las solapas · solo puedes abrir la que alcanzas",
     "mechanics": {
       "wallSlide": true
     },
@@ -652,9 +670,9 @@
       },
       {
         "x": 980,
-        "y": 1390,
-        "w": 240,
-        "h": 300,
+        "y": 1250,
+        "w": 260,
+        "h": 440,
         "kind": "boxstack"
       },
       {
@@ -714,7 +732,36 @@
         "text": "Desde el rellano se ve la puerta de la calle abierta de par en par.<br><b>Entran y salen personas que no son Aldo.</b>"
       }
     ],
-    "spawn": 180
+    "spawn": 180,
+    "interactives": [
+      {
+        "id": "solapa_baja",
+        "kind": "drawer",
+        "host": 4,
+        "slot": 2,
+        "out": 130,
+        "side": 1,
+        "needsBelow": null
+      },
+      {
+        "id": "solapa_media",
+        "kind": "drawer",
+        "host": 4,
+        "slot": 1,
+        "out": 130,
+        "side": 1,
+        "needsBelow": "solapa_baja"
+      },
+      {
+        "id": "solapa_alta",
+        "kind": "drawer",
+        "host": 4,
+        "slot": 0,
+        "out": 130,
+        "side": 1,
+        "needsBelow": "solapa_media"
+      }
+    ]
   },
   {
     "name": "La tormenta",

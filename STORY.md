@@ -95,8 +95,16 @@ Enseña el verbo central: **la escalera no existe, la construyes**.
 Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva
 horas mirándolo desde debajo del mueble.
 
-El ascenso es corto y fácil a propósito: mesita, sofá, butaca. La dificultad no
-es física. Es decidirse.
+El ascenso es corto a propósito: mesita, sofá, butaca. La dificultad no es
+física, es decidirse — y decidirse, para un gato, es llevar algo. Sobre la
+repisa alta, donde desde el suelo solo se ve el canto, hay un ratón de trapo con
+una oreja descosida que lleva ahí desde antes que él. Subir a la butaca con las
+manos vacías no cierra el episodio.
+
+> *«Aldo no se despierta, pero su mano se cierra un poco.»*
+
+El ratón se planta aquí para que duela en el episodio 7, cuando alguien lo
+guarde en una caja con cinta.
 
 > *«El pecho de Aldo sube y baja. Nero se enrosca ahí. Aldo no se despierta,
 > pero su mano se cierra un poco.»*
@@ -121,8 +129,11 @@ ratón de trapo que ya no es de nadie.
 La sala está llena de cajas de mudanza. Los muebles no están donde deben. El sofá
 tapado con una sábana. La butaca vacía.
 
-Nero no entiende lo que ve, pero entiende que algo se acabó. Trepa por lo que
-sobra buscando su ratón de trapo, que alguien guardó en una caja cerrada.
+Nero no entiende lo que ve, pero entiende que algo se acabó. La casa que se
+sabía de memoria es ahora una torre de cajas, y la única forma de subir es
+abrirlas por las solapas, de abajo arriba, como los cajones de la cocina el
+primer día. Arriba encuentra su ratón de trapo dentro de una caja cerrada con
+cinta. No puede abrirla.
 
 > *«Todo huele a él, pero en el sitio equivocado.»*
 

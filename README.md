@@ -15,10 +15,10 @@ cuando la casa se rompe, descubre lo que de verdad significaba.
 | 1 | El callejón | Calle | Contrarreloj · ramas A/B |
 | 2 | Unas manos | Calle | Cinemática (rama B) |
 | 3 | El primer día | Cocina | Escalera de cajones |
-| 4 | El regazo | Sala | Ascenso corto |
+| 4 | El regazo | Sala | Llegar **con algo en la boca** |
 | 5 | El invierno | — | Cinemática |
 | 6 | Lo que se tira | Estudio | Derribar objetos |
-| 7 | Las cajas | Sala ↺ | Trepar por lo que sobra |
+| 7 | Las cajas | Sala ↺ | Solapas de cartón, en orden |
 | 8 | La tormenta | Cocina ↺ | Contrapeso |
 | 9 | El altillo | Cuarto | Todo lo aprendido |
 
@@ -47,7 +47,7 @@ Guion completo en [`STORY.md`](STORY.md) · diseño de puzzles en [`PUZZLES.md`]
 
 | Página | Qué es |
 |---|---|
-| `index.html` | **El juego** (Three.js, cámara ortográfica, estética de papel) |
+| `index.html` | **El juego** (Three.js, cámara a la altura del gato, estética de papel) |
 | `2d.html` | La versión 2D clásica en canvas, sobre los mismos datos |
 | `editor.html` | Editor de niveles e historia con validador de alcance |
 
@@ -88,48 +88,37 @@ no está al alcance, el gato da un salto normal hacia esa dirección.
 - 📚 Tres libros en una repisa que puedes tirar al pasar.
 - 🖼️ Cuadros, alfombra y techo de madera que enmarcan la habitación.
 
-## Contenido del MVP
-
-- Cocina/sala vertical con suelo, silla, mesa, encimera, repisas, repisa alta con planta y ventana como salida.
-- Gato con estados: idle, carga, salto, agarre/cuelgue, caída, aterrizaje con squash & stretch "líquido", cola animada y parpadeo.
-- 1 interacción de objeto: empujar la taza del abuelo desde la encimera (se rompe → recuerdo).
-- 3 recuerdos narrativos (taza, planta, ventana) contados como microtextos ambientales.
-- Cámara suave que sigue el ascenso; indicador de progreso; reinicio rápido.
-- Final al reunir los 3 recuerdos.
-
-## Dirección de arte
-
-Paleta cálida boho: crema, terracota, mostaza, salvia; gato de silueta negra con ojos blancos,
-arcos decorativos y sol, siguiendo las imágenes de referencia del GDD.
-
-## 🏗️ Arquitectura Modular
-
-El juego utiliza una arquitectura profesional y escalable:
+## Arquitectura
 
 ```
 nero/
-├── index.html              # Punto de entrada (orquestador)
-├── styles/main.css         # Estilos AAA quality
+├── index.html          # el juego: orquestador (carga datos, física, render 3D)
+├── 2d.html             # el motor 2D original, sobre los mismos datos
+├── editor.html         # editor de niveles/historia con validador de alcance
 ├── js/
-│   ├── core.js            # Constantes y utilidades
-│   ├── renderer.js        # Sistema de renderizado
-│   ├── physics.js         # Motor de física
-│   ├── input.js           # Gestión de input
-│   ├── ui.js              # Sistema de UI
-│   └── polyfills.js       # Compatibilidad
-└── data/
-    ├── scenes.json        # Niveles configurables
-    └── stories.json       # Narrativa modular
+│   ├── core.js         # constantes, estado, disparadores, interactivos
+│   ├── physics.js      # física del gato (2D pura: x, y)
+│   ├── actions.js      # gramática de salto compartida por ambos motores
+│   ├── renderer3d.js   # render 2.5D en Three.js (papel, luces, poses)
+│   ├── renderer.js     # render 2D en canvas
+│   ├── input.js · ui.js · editor.js
+│   └── vendor/         # Three.js r185 y loaders, sin CDN
+├── data/
+│   ├── scenes.json     # los diez episodios: muebles, recuerdos, puzzles
+│   └── stories.json    # textos: títulos, intros, pistas, final
+└── assets/nero.glb     # el gato, riggeado
 ```
 
-**Beneficios:**
-- ✅ Modularidad: 6 módulos independientes
-- ✅ Escalabilidad: Agregar niveles sin tocar código
-- ✅ Mantenibilidad: Cambios centralizados
-- ✅ Performance: Canvas 2D optimizado
-- ✅ AAA Quality: UI mejorada con glassmorphism y animaciones
+El juego se renderiza en 3D pero **se juega en 2D**: el plano de física nunca
+sale de (x, y). Por eso cambiar de motor no toca `physics.js`, y por eso el
+editor puede validar alcance con aritmética de parábolas.
 
-Ver [`ARCHITECTURE.md`](ARCHITECTURE.md) para documentación completa.
+Añadir contenido es editar `data/scenes.json` (o usar `editor.html`); añadir un
+tipo de mueble es un caso nuevo en `renderer3d.js`.
+
+Escala: **336 unidades ≈ 1 metro**. Los muebles están a alturas reales (silla
+45 cm, encimera 90 cm, techo 2,55 m) porque de eso depende que los saltos se
+sientan como saltos de gato.
 
 ## 📦 Instalación & Desarrollo
 
@@ -144,23 +133,9 @@ npx serve .
 
 ### Para desarrollar
 
-El juego está completamente modularizado. Para agregar contenido:
-
-**Nuevo acto:** Editar `data/scenes.json`
-```json
-{
-  "name": "Mi habitación",
-  "platforms": [...],
-  "memories": [...],
-  "tint": { "bg": "#...", "band": "#..." }
-}
-```
-
-**Nuevo tipo de plataforma:** Agregar caso en `js/renderer.drawPlatform()`
-
-**Cambiar UI:** Editar `styles/main.css` o `js/ui.js`
-
-**Cambiar narrativa:** Editar `data/stories.json`
+Abre `editor.html`: dibuja la habitación, coloca recuerdos y puzzles, y el
+validador avisa si dejas una plataforma inalcanzable. Exporta a
+`data/scenes.json` o pruébalo en caliente con `index.html?draft=1`.
 
 ## 🚀 Deploy a GitHub Pages
 

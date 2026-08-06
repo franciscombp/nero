@@ -63,6 +63,13 @@ apoyarse en lo que el jugador **sabe** de la habitación:
   soltarla es gratis: la altura se convierte en moneda. La gramática es «haz que
   X caiga sobre Y», imposible en una sala plana porque no habría nada que caiga.
 - **Contrapeso** — recibe el peso que le tiras y sube otra cosa.
+- **Llegar con algo** — a veces la meta no es un sitio, es un sitio *más* una
+  cosa. Y la cosa está donde no se ve: sobre una repisa que desde el suelo es
+  solo un canto. Obliga a explorar antes de rematar, y de paso convierte el
+  objeto en trama.
+- **Solapas de cartón** — el mismo verbo del cajón con otra piel: una torre de
+  cajas se abre de abajo arriba y se vuelve escalera. Reutilizar el verbo en un
+  espacio ya conocido es lo que hace que la casa se sienta aprendida.
 
 La regla de seguridad se mantiene: **caer es gratis**. Un gato cae de pie, ningún
 error es irreversible, y equivocarse cuesta tiempo, nunca la partida.
@@ -239,11 +246,17 @@ tiempo, que es exactamente lo que debe costar equivocarse.
   lo subes dos repisas, lo sueltas sobre la bandeja de la polea y la balda sube
   los 130 px que faltaban. Sin resolverlo, el último tramo son 390 px: imposible
 
+- **Llegar con algo** (ep. 4) — el ratón de trapo está sobre la repisa alta,
+  invisible desde el suelo. Llegar a la butaca sin él no cierra el episodio: la
+  casa se limita a decir que le falta algo en la boca. Campo `goalCarry` en la
+  escena.
+- **Solapas de cartón** (ep. 7) — la torre de cajas de la mudanza usa el verbo
+  del cajón: se abre de abajo arriba y es el único camino al rellano.
+
 ## Siguiente
 
 `seesaw` (balancín) y `hatch` (tapa que cede) son variantes baratas de lo ya
-construido: ambas son «recibir un peso» con otro efecto. Con ellas, los episodios
-4 y 7 dejan de ser ascensos y pasan a ser máquinas.
+construido: ambas son «recibir un peso» con otro efecto.
 
 ## Orden de implementación (original)
 

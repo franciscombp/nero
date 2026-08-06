@@ -882,6 +882,14 @@ export function createRenderer3D(canvas) {
       if (c.kind === 'book') {
         g.add(put(rbox(46, 14, 62, COL.coral, 3), 0, 0, 0));
         g.add(put(rbox(42, 5, 58, COL.cream, 2), 0, 8, 0));
+      } else if (c.kind === 'mouse') {
+        // ratón de trapo: cuerpo, morro, orejas y cola de cordel
+        g.add(put(rbox(52, 30, 34, 0xC9BCA8, 9), 0, 0, 0));
+        g.add(put(rbox(20, 18, 20, 0xD8CCB9, 7), 30, -3, 0));
+        for (const sz of [-11, 11]) g.add(put(rbox(6, 16, 16, COL.blush, 5), 14, 15, sz));
+        const tail = put(cyl(2, 2, 46, 0xA89C88, { seg: 6 }), -38, 4, 0);
+        tail.rotation.z = Math.PI / 2;
+        g.add(tail);
       } else {
         g.add(put(rbox(40, 34, 40, COL.sand, 5), 0, 0, 0));
       }

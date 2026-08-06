@@ -104,7 +104,7 @@ async function main() {
 
   // El jugador solo recibe texto de ayuda si lleva rato sin avanzar. Cualquier
   // acción con sentido reinicia el reloj: guiar sin estorbar.
-  let idleT = 0, hintsGiven = 0;
+  let idleT = 0, hintsGiven = 0, missingCarryShown = false;
   function noteProgress() {
     idleT = 0;
     ui.hideHint();
@@ -241,6 +241,7 @@ async function main() {
     ui.hideMemory();          // que no quede colgado el subtítulo del episodio anterior
     idleT = 0;
     hintsGiven = 0;
+    missingCarryShown = false;
   }
 
   // Efectos que solo deben dispararse al empezar a JUGAR el nivel (no con la tarjeta abierta)
@@ -533,7 +534,16 @@ async function main() {
       }
 
       // meta
-      if (checkGoalTrigger(cat, levelState.platforms, L.goalKind, levelState)) {
+      // Algunos episodios no piden llegar, piden llegar CON algo en la boca.
+      // Si Nero está en la meta con las manos vacías, la casa se lo recuerda.
+      const atGoal = checkGoalTrigger(cat, levelState.platforms, L.goalKind, levelState);
+      if (atGoal && L.goalCarry &&
+          !(levelState.carryables || []).some(c => c.held && c.id === L.goalCarry)) {
+        if (!missingCarryShown) {
+          missingCarryShown = true;
+          ui.showHint(L.carryHint || 'Le falta algo en la boca');
+        }
+      } else if (atGoal) {
         levelState.levelCompleteTime = now;
         const gm = levelState.memories.find(m => m.trigger === 'goal');
         if (gm) collect(gm.id);
@@ -610,6 +620,7 @@ async function main() {
   window.levelState = levelState;
   window.levels = levels;
   window.__enterPlay = enterPlay;
+  window.__showAct = showAct;
 }
 
 main().catch(err => {
