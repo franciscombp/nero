@@ -35,6 +35,16 @@ html, body {
   height: 100dvh;
 }
 
+/* viñeteo cinematográfico sobre la escena 3D */
+#vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse 105% 90% at 50% 42%,
+    transparent 52%, rgba(18, 16, 24, 0.14) 76%, rgba(18, 16, 24, 0.42) 100%);
+}
+
 /* ==================== HUD ==================== */
 #hud {
   position: fixed;

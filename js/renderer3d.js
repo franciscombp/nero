@@ -26,11 +26,20 @@ const COL = {
 // El amanecer del prólogo (caja / callejón) es exterior u oscuro: sin decoración doméstica.
 const isDomestic = time => time !== 'dawn';
 
+// Fondo profundo y desaturado por momento del día: la habitación flota como un
+// diorama sobre él (ref. de arte: interiores cálidos sobre campo de color apagado).
+const BACKDROP = {
+  dawn: 0x343842, morning: 0x6E7A66, afternoon: 0x77655B,
+  evening: 0x5E5157, night: 0x272638
+};
+
 export function createRenderer3D(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // rolloff fílmico (look indie)
+  renderer.toneMappingExposure = 1.18;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(46, 1, 10, 8000);
@@ -100,6 +109,51 @@ export function createRenderer3D(canvas) {
     }
   }
 
+  // halo luminoso para bombillas (sprite aditivo con gradiente radial)
+  let glowTex = null;
+  function makeGlow(size, color) {
+    if (!glowTex) {
+      const cvs = document.createElement('canvas');
+      cvs.width = cvs.height = 128;
+      const c2 = cvs.getContext('2d');
+      const grad = c2.createRadialGradient(64, 64, 4, 64, 64, 64);
+      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+      grad.addColorStop(0.35, 'rgba(255,255,255,0.28)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      c2.fillStyle = grad;
+      c2.fillRect(0, 0, 128, 128);
+      glowTex = new THREE.CanvasTexture(cvs);
+    }
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+    }));
+    spr.scale.set(size, size, 1);
+    return spr;
+  }
+
+  // lámpara colgante: cordón + pantalla + bombilla + luz puntual cálida + halo
+  function buildPendant(px2, cordLen, night) {
+    const g = new THREE.Group();
+    const topY = tY(CY);
+    const bulbY = topY - cordLen;
+    const cord = cyl(2, 2, cordLen, 0x3A3630);
+    cord.castShadow = false;
+    put(cord, px2, topY - cordLen / 2, -40);
+    const shade = shadowed(new THREE.Mesh(new THREE.ConeGeometry(44, 40, 24, 1, true),
+      M(0xE8DCC8, { rough: 0.85, noCache: true })));
+    shade.material.side = THREE.DoubleSide;
+    put(shade, px2, bulbY + 26, -40);
+    const bulb = sph(13, 0xFFE9C0, { emissive: 0xFFE2A8, ei: night ? 1.3 : 1.6, noCache: true });
+    bulb.castShadow = false;
+    put(bulb, px2, bulbY, -40);
+    const glow = makeGlow(230, 0xFFE2A8);
+    glow.position.set(px2, bulbY, -30);
+    const light = new THREE.PointLight(0xFFDFA8, night ? 3.6 : 4.6, 1150, 1);
+    light.position.set(px2, bulbY - 8, -30);
+    g.add(cord, shade, bulb, glow, light);
+    return g;
+  }
+
   // ---------- habitación ----------
   function buildRoom(L) {
     clearGroup(room);
@@ -112,50 +166,67 @@ export function createRenderer3D(canvas) {
     const bg = new THREE.Color(L.tint?.bg ?? '#F4ECE3');
     const band = new THREE.Color(L.tint?.band ?? '#EDE0D2');
 
-    // suelo: madera en casa, asfalto/cartón en el amanecer del prólogo
-    const floor = rbox(W2 + 280, 60, 820, domestic ? COL.wood : COL.crateDk, 6);
-    put(floor, 0, -30, 0);
+    // suelo: una isla con canto visible, flotando sobre el fondo profundo
+    const floor = rbox(W2 + 90, 70, 840, domestic ? COL.wood : COL.crateDk, 14);
+    put(floor, 0, -35, 0);
     room.add(floor);
+    const fascia = rbox(W2 + 94, 22, 844, domestic ? COL.woodDk : 0x4E4A44, 8);
+    put(fascia, 0, -62, 0);
+    room.add(fascia);
+    if (domestic) {
+      // tablones del piso
+      for (let zz = -350; zz <= 350; zz += 100) {
+        const seam = pbox(W2 + 60, 1.6, 3, COL.woodDk);
+        seam.receiveShadow = false;
+        put(seam, 0, 0.8, zz);
+        room.add(seam);
+      }
+    }
 
     // paredes
-    // las paredes NO reciben sombra: mantiene el look plano/limpio del estilo
-    const back = pbox(W2 + 280, wallH, 24, bg.getHex(), { noCache: true });
-    back.material.color.copy(bg);
-    back.receiveShadow = false;
-    put(back, 0, wallH / 2 - 40, WALL_Z - 12);
-    const bandMesh = pbox(W2 + 280, 480, 8, band.getHex(), { noCache: true });
-    bandMesh.material.color.copy(band);
-    bandMesh.receiveShadow = false;
-    put(bandMesh, 0, 240, WALL_Z - 2);
-    const sideL = pbox(30, wallH, 820, band.getHex(), { noCache: true });
-    sideL.material.color.copy(band);
-    sideL.receiveShadow = false;
-    put(sideL, -(X0 + 155), wallH / 2 - 40, 0);
-    const sideR = sideL.clone();
-    sideR.position.x = X0 + 155;
-    room.add(back, bandMesh, sideL, sideR);
-
-    // techo + viga
-    const ceil = rbox(W2 + 280, 30, 820, domestic ? COL.woodDk : COL.crateDk, 5);
-    put(ceil, 0, tY(CY) + 15, 0);
     if (domestic) {
-      const beam = rbox(W2 + 280, 10, 830, accent, 4);
-      put(beam, 0, tY(CY) - 5, 0);
-      room.add(beam);
+      // paredes acotadas a la habitación (el fondo profundo asoma alrededor)
+      const back = pbox(W2 + 60, wallH, 26, bg.getHex(), { noCache: true });
+      back.material.color.copy(bg);
+      back.receiveShadow = false;
+      put(back, 0, wallH / 2 - 40, WALL_Z - 13);
+      const bandMesh = pbox(W2 + 60, 480, 8, band.getHex(), { noCache: true });
+      bandMesh.material.color.copy(band);
+      bandMesh.receiveShadow = false;
+      put(bandMesh, 0, 240, WALL_Z - 2);
+      const sideL = pbox(34, wallH, 780, band.getHex(), { noCache: true });
+      sideL.material.color.copy(band);
+      sideL.receiveShadow = false;
+      put(sideL, -(X0 + 28), wallH / 2 - 40, -20);
+      const sideR = sideL.clone();
+      sideR.position.x = X0 + 28;
+      room.add(back, bandMesh, sideL, sideR);
+
+      // techo fino + viga de acento
+      const ceil = rbox(W2 + 60, 22, 780, COL.woodDk, 5);
+      put(ceil, 0, tY(CY) + 11, -20);
+      const beam = rbox(W2 + 60, 10, 790, accent, 4);
+      put(beam, 0, tY(CY) - 5, -20);
+      room.add(ceil, beam);
+
+      // lámparas colgantes escalonadas: charcos de luz cálida a lo largo del ascenso
+      const pendants = [[-270, 380], [40, 640], [320, 900], [-90, 1180]];
+      for (const [px2, len] of pendants) {
+        room.add(buildPendant(px2, len, night));
+      }
     }
-    room.add(ceil);
 
     if (!domestic) {
       // ---- ambientación del callejón al amanecer ----
       // siluetas de edificios con alguna ventana encendida
       for (const [bx, bw2, bh2] of [[-330, 260, 980], [0, 310, 1260], [330, 240, 860]]) {
-        const bld = pbox(bw2, bh2, 16, 0x45454E);
+        const bld = pbox(bw2, bh2, 16, 0x4B4B58, { noCache: true });
         bld.receiveShadow = false;
         put(bld, bx, bh2 / 2 - 40, WALL_Z + 2);
         room.add(bld);
         for (let wi = 0; wi < 5; wi++) {
           if ((wi * 7 + bx) % 3 === 0) continue;   // no todas encendidas
-          const win = pbox(18, 24, 4, COL.butter, { emissive: 0xF0C987, ei: 0.75, noCache: true });
+          const win = pbox(18, 24, 4, COL.butter, { emissive: 0xF0C987, ei: 1.0, noCache: true });
           win.receiveShadow = false;
           put(win, bx - bw2 / 2 + 40 + (wi % 2) * (bw2 - 80), 160 + wi * (bh2 / 6), WALL_Z + 12);
           room.add(win);
@@ -168,17 +239,18 @@ export function createRenderer3D(canvas) {
       dawnGlow.receiveShadow = false;
       put(dawnGlow, 0, 1420, WALL_Z + 1);
       room.add(dawnGlow);
-      // farola cálida
+      // farola cálida sobre la ruta de escombros (a la izquierda, lejos de la camioneta)
       const pole = cyl(6, 8, 540, 0x3A3A40);
-      put(pole, 250, 270, -190);
+      put(pole, -150, 270, -160);
       const head = rbox(38, 22, 38, 0x3A3A40, 6);
-      put(head, 250, 552, -190);
-      const bulb = sph(14, COL.butter, { emissive: 0xF0C987, ei: 1.5 });
-      put(bulb, 250, 536, -190);
-      const pool = disc(120, 3, COL.butter, { emissive: 0xF0C987, ei: 0.35, opacity: 0.22, noCache: true });
-      put(pool, 250, 2, -150);
-      pool.receiveShadow = false;
-      room.add(pole, head, bulb, pool);
+      put(head, -150, 552, -160);
+      const bulb = sph(14, COL.butter, { emissive: 0xF0C987, ei: 1.6, noCache: true });
+      put(bulb, -150, 536, -160);
+      const lampGlow = makeGlow(280, 0xFFDFA0);
+      lampGlow.position.set(-150, 536, -140);
+      const lampLight = new THREE.PointLight(0xFFD9A0, 6.5, 1300, 1);
+      lampLight.position.set(-150, 516, -110);
+      room.add(pole, head, bulb, lampGlow, lampLight);
       // charco
       const puddle = disc(90, 2, 0x394050, { rough: 0.15, opacity: 0.85, noCache: true });
       puddle.scale.z = 0.5;
@@ -892,27 +964,28 @@ export function createRenderer3D(canvas) {
   }
 
   function applyTint(L) {
-    const bg = new THREE.Color(L.tint?.bg ?? '#F4ECE3');
-    scene.background = bg;
-    scene.fog = new THREE.Fog(bg, 1800, 4200);
+    // el fondo NO es el color de la pared: es el campo profundo sobre el que flota el diorama
+    const back = new THREE.Color(BACKDROP[L.time] ?? BACKDROP.morning);
+    scene.background = back;
+    scene.fog = new THREE.Fog(back, 2200, 4800);
+    // luz general contenida: los charcos cálidos de las lámparas llevan el drama
     if (L.time === 'dawn') {
-      // amanecer del prólogo: frío y gris azulado, pero legible
-      hemi.color.set(0xA8B2C4); hemi.groundColor.set(0x5A5A64); hemi.intensity = 0.75;
-      dir.color.set(0xC4CCDC); dir.intensity = 1.15;
-      amb.intensity = 0.42;
+      hemi.color.set(0xA8B2C4); hemi.groundColor.set(0x565660); hemi.intensity = 0.72;
+      dir.color.set(0xC4CCDC); dir.intensity = 1.05;
+      amb.intensity = 0.34;
     } else if (L.time === 'night') {
-      hemi.color.set(0xCBC2E0); hemi.groundColor.set(0x6B6480); hemi.intensity = 0.6;
-      dir.color.set(0xB8B0DE); dir.intensity = 1.0;
-      amb.intensity = 0.4;
+      hemi.color.set(0xCBC2E0); hemi.groundColor.set(0x565064); hemi.intensity = 0.42;
+      dir.color.set(0xB8B0DE); dir.intensity = 0.6;
+      amb.intensity = 0.2;
     } else if (L.time === 'afternoon' || L.time === 'evening') {
       const deep = L.time === 'evening';
-      hemi.color.set(deep ? 0xF3C9AE : 0xFFE8DC); hemi.groundColor.set(0xD8B8A8); hemi.intensity = deep ? 0.85 : 0.95;
-      dir.color.set(deep ? 0xF0B890 : 0xFFD9C0); dir.intensity = deep ? 1.6 : 1.8;
-      amb.intensity = 0.45;
+      hemi.color.set(deep ? 0xF3C9AE : 0xFFE8DC); hemi.groundColor.set(0xB09484); hemi.intensity = deep ? 0.5 : 0.58;
+      dir.color.set(deep ? 0xF0B088 : 0xFFD9B8); dir.intensity = deep ? 1.05 : 1.2;
+      amb.intensity = 0.24;
     } else {
-      hemi.color.set(0xFFF6E8); hemi.groundColor.set(0xD8C4A8); hemi.intensity = 1.0;
-      dir.color.set(0xFFF2DC); dir.intensity = 1.9;
-      amb.intensity = 0.45;
+      hemi.color.set(0xFFF2DC); hemi.groundColor.set(0xB8A488); hemi.intensity = 0.62;
+      dir.color.set(0xFFE9C4); dir.intensity = 1.3;
+      amb.intensity = 0.26;
     }
   }
 
@@ -995,13 +1068,14 @@ export function createRenderer3D(canvas) {
     const halfTan = Math.tan(camera.fov * Math.PI / 360);
     const viewH = 2 * camDist * halfTan;
     const cy = Math.max(viewH * 0.42 - 40, Math.min(tY(CY) - viewH * 0.30, py + 110));
-    const targetPos = { x: Math.max(-170, Math.min(170, px * 0.28)), y: cy + 70, z: camDist };
+    // picado suave (~15°): la habitación se lee como diorama visto desde arriba
+    const targetPos = { x: Math.max(-170, Math.min(170, px * 0.28)), y: cy + 260, z: camDist };
     const ck = 1 - Math.pow(0.012, dt);
     camera.position.x += (targetPos.x - camera.position.x) * ck;
     camera.position.y += (targetPos.y - camera.position.y) * ck * 0.8;
     camera.position.z = camDist;
     lookTarget.x += (Math.max(-240, Math.min(240, px * 0.5)) - lookTarget.x) * ck;
-    lookTarget.y += (cy - 40 - lookTarget.y) * ck * 0.8;
+    lookTarget.y += (cy - 20 - lookTarget.y) * ck * 0.8;
     camera.lookAt(lookTarget);
 
     // la luz sigue el ascenso para que la sombra no se degrade
