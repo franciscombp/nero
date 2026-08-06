@@ -75,12 +75,12 @@ async function main() {
   // Cinemáticas de la historia de origen (mismas que el 2D)
   const cinematics = {
     2: {
-      text: `Nero no logró subirse a tiempo. Resbala. Cae.<br><br>Una sombra enorme lo cubre.<br>Una voz profunda dice: "¿Qué haces aquí, pequeño?"<br><br>Manos suaves lo levantan.<br>Nero está asustado pero... seguro.`,
-      duration: 4000
+      text: `Nero no llegó a tiempo. Resbala, cae y se queda quieto en el barro.<br><br>Una sombra enorme lo cubre.<br>Una voz profunda dice: «¿Qué haces aquí, pequeño?»<br><br>Pero las manos son suaves, y lo levantan<br>como se levanta algo que se puede romper.`,
+      duration: 5200
     },
     5: {
-      text: `<b>Un nuevo amanecer.</b><br><br>El dueño prepara café.<br>Nero baja del sofá, estirándose.<br><br>La cocina es la misma que ayer.<br>Pero Nero es diferente. El dueño es diferente.<br><br><b>La aventura verdadera comienza.</b>`,
-      duration: 5000
+      text: `<b>Pasan los meses.</b><br><br>Nero ya no cabe en una mano.<br>Aprende dónde da el sol a cada hora,<br>qué escalón cruje y en qué silla no debe dormir.<br><br>Aprende la casa como se aprende un idioma:<br><b>sin darse cuenta.</b>`,
+      duration: 6000
     }
   };
 
@@ -323,16 +323,28 @@ async function main() {
     if (!list || !list.length) return;
     let dirty = false;
     for (const o of list) {
+      // el contrapeso se dispara solo cuando cae el peso del otro lado
+      if (o.kind === 'counterweight') {
+        if (o.trigger === 'knock' && levelState.knock?.broken) o.target = 1;
+        const prevY = o.platform.y;
+        o.platform.y = o.baseY - (o.travel ?? 200) * o.open;
+        const dY = o.platform.y - prevY;
+        // si el gato viaja encima, sube con ella
+        if (dY !== 0 && cat.onGround && Math.abs(cat.y - prevY) < 3 &&
+            cat.x > o.platform.x - 20 && cat.x < o.platform.x + o.platform.w + 20) {
+          cat.y += dY;
+        }
+      }
       if (Math.abs(o.target - o.open) > 0.001) {
         o.open += (o.target - o.open) * Math.min(1, dt * 6);
         if (Math.abs(o.target - o.open) < 0.01) o.open = o.target;
         dirty = true;
       }
     }
-    if (!dirty && levelState.platforms.length !== levelState.basePlatforms.length + list.filter(o => o.open > 0.55).length) dirty = true;
+    const shown = list.filter(o => o.platform && (o.always || o.open > 0.55));
+    if (levelState.platforms.length !== levelState.basePlatforms.length + shown.length) dirty = true;
     if (dirty) {
-      levelState.platforms = levelState.basePlatforms.concat(
-        list.filter(o => o.open > 0.55 && o.platform).map(o => o.platform));
+      levelState.platforms = levelState.basePlatforms.concat(shown.map(o => o.platform));
     }
   }
 
@@ -342,7 +354,7 @@ async function main() {
     if (!list || !list.length) return false;
     for (const o of list) {
       const p = o.platform;
-      if (!p) continue;
+      if (!p || o.kind !== 'drawer') continue;
       const hit = wx > p.x - 30 && wx < p.x + p.w + 30 && wy > p.y - 40 && wy < p.y + 90;
       if (!hit) continue;
       if (canOpenInteractive(o, cat, list)) { o.target = 1; hideHintOnce(); return true; }

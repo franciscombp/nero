@@ -261,6 +261,13 @@ export function createInteractives(levelData, platforms) {
         y: topY, w: out, h: 12, kind: 'drawer', ref: obj
       };
     }
+    if (d.kind === 'counterweight') {
+      // La balda está SIEMPRE presente como plataforma; lo que cambia es su
+      // altura cuando el contrapeso del otro lado cae.
+      obj.baseY = d.y;
+      obj.always = true;
+      obj.platform = { x: d.x, y: d.y, w: d.w ?? 180, h: 14, kind: 'shelf', ref: obj };
+    }
     return obj;
   });
 }

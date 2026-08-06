@@ -579,6 +579,43 @@ export function createRenderer3D(canvas) {
         g.add(put(rbox(8, 96, 5, COL.woodDk, 2), 0, 74, WALL_Z + 26));   // parteluz
         break;
       }
+      case 'armchair': {
+        // Butaca de Aldo, con él dormido dentro: la meta del episodio 4 no es
+        // un sitio, es una persona.
+        const seatH = 78, legH = Math.max(drop - seatH, 18);
+        g.add(put(rbox(p.w, seatH, 280, 0xB8705E, 12), 0, -seatH / 2, SURF_Z));
+        g.add(put(rbox(p.w, 150, 40, 0xB8705E, 12), 0, 62, SURF_Z - 118));      // respaldo alto
+        g.add(put(rbox(40, 118, 280, 0xC97F6B, 12), -(p.w / 2 + 18), 22, SURF_Z));
+        g.add(put(rbox(40, 118, 280, 0xC97F6B, 12), p.w / 2 + 18, 22, SURF_Z));
+        g.add(put(rbox(p.w - 30, 22, 250, 0xC97F6B, 10), 0, 6, SURF_Z));        // cojín
+        legs4(g, p.w / 2 - 20, 110, -seatH, legH, 8, COL.woodDk);
+        // Aldo: figura dormida bajo una manta (formas simples, sin cara)
+        const torso = sph(52, 0x8E93A8, { seg: 10, seg2: 7 });
+        torso.scale.set(1.1, 0.78, 0.9);
+        put(torso, -6, 44, SURF_Z + 10);
+        const head = sph(26, 0xD8B49A, { seg: 9, seg2: 6 });
+        put(head, 4, 104, SURF_Z - 26);
+        const blanket = rbox(p.w - 24, 30, 240, 0x9AA3B8, 12);
+        put(blanket, 0, 22, SURF_Z + 24);
+        g.add(torso, head, blanket);
+        break;
+      }
+      case 'boxstack': {
+        // Pila de cajas de mudanza: bloque sólido desde el suelo, con cinta
+        const bh = Math.max(p.h, 60);
+        const tiers = Math.max(1, Math.round(bh / 130));
+        for (let i = 0; i < tiers; i++) {
+          const th = bh / tiers;
+          const inset = i * 6;
+          const shade = i % 2 ? 0x9C7E58 : COL.carton;
+          g.add(put(rbox(p.w - inset, th - 8, 250 - inset * 2, shade, 5),
+                     (i % 2 ? 8 : -8), -bh + th * (i + 0.5), SURF_Z));
+          // cinta de embalar
+          g.add(put(rbox(p.w - inset - 30, 9, 6, 0xD9C9A8, 2),
+                     (i % 2 ? 8 : -8), -bh + th * (i + 0.5) + th * 0.2, SURF_Z + 126 - inset));
+        }
+        break;
+      }
       case 'landing': {
         // RELLANO del piso de arriba con la puerta del pasillo entreabierta.
         // Sustituye a la antigua "puerta flotante": ahora se entiende que arriba
@@ -728,6 +765,7 @@ export function createRenderer3D(canvas) {
   let yarnMesh = null, knockG = null, knockBrokenG = null, bookMeshes = [];
   let pushMeshes = [];
   let drawerMeshes = [];
+  let cwMeshes = [];
   let counterSprite = null, counterLast = '';
 
   // Contador de saltos flotante (textura de canvas sobre un sprite)
@@ -805,10 +843,27 @@ export function createRenderer3D(canvas) {
     bookMeshes = [];
     pushMeshes = [];
     drawerMeshes = [];
+    cwMeshes = [];
     counterSprite = null;
     counterLast = '';
 
-    // cajones del puzzle vertical: salen hacia la cámara y su tapa es el escalón
+
+    // contrapeso: balda colgante que sube cuando cae el peso del otro lado
+    cwMeshes = [];
+    for (const o of (state.interactives ?? [])) {
+      if (o.kind !== 'counterweight' || !o.platform) { cwMeshes.push(null); continue; }
+      const pl = o.platform, g = new THREE.Group();
+      g.add(put(rbox(pl.w, 16, 200, COL.wood, 6), 0, -8, 0));
+      g.add(put(rbox(10, 14, 210, COL.woodDk, 4), -pl.w / 2 + 6, 2, 0));
+      g.add(put(rbox(10, 14, 210, COL.woodDk, 4), pl.w / 2 - 6, 2, 0));
+      const rope = cyl(2.5, 2.5, 1200, 0x6B5B45, { seg: 6 });
+      put(rope, 0, 606, 0);
+      g.add(rope);
+      cwMeshes.push(g);
+      dynamic.add(g);
+    }
+
+    // cajones del puzzle vertical: su tapa sobresale y es el escalón
     for (const o of (state.interactives ?? [])) {
       if (o.kind !== 'drawer' || !o.platform) { drawerMeshes.push(null); continue; }
       const pl = o.platform, g = new THREE.Group();
@@ -1235,7 +1290,14 @@ export function createRenderer3D(canvas) {
 
     updateDust(dt);
 
-    // cajones: deslizan hacia la cámara según su apertura
+    // contrapeso: la balda sigue la altura que marca la lógica del puzzle
+    (state.interactives ?? []).forEach((o, i) => {
+      const g = cwMeshes[i];
+      if (!g || o.kind !== 'counterweight' || !o.platform) return;
+      g.position.set(tX(o.platform.x + o.platform.w / 2), tY(o.platform.y), SURF_Z + 20);
+    });
+
+    // cajones: deslizan lateralmente según su apertura
     (state.interactives ?? []).forEach((o, i) => {
       const g = drawerMeshes[i];
       if (!g || !o.platform) return;
@@ -1259,7 +1321,7 @@ export function createRenderer3D(canvas) {
     const loY = half - 100, hiY = tY(CY) + 190 - half;
     const cy = hiY <= loY ? (loY + hiY) / 2 : Math.max(loY, Math.min(hiY, py + 60));
     // paneo horizontal solo si la habitación no cabe a lo ancho
-    const panX = Math.max(0, (W2 - viewW) / 2 + 40);
+    const panX = Math.max(0, (W2 - viewW) / 2);
     const cx = panX === 0 ? 0 : Math.max(-panX, Math.min(panX, px));
     const ck = 1 - Math.pow(0.012, dt);
     camera.position.x += (cx - camera.position.x) * ck;

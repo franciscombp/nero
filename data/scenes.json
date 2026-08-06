@@ -1,13 +1,13 @@
 [
   {
-    "name": "Dentro de la Caja",
-    "kicker": "Prólogo · Acto 0",
+    "name": "La caja",
+    "kicker": "Episodio 0",
     "time": "dawn",
     "tint": {
       "bg": "#2C2C2C",
       "band": "#1A1A1A"
     },
-    "intro": "Oscuridad. Cartón. Nero está atrapado en una caja. Es pequeño. Salta. Una vez. Dos. Tres. De tanto saltar, la caja se agrieta. Al octavo salto... escapa.",
+    "intro": "Llueve. Nero no sabe cómo llegó aquí: solo que hay cartón por todos lados y que la única salida está arriba. Salta. Otra vez. Otra vez.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -41,31 +41,31 @@
     "bookShelf": -1,
     "memories": [
       {
-        "id": "origen_0_1_caja",
+        "id": "e0_caja",
         "trigger": "start",
-        "x": 450,
-        "y": 1300,
-        "text": "La oscuridad. Huele a cartón y miedo.<br><b>Abandonado. Encerrado. Solo.</b>"
+        "x": 130,
+        "y": 470,
+        "text": "La oscuridad huele a cartón mojado.<br><b>Nadie viene. Hay que salir solo.</b>"
       },
       {
-        "id": "origen_0_2_escape",
+        "id": "e0_luz",
         "trigger": "goal",
-        "x": 450,
-        "y": 900,
-        "text": "Al octavo salto, el cartón se rasga. Luz. Aire. Libertad.<br><b>Escapó. Es libre.</b>"
+        "x": 610,
+        "y": 290,
+        "text": "Al octavo golpe el cartón se rasga y entra el aire.<br><b>Afuera todo es enorme. Y es suyo.</b>"
       }
     ],
     "hint": "Salta ↑ una y otra vez: cada golpe abre más la caja"
   },
   {
-    "name": "El Callejón · Rama A",
-    "kicker": "Prólogo · Acto 1A",
+    "name": "El callejón",
+    "kicker": "Episodio 1",
     "time": "dawn",
     "tint": {
       "bg": "#3A3A3A",
       "band": "#2C2C2C"
     },
-    "intro": "La camioneta está estacionada. El motor está apagado. Nero ve el balde trasero. Parece alto, imposible. Pero hay escombros alrededor. Hay un camino. Espera un timer implacable.",
+    "intro": "Una camioneta con el motor apagado y un camino de escombros hasta el balde. No estará ahí para siempre.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -125,24 +125,24 @@
     "bookShelf": -1,
     "memories": [
       {
-        "id": "origen_1a_viaje",
+        "id": "e1_viaje",
         "trigger": "goal",
-        "x": 750,
-        "y": 900,
-        "text": "Logró subirse. El motor ruge bajo él.<br><b>Está vivo. Está en movimiento. Está esperanzado.</b>"
+        "x": 610,
+        "y": 300,
+        "text": "El motor ruge debajo de sus patas y el callejón se aleja.<br><b>No sabe adónde va. Va.</b>"
       }
     ],
     "hint": "Trepa los escombros y el espejo hasta el balde ¡antes de que la camioneta arranque!"
   },
   {
-    "name": "El Callejón · Rama B",
-    "kicker": "Prólogo · Acto 1B",
+    "name": "Unas manos",
+    "kicker": "Episodio 2",
     "time": "dawn",
     "tint": {
       "bg": "#3A3A3A",
       "band": "#2C2C2C"
     },
-    "intro": "Nero no logró subirse a tiempo. Resbala. Cae. Una sombra lo cubre. Una voz profunda: '¿Qué haces aquí, pequeño?' Pero las manos son suaves.",
+    "intro": "No llegó a tiempo. Resbala, cae y se queda quieto en el barro esperando lo peor.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -194,28 +194,29 @@
     "bookShelf": -1,
     "memories": [
       {
-        "id": "origen_1b_manos",
+        "id": "e2_manos",
         "trigger": "goal",
-        "x": 450,
-        "y": 1000,
-        "text": "Unas manos grandes pero gentiles lo envuelven.<br><b>Alguien lo vio. Alguien se detuvo por él.</b>"
+        "x": 610,
+        "y": 300,
+        "text": "Unas manos enormes lo levantan como se levanta algo que se puede romper.<br><b>Alguien lo vio.</b>"
       }
     ]
   },
   {
-    "name": "La Cocina · Primer Día",
-    "kicker": "Prólogo · Acto 2",
+    "name": "El primer día",
+    "kicker": "Episodio 3",
     "time": "morning",
     "tint": {
       "bg": "#F4ECE3",
       "band": "#E8DCC9"
     },
-    "intro": "La casa huele diferente a la calle. Huele a UNA PERSONA. El dueño es adulto. Solitario. Vive aquí solo. Y ahora vive aquí Nero. La cocina es enorme. Todo brilla. Nada es suyo... todavía.",
+    "intro": "La casa es gigantesca y Nero cabe en una mano. Huele a comida, y la comida está en la encimera, a una altura imposible. La mesa no basta: hay que inventar una escalera.",
+    "hint": "Toca los cajones para abrirlos · solo puedes abrir el que alcanzas",
     "mechanics": {
       "babyKitten": true,
-      "speed": 0.8,
-      "jumpHeight": 0.85,
-      "wallSlide": false
+      "speed": 0.7,
+      "jumpHeight": 0.8,
+      "wallSlide": true
     },
     "platforms": [
       {
@@ -226,127 +227,118 @@
         "kind": "floor"
       },
       {
-        "x": 80,
-        "y": 1570,
-        "w": 130,
+        "x": 330,
+        "y": 1580,
+        "w": 150,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 280,
-        "y": 1450,
-        "w": 250,
-        "h": 22,
+        "x": 290,
+        "y": 1470,
+        "w": 260,
+        "h": 20,
         "kind": "table"
       },
       {
-        "x": 650,
-        "y": 1330,
+        "x": 60,
+        "y": 1310,
         "w": 180,
+        "h": 16,
+        "kind": "dresser"
+      },
+      {
+        "x": 600,
+        "y": 1210,
+        "w": 260,
         "h": 26,
         "kind": "counter"
       },
       {
-        "x": 420,
-        "y": 1200,
-        "w": 150,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 100,
+        "x": 300,
         "y": 1080,
         "w": 170,
         "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 600,
+        "x": 90,
         "y": 950,
-        "w": 160,
+        "w": 170,
         "h": 14,
         "kind": "shelf"
-      },
-      {
-        "x": 280,
-        "y": 830,
-        "w": 140,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 420,
-        "y": 690,
-        "w": 200,
-        "h": 18,
-        "kind": "top"
-      },
-      {
-        "x": 50,
-        "y": 560,
-        "w": 230,
-        "h": 20,
-        "kind": "window"
       }
     ],
-    "goalKind": "custom_first_connection",
-    "knock": {
-      "platform": 3,
-      "offset": 40,
-      "type": "plate",
-      "memoryId": "origen_2_plato"
-    },
-    "yarn": false,
-    "bookShelf": 4,
+    "goalKind": "counter",
+    "knock": null,
+    "yarn": true,
+    "bookShelf": 5,
+    "interactives": [
+      {
+        "id": "cajon_bajo",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 2,
+        "out": 115,
+        "needsBelow": null
+      },
+      {
+        "id": "cajon_medio",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 1,
+        "out": 115,
+        "needsBelow": "cajon_bajo"
+      },
+      {
+        "id": "cajon_alto",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 0,
+        "out": 115,
+        "needsBelow": "cajon_medio"
+      }
+    ],
     "memories": [
       {
-        "id": "origen_2_aruna",
-        "trigger": "platform",
-        "pi": 1,
-        "x": 150,
-        "y": 1400,
-        "text": "Sus garras encuentran el sofá. La tela se rasga.<br><b>Espera golpes. No llegan. Solo una voz suave: 'Está bien, Nero.'</b>"
+        "id": "e3_grande",
+        "trigger": "start",
+        "x": 120,
+        "y": 900,
+        "text": "Los techos están lejísimos y el suelo es de madera fría.<br><b>Todo aquí fue hecho para alguien enorme.</b>"
       },
       {
-        "id": "origen_2_plato",
-        "trigger": "knock",
-        "x": 680,
-        "y": 1200,
-        "text": "Un plato. Con comida. Preparado para él.<br><b>Nunca nadie le preparó algo.</b>"
+        "id": "e3_cajon",
+        "trigger": "platform",
+        "pi": 3,
+        "x": 300,
+        "y": 700,
+        "text": "El cajón cede con un ruido enorme. Nero se queda quieto.<br><b>Nadie viene a regañarlo. Entonces sigue.</b>"
       },
       {
-        "id": "origen_2_plantas",
-        "trigger": "platform",
-        "pi": 6,
-        "x": 650,
-        "y": 720,
-        "text": "Una maceta se cae. Tierra esparcida. Nero corre asustado.<br><b>El dueño entra. No grita. Solo dice: 'Está bien. Eres pequeño.'</b>"
-      },
-      {
-        "id": "origen_2_biblioteca",
-        "trigger": "platform",
-        "pi": 8,
-        "x": 520,
-        "y": 420,
-        "text": "Libros. Fotos. Una vida en objetos.<br><b>Ve el dueño más joven. Solo. Años después. Aún solo.</b>"
+        "id": "e3_comida",
+        "trigger": "goal",
+        "x": 600,
+        "y": 500,
+        "text": "Un plato con comida y, al lado, un cuenco de agua limpia.<br><b>Alguien lo puso ahí. Para él.</b>"
       }
     ]
   },
   {
-    "name": "La Sala · Atardecer",
-    "kicker": "Prólogo · Acto 3",
+    "name": "El regazo",
+    "kicker": "Episodio 4",
     "time": "evening",
     "tint": {
       "bg": "#F7E8DF",
       "band": "#F1DCC0"
     },
-    "intro": "El atardecer entra por las ventanas. El dueño entra con té. Se sienta en el sofá (el que Nero destrozó). No hay enojo. Solo silencio compartido. Un acto tan simple como estar juntos.",
+    "intro": "Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva media hora mirándolo desde debajo del mueble. Subir es fácil. Decidirse, no.",
+    "hint": "Sube por la mesita y el sofá hasta la butaca",
     "mechanics": {
-      "babyKitten": false,
-      "speed": 1.0,
-      "jumpHeight": 1.0,
-      "wallSlide": true,
-      "cinematicStart": true
+      "babyKitten": true,
+      "speed": 0.7,
+      "jumpHeight": 0.8,
+      "wallSlide": true
     },
     "platforms": [
       {
@@ -357,105 +349,88 @@
         "kind": "floor"
       },
       {
-        "x": 480,
-        "y": 1570,
-        "w": 250,
+        "x": 90,
+        "y": 1580,
+        "w": 190,
+        "h": 18,
+        "kind": "table"
+      },
+      {
+        "x": 320,
+        "y": 1470,
+        "w": 300,
         "h": 20,
         "kind": "sofa"
       },
       {
-        "x": 180,
-        "y": 1460,
-        "w": 170,
-        "h": 16,
-        "kind": "table"
+        "x": 610,
+        "y": 1360,
+        "w": 220,
+        "h": 22,
+        "kind": "armchair"
       },
       {
-        "x": 580,
-        "y": 1330,
-        "w": 160,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 250,
-        "y": 1210,
-        "w": 160,
+        "x": 120,
+        "y": 1240,
+        "w": 180,
         "h": 14,
         "kind": "frameshelf"
       },
       {
-        "x": 20,
-        "y": 1090,
-        "w": 150,
+        "x": 400,
+        "y": 1120,
+        "w": 190,
         "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 400,
-        "y": 960,
+        "x": 110,
+        "y": 990,
         "w": 170,
         "h": 14,
         "kind": "shelf"
-      },
-      {
-        "x": 90,
-        "y": 840,
-        "w": 140,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 450,
-        "y": 700,
-        "w": 180,
-        "h": 18,
-        "kind": "top"
-      },
-      {
-        "x": 70,
-        "y": 570,
-        "w": 210,
-        "h": 20,
-        "kind": "landing"
       }
     ],
-    "goalKind": "custom_sofa_rest",
+    "goalKind": "armchair",
     "knock": null,
-    "yarn": false,
-    "bookShelf": 4,
+    "yarn": true,
+    "bookShelf": 5,
     "memories": [
       {
-        "id": "origen_3_conexion",
+        "id": "e4_manta",
         "trigger": "platform",
-        "pi": 0,
-        "x": 605,
-        "y": 1470,
-        "text": "El dueño extiende una mano. Dos dedos acarician.<br><b>Suave. Esperando rechazo. Nero se acerca.</b>"
+        "pi": 2,
+        "x": 180,
+        "y": 470,
+        "text": "La manta del sofá guarda el hueco de alguien que estuvo ahí toda la tarde.<br><b>Todavía está tibia.</b>"
       },
       {
-        "id": "origen_3_hogar",
+        "id": "e4_retrato",
+        "trigger": "platform",
+        "pi": 4,
+        "x": 420,
+        "y": 390,
+        "text": "En el retrato hay una niña pequeña subida a los hombros de Aldo.<br><b>La casa no siempre estuvo tan callada.</b>"
+      },
+      {
+        "id": "e4_regazo",
         "trigger": "goal",
-        "x": 600,
-        "y": 280,
-        "text": "Nero había estado buscando algo sin saberlo.<br><b>No un lugar. Alguien que lo viera.</b>"
+        "x": 670,
+        "y": 300,
+        "text": "El pecho de Aldo sube y baja. Nero se enrosca ahí y cierra los ojos.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
       }
     ]
   },
   {
-    "name": "Amanecer · Nuevo Comienzo",
-    "kicker": "Prólogo · Transición",
+    "name": "El invierno",
+    "kicker": "Episodio 5",
     "time": "morning",
     "tint": {
-      "bg": "#FBF6EE",
-      "band": "#F4ECE3"
+      "bg": "#EFE7DC",
+      "band": "#E2D6C4"
     },
-    "intro": "Un nuevo amanecer. El dueño prepara café. Nero baja del sofá, estirándose. La cocina es la misma que ayer. Pero Nero es diferente. El dueño es diferente. Todo es diferente.",
+    "intro": "Pasan los meses.",
     "mechanics": {
-      "babyKitten": false,
-      "speed": 1.0,
-      "jumpHeight": 1.0,
-      "wallSlide": true,
       "cinematicOnly": true,
       "transitionLevel": true
     },
@@ -468,84 +443,54 @@
         "kind": "floor"
       },
       {
-        "x": 90,
-        "y": 1570,
+        "x": 330,
+        "y": 1580,
         "w": 150,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 330,
-        "y": 1450,
-        "w": 300,
-        "h": 22,
+        "x": 290,
+        "y": 1470,
+        "w": 260,
+        "h": 20,
         "kind": "table"
       },
       {
-        "x": 700,
-        "y": 1330,
-        "w": 200,
+        "x": 600,
+        "y": 1210,
+        "w": 260,
         "h": 26,
         "kind": "counter"
-      },
-      {
-        "x": 480,
-        "y": 1200,
-        "w": 170,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 150,
-        "y": 1080,
-        "w": 190,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 470,
-        "y": 950,
-        "w": 180,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 130,
-        "y": 830,
-        "w": 160,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 430,
-        "y": 690,
-        "w": 220,
-        "h": 18,
-        "kind": "top"
-      },
-      {
-        "x": 60,
-        "y": 560,
-        "w": 250,
-        "h": 20,
-        "kind": "window"
       }
     ],
-    "goalKind": "window",
+    "goalKind": "counter",
     "knock": null,
     "yarn": false,
     "bookShelf": -1,
-    "memories": []
+    "memories": [
+      {
+        "id": "e5_idioma",
+        "trigger": "goal",
+        "x": 450,
+        "y": 600,
+        "text": "Nero aprende dónde da el sol a cada hora y qué escalón cruje.<br><b>Aprende la casa como se aprende un idioma: sin darse cuenta.</b>"
+      }
+    ]
   },
   {
-    "name": "La cocina",
-    "kicker": "Acto I",
-    "time": "morning",
+    "name": "Lo que se tira",
+    "kicker": "Episodio 6",
+    "time": "afternoon",
     "tint": {
-      "bg": "#F6EEE2",
-      "band": "#F0E2CF"
+      "bg": "#F3E6D8",
+      "band": "#E7D5BF"
     },
-    "intro": "Semanas después. La casa es su hogar ahora. El dueño y Nero han caído en una rutina: él trabaja, Nero explora. Hoy la cocina está en silencio. Huele a café. Y hay una taza sin lavar.",
+    "intro": "Aldo lleva toda la tarde leyendo y no le hace caso. Nero conoce el método: tirar cosas al suelo hasta que alguien reaccione. Arriba, en lo alto de la librería, hay una caja de zapatos.",
+    "hint": "Pasa junto a la taza para tirarla · sube hasta lo alto de la librería",
+    "mechanics": {
+      "wallSlide": true
+    },
     "platforms": [
       {
         "x": 0,
@@ -555,223 +500,317 @@
         "kind": "floor"
       },
       {
-        "x": 90,
+        "x": 110,
         "y": 1570,
         "w": 150,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 330,
+        "x": 280,
         "y": 1450,
-        "w": 300,
-        "h": 22,
-        "kind": "table"
+        "w": 240,
+        "h": 18,
+        "kind": "desk"
       },
       {
-        "x": 700,
+        "x": 600,
         "y": 1330,
-        "w": 200,
-        "h": 26,
-        "kind": "counter"
+        "w": 180,
+        "h": 14,
+        "kind": "shelf"
       },
       {
-        "x": 480,
+        "x": 330,
         "y": 1200,
-        "w": 170,
+        "w": 180,
         "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 150,
+        "x": 80,
         "y": 1080,
-        "w": 190,
+        "w": 180,
         "h": 14,
-        "kind": "shelf"
+        "kind": "frameshelf"
       },
       {
-        "x": 470,
+        "x": 380,
         "y": 950,
         "w": 180,
         "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 130,
-        "y": 830,
-        "w": 160,
+        "x": 610,
+        "y": 820,
+        "w": 210,
+        "h": 18,
+        "kind": "top"
+      }
+    ],
+    "goalKind": "top",
+    "knock": {
+      "platform": 2,
+      "offset": 60,
+      "type": "mug",
+      "memoryId": "e6_taza"
+    },
+    "yarn": true,
+    "bookShelf": 4,
+    "memories": [
+      {
+        "id": "e6_taza",
+        "trigger": "knock",
+        "x": 300,
+        "y": 700,
+        "text": "La taza se estrella contra el suelo y el café se abre en el parqué.<br><b>Aldo levanta la vista. Y por primera vez, se ríe.</b>"
+      },
+      {
+        "id": "e6_retrato",
+        "trigger": "platform",
+        "pi": 5,
+        "x": 140,
+        "y": 560,
+        "text": "En la repisa hay un retrato que lleva mucho tiempo boca abajo.<br><b>Nero lo empuja hasta dejarlo de pie.</b>"
+      },
+      {
+        "id": "e6_raton",
+        "trigger": "goal",
+        "x": 640,
+        "y": 420,
+        "text": "En la caja de zapatos hay fotos viejas y un ratón de trapo sin orejas.<br><b>Huele a otra casa y a otro tiempo. Ahora es suyo.</b>"
+      }
+    ]
+  },
+  {
+    "name": "Las cajas",
+    "kicker": "Episodio 7",
+    "time": "afternoon",
+    "tint": {
+      "bg": "#E9E2DA",
+      "band": "#D9CFC4"
+    },
+    "intro": "La sala está llena de cajas de mudanza. El sofá tapado con una sábana. La butaca vacía. Nero no entiende lo que ve, pero entiende que algo se acabó: alguien guardó su ratón de trapo.",
+    "hint": "Trepa por las cajas hasta el rellano de la escalera",
+    "mechanics": {
+      "wallSlide": true
+    },
+    "platforms": [
+      {
+        "x": 0,
+        "y": 1690,
+        "w": 900,
+        "h": 60,
+        "kind": "floor"
+      },
+      {
+        "x": 80,
+        "y": 1560,
+        "w": 170,
+        "h": 130,
+        "kind": "boxstack"
+      },
+      {
+        "x": 560,
+        "y": 1470,
+        "w": 300,
+        "h": 20,
+        "kind": "sofa"
+      },
+      {
+        "x": 300,
+        "y": 1430,
+        "w": 190,
+        "h": 260,
+        "kind": "boxstack"
+      },
+      {
+        "x": 60,
+        "y": 1300,
+        "w": 180,
+        "h": 390,
+        "kind": "boxstack"
+      },
+      {
+        "x": 330,
+        "y": 1180,
+        "w": 180,
         "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 430,
-        "y": 690,
-        "w": 220,
-        "h": 18,
-        "kind": "top"
+        "x": 620,
+        "y": 1050,
+        "w": 190,
+        "h": 14,
+        "kind": "shelf"
+      },
+      {
+        "x": 300,
+        "y": 920,
+        "w": 180,
+        "h": 14,
+        "kind": "shelf"
+      },
+      {
+        "x": 40,
+        "y": 790,
+        "w": 190,
+        "h": 14,
+        "kind": "shelf"
+      },
+      {
+        "x": 560,
+        "y": 660,
+        "w": 300,
+        "h": 22,
+        "kind": "landing"
+      }
+    ],
+    "goalKind": "landing",
+    "knock": null,
+    "yarn": false,
+    "bookShelf": 7,
+    "memories": [
+      {
+        "id": "e7_sabana",
+        "trigger": "start",
+        "x": 300,
+        "y": 900,
+        "text": "El sofá está tapado con una sábana y la butaca no huele a nadie.<br><b>Todo está aquí, pero en el sitio equivocado.</b>"
+      },
+      {
+        "id": "e7_caja",
+        "trigger": "platform",
+        "pi": 4,
+        "x": 140,
+        "y": 700,
+        "text": "Dentro de una caja cerrada con cinta reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo.</b>"
+      },
+      {
+        "id": "e7_escalera",
+        "trigger": "goal",
+        "x": 640,
+        "y": 420,
+        "text": "Desde el rellano se ve la puerta de la calle abierta de par en par.<br><b>Entran y salen personas que no son Aldo.</b>"
+      }
+    ]
+  },
+  {
+    "name": "La tormenta",
+    "kicker": "Episodio 8",
+    "time": "night",
+    "tint": {
+      "bg": "#2F3040",
+      "band": "#262734"
+    },
+    "intro": "Aldo no ha vuelto. Hay tormenta y no hay luz. Nero quiere llegar a la ventana alta para ver el camino, pero a oscuras la ruta de siempre no alcanza. Del colgador cuelga una olla pesada.",
+    "hint": "Tira la olla: su peso hará subir la balda",
+    "mechanics": {
+      "wallSlide": true
+    },
+    "platforms": [
+      {
+        "x": 0,
+        "y": 1690,
+        "w": 900,
+        "h": 60,
+        "kind": "floor"
+      },
+      {
+        "x": 330,
+        "y": 1580,
+        "w": 150,
+        "h": 16,
+        "kind": "chair"
+      },
+      {
+        "x": 290,
+        "y": 1470,
+        "w": 260,
+        "h": 20,
+        "kind": "table"
       },
       {
         "x": 60,
-        "y": 560,
-        "w": 250,
+        "y": 1310,
+        "w": 180,
+        "h": 16,
+        "kind": "dresser"
+      },
+      {
+        "x": 600,
+        "y": 1210,
+        "w": 260,
+        "h": 26,
+        "kind": "counter"
+      },
+      {
+        "x": 80,
+        "y": 790,
+        "w": 240,
         "h": 20,
         "kind": "window"
       }
     ],
     "goalKind": "window",
     "knock": {
-      "platform": 3,
-      "offset": 60,
+      "platform": 4,
+      "offset": 70,
       "type": "mug",
-      "memoryId": "taza"
+      "memoryId": "e8_olla"
     },
-    "yarn": true,
-    "bookShelf": 5,
-    "memories": [
+    "yarn": false,
+    "bookShelf": -1,
+    "interactives": [
       {
-        "id": "taza",
-        "trigger": "knock",
-        "x": 130,
-        "y": 470,
-        "text": "La taza favorita del abuelo se hizo pedazos.<br><b>Nadie la usaba… pero nadie se atrevía a guardarla.</b>"
-      },
-      {
-        "id": "planta",
-        "trigger": "platform",
-        "pi": 8,
-        "x": 380,
-        "y": 390,
-        "text": "La monstera que mamá riega cada domingo.<br><b>«No la toques, Nero», dice siempre. Demasiado tarde.</b>"
-      },
-      {
-        "id": "ventana",
-        "trigger": "goal",
-        "x": 610,
-        "y": 290,
-        "text": "Desde la ventana se ve el camino a la escuela.<br><b>Por ahí se fueron todos esta mañana.</b>"
-      }
-    ]
-  },
-  {
-    "name": "La sala",
-    "kicker": "Acto II",
-    "time": "afternoon",
-    "tint": {
-      "bg": "#F7E8DF",
-      "band": "#F1DACE"
-    },
-    "intro": "Tarde de fin de semana. El dueño está en casa. Los cojines del sofá aún guardan la forma de la última siesta juntos. Nero busca nuevos rincones de la casa, rincones que huelen a ambos.",
-    "platforms": [
-      {
-        "x": 0,
-        "y": 1690,
-        "w": 900,
-        "h": 60,
-        "kind": "floor"
-      },
-      {
-        "x": 540,
-        "y": 1570,
-        "w": 280,
-        "h": 20,
-        "kind": "sofa"
-      },
-      {
-        "x": 230,
-        "y": 1460,
+        "id": "balda",
+        "kind": "counterweight",
+        "x": 330,
+        "y": 1130,
         "w": 190,
-        "h": 16,
-        "kind": "table"
-      },
-      {
-        "x": 620,
-        "y": 1330,
-        "w": 180,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 300,
-        "y": 1210,
-        "w": 180,
-        "h": 14,
-        "kind": "frameshelf"
-      },
-      {
-        "x": 40,
-        "y": 1090,
-        "w": 160,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 420,
-        "y": 960,
-        "w": 190,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 110,
-        "y": 840,
-        "w": 150,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 470,
-        "y": 700,
-        "w": 200,
-        "h": 18,
-        "kind": "top"
-      },
-      {
-        "x": 90,
-        "y": 570,
-        "w": 230,
-        "h": 20,
-        "kind": "landing"
+        "travel": 170,
+        "trigger": "knock"
       }
     ],
-    "goalKind": "landing",
-    "knock": null,
-    "yarn": true,
-    "bookShelf": 6,
     "memories": [
       {
-        "id": "manta",
-        "trigger": "platform",
-        "pi": 1,
-        "x": 180,
-        "y": 470,
-        "text": "La manta del sofá huele a todos a la vez.<br><b>Aquí caben cuatro personas y un gato, apretados y felices.</b>"
+        "id": "e8_espera",
+        "trigger": "start",
+        "x": 300,
+        "y": 900,
+        "text": "La casa suena distinto sin luz. Cada trueno la hace más grande.<br><b>El plato de la cena sigue lleno.</b>"
       },
       {
-        "id": "retrato",
-        "trigger": "platform",
-        "pi": 4,
-        "x": 420,
-        "y": 390,
-        "text": "El retrato de la playa, un poco torcido.<br><b>Ese día Nero era apenas una bolita negra en la arena.</b>"
+        "id": "e8_olla",
+        "trigger": "knock",
+        "x": 300,
+        "y": 700,
+        "text": "La olla cae del colgador y la balda del otro lado sube de golpe.<br><b>Nero entiende el truco antes de saber que lo entendió.</b>"
       },
       {
-        "id": "puerta",
+        "id": "e8_faros",
         "trigger": "goal",
-        "x": 670,
-        "y": 300,
-        "text": "La puerta del pasillo quedó entreabierta.<br><b>Del otro lado, el cuarto de la niña. Su lugar favorito.</b>"
+        "x": 140,
+        "y": 500,
+        "text": "Nero espera en la ventana contando los coches que no son.<br><b>Hasta que unos faros sí paran. Y quien baja no es Aldo.</b>"
       }
     ]
   },
   {
-    "name": "El cuarto",
-    "kicker": "Acto III",
+    "name": "El altillo",
+    "kicker": "Episodio 9",
     "time": "night",
     "tint": {
       "bg": "#E7E3F0",
       "band": "#DBD6E9"
     },
-    "intro": "De noche, la casa es diferente. El dueño duerme. Nero explore el cuarto, trepando de mueble en mueble. La luna dibuja las cosas con luz suave. En la oscuridad, el hogar sigue siendo hogar.",
+    "intro": "Uma se ha encerrado en el cuarto de arriba. Aldo está en el hospital y se pondrá bien, pero ella todavía no se lo cree. Nero sube. Y sube con algo en la boca.",
+    "hint": "Usa todo lo aprendido: cajones, repisas y el salto largo",
+    "mechanics": {
+      "wallSlide": true
+    },
     "platforms": [
       {
         "x": 0,
@@ -838,38 +877,9 @@
       }
     ],
     "goalKind": "bed",
-    "knock": {
-      "platform": 2,
-      "offset": 50,
-      "type": "toy",
-      "memoryId": "juguete"
-    },
+    "knock": null,
     "yarn": false,
     "bookShelf": 4,
-    "memories": [
-      {
-        "id": "juguete",
-        "trigger": "knock",
-        "x": 180,
-        "y": 470,
-        "text": "El ratón de trapo rodó bajo el escritorio.<br><b>Fue el primer regalo de la niña. Ya casi no tiene orejas.</b>"
-      },
-      {
-        "id": "estrellas",
-        "trigger": "platform",
-        "pi": 6,
-        "x": 390,
-        "y": 390,
-        "text": "El móvil de estrellas gira despacito.<br><b>Cada noche la niña le pide un deseo. Casi siempre es sobre Nero.</b>"
-      },
-      {
-        "id": "cama",
-        "trigger": "goal",
-        "x": 660,
-        "y": 300,
-        "text": "La cama alta, tibia de tantas noches.<br><b>Se oye la puerta de casa: ya volvieron. Nero cierra los ojos.</b>"
-      }
-    ],
     "interactives": [
       {
         "id": "cajon_bajo",
@@ -894,6 +904,30 @@
         "slot": 0,
         "out": 120,
         "needsBelow": "cajon_medio"
+      }
+    ],
+    "memories": [
+      {
+        "id": "e9_puerta",
+        "trigger": "start",
+        "x": 300,
+        "y": 900,
+        "text": "Detrás de la puerta se oye a alguien intentando no hacer ruido al llorar.<br><b>Nero conoce ese silencio.</b>"
+      },
+      {
+        "id": "e9_estrellas",
+        "trigger": "platform",
+        "pi": 6,
+        "x": 390,
+        "y": 390,
+        "text": "El móvil de estrellas gira despacio sobre una cama que nadie usaba.<br><b>Alguien la dejó preparada por si acaso.</b>"
+      },
+      {
+        "id": "e9_raton",
+        "trigger": "goal",
+        "x": 660,
+        "y": 300,
+        "text": "Nero deja el ratón de trapo sobre la almohada y espera.<br><b>Uma se ríe con la nariz, que es como se ríe quien ha llorado.</b>"
       }
     ]
   }

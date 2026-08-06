@@ -1,338 +1,187 @@
-# 📖 La Historia de Nero
-
-## Sinopsis
-
-Nero no es un gato doméstico. Es un cachorro abandonado que despierta solo en una caja de cartón en la calle. Lo que comienza como un acto de supervivencia (escapar de la caja y llegar a la camioneta) se convierte en el primer encuentro entre Nero y su familia. La historia es sobre cómo un gatito perdido encuentra un hogar.
+# NERO · Temporada 1
+## «La casa que no estaba vacía»
 
 ---
 
-## 🎬 Acto 0: Despertar en la Caja
+## Premisa
 
-### Escena: La Calle (Tutorial/Intro)
+Nero es un gatito abandonado en una caja. Encuentra una casa. Aprende a vivir en
+ella. Y cuando la casa se rompe, descubre lo que de verdad significaba.
 
-**Setting:**
-- Madrugada. Silencio de ciudad durmiendo.
-- Nero está en una caja de cartón, entre basuras
-- Confundido, desorientado
-- Oye ruidos lejanos, olores desconocidos
+**Pregunta dramática:** ¿qué convierte una casa en un hogar?
 
-**Mecánica de Juego (Tutorial):**
-- El jugador aprende a:
-  - Gatear (analógico izquierda/derecha)
-  - Saltar con dificultad (sin combo, sin momentum)
-  - Trepar (a diferencia de los juegos posteriores, es DIFÍCIL trepar siendo bebé)
-
-**Narrativa:**
-> "Nero se despierta sin recordar cómo llegó aquí. La caja es su único mundo.
-> El cartón rasguñado, mojado. Afuera, todo es extraño y enorme.
-> Intenta trepar. Sus patitas resbalan. Intenta de nuevo."
-
-**Memoria 1: "El Sueño"**
-> "Antes de la caja había... ¿luz? ¿calor? Una boca suave.
-> Luego, frío. Oscuridad. Solo."
+**Respuesta de la temporada:** no es el techo que te protege. Es alguien a quien
+tú proteges.
 
 ---
 
-## 🚗 Acto 1: La Camioneta (Bifurcación Narrativa)
+## Personajes
 
-### Escena: El Callejón al Amanecer
+**Nero** — gato negro. Empieza siendo un cachorro torpe que apenas salta; termina
+siendo un gato capaz. Su arco no es de fuerza: es de pertenencia. No habla; lo
+que siente se cuenta con lo que hace y con los recuerdos que recoge.
 
-**Setting:**
-- Nero finalmente trepa la caja (con esfuerzo)
-- Se cae del otro lado, rueda en el barro
-- Ve una camioneta estacionada, motor apagado
-- El balde trasero está al alcance pero es ALTO
+**Aldo** — hombre mayor que vive solo. Callado, metódico, con la casa llena de
+cosas que no tira. No adopta a Nero: lo deja quedarse, que es distinto y más
+difícil.
 
-**Momento Decisivo:**
+**Uma** — nieta de Aldo. Aparece en el último acto. Doce años, asustada,
+fingiendo que no lo está.
 
-#### 🟢 RAMA A: El Coraje (Camioneta)
-**Condición:** El jugador logra subirse al balde en X segundos
-
-**Mecánica:**
-- Debe saltar 3 veces para llegar (platforma de basura, espejo, balde)
-- Cada salto es arriesgado (puede caer)
-- Timer: 45 segundos
-
-**Narrativa:**
-> "El auto despierta. El motor ruge.
-> Nero está adentro, temblando, mirando el mundo que se mueve.
-> Atraviesa calles desconocidas.
-> Luego... frena. Silencio. Una puerta se abre.
-> Está en un lugar diferente. Un lugar... acogedor."
-
-**Memoria 2a: "El Viaje"**
-> "La camioneta rueda. Todo vibra. Nero cierra los ojos.
-> Cuando los abre, es otro mundo."
+**El ratón de trapo** — el objeto que recorre la temporada. Nero lo encuentra en
+el estudio, lo pierde entre las cajas, y en el último episodio lo entrega. Es la
+medida de su arco: de juguete propio a regalo.
 
 ---
 
-#### 🔴 RAMA B: El Encuentro (Conductor)
-**Condición:** El jugador NO logra subirse a tiempo
+## Estructura
 
-**Mecánica:**
-- Timer expira (45 segundos)
-- El conductor llega, abre la puerta
-- Ve a Nero temblando en la basura
-- Lo recoge suavemente
+Cuatro espacios que se repiten y se transforman. La casa se aprende y luego se
+desconoce: el mismo cuarto, dos veces, dice más que dos cuartos distintos.
 
-**Narrativa:**
-> "Nero no lo logra. Resbala. Cae.
-> Una sombra enorme lo cubre.
-> Una voz profunda dice: '¿Qué haces aquí, pequeño?'
-> Manos suaves lo levantan.
-> Nero está asustado pero... seguro."
-
-**Memoria 2b: "Las Manos"**
-> "Unas manos grandes pero gentiles lo envuelven.
-> No entiende qué pasa. Solo siente que... alguien lo vio.
-> Alguien se detuvo por él."
+| # | Episodio | Espacio | Tema | Mecánica |
+|---|---|---|---|---|
+| 0 | La caja | Calle | Supervivencia | Saltos acumulados |
+| 1 | El callejón | Calle | Suerte | Contrarreloj · ramas A/B |
+| 2 | Unas manos | Calle | Bondad | Cinemática (rama B) |
+| 3 | El primer día | **Cocina** | Miedo | Escalera de cajones |
+| 4 | El regazo | **Sala** | Confianza | Ascenso corto y cálido |
+| 5 | El invierno | — | Tiempo | Cinemática |
+| 6 | Lo que se tira | **Estudio** | Juego | Derribar objetos |
+| 7 | Las cajas | **Sala** ↺ | Pérdida | Trepar por lo que sobra |
+| 8 | La tormenta | **Cocina** ↺ | Espera | Contrapeso |
+| 9 | El altillo | **Cuarto** | Hogar | Todo lo aprendido |
 
 ---
 
-## 🏠 Acto 2: La Casa (Convergencia)
+## Episodios
 
-### Escena: La Cocina (Primera vez en Casa)
+### 0 · La caja
+Llueve. Nero es un cachorro dentro de una caja de cartón cerrada, en un callejón.
+No sabe cómo llegó ahí. Solo sabe que la única salida está arriba.
 
-**Setting:**
-- Ambas ramas convergen aquí
-- Es ENORME desde la perspectiva de un cachorro
-- **La casa de una persona sola** (silencio, objetos personales, bibliografía de soledad)
-- Olores: café, tinta, quizá tabaco
-- Hay objetos para explorar (libros, plantas, escritorio)
+> *«La oscuridad huele a cartón y a miedo.»*
 
-**El dueño es:**
-- Adulto solitario (30-50 años)
-- Inteligente, observador, ha estado solo por tiempo
-- Ve a Nero y algo *cambia*: una oportunidad de cuidar, de no estar solo
-- Primera vez que comparte su hogar
+Salta hasta que las solapas ceden. Es el tutorial y la tesis del juego: **subir
+es lo único que tienes**.
 
-**Mecánica (Exploración Libre):**
-- Araña (sofá, cortinas) - instinto puro
-- Descubre comida (plato preparado para él) - primer acto de amor del dueño
-- Bota plantas (accidentes energéticos)
-- Explora escritorio, estanterías, búsqueda de refugio
-- Cada descubrimiento dispara una memoria
+### 1 · El callejón
+Una camioneta con el motor apagado. Cuarenta y cinco segundos antes de que
+arranque. Escombros que forman un camino: bolsas, cajas, el espejo lateral.
 
-**Narrativa:**
-> "La casa huele diferente a la calle. Huele a PERSONA.
-> No personas. Una persona.
-> Sus cosas están en cada rincón: libros, plantas, objetos sin razón aparente.
-> Nero toca todo. Destruye cosas sin culpa.
-> Pero también descubre que... alguien preparó esto para él.
-> Comida. Seguridad. Atención."
+- **Rama A** — llega al balde. Viaja escondido entre herramientas.
+- **Rama B** — no llega. El conductor lo encuentra al subir. Lo levanta con las
+  dos manos, como se levanta algo que se puede romper.
+
+Ambas ramas terminan en la misma puerta. La temporada no premia el éxito: premia
+haber estado ahí.
+
+### 2 · Unas manos *(cinemática, solo rama B)*
+> *«Una voz profunda dice: ¿Qué haces aquí, pequeño? Pero las manos son suaves.»*
+
+### 3 · El primer día — LA COCINA
+La casa es gigantesca. Nero es diminuto y tiene hambre. La comida está en la
+encimera, a una altura imposible para sus patas.
+
+La mesa y la silla no bastan: desde ahí la encimera queda lejos. Pero la cajonera
+tiene tres cajones, y un cajón entreabierto es un escalón.
+
+> *«El cajón cede con un ruido enorme. Nero se queda quieto. Nadie viene a
+> regañarlo. Entonces sigue.»*
+
+Enseña el verbo central: **la escalera no existe, la construyes**.
+
+### 4 · El regazo — LA SALA
+Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva
+horas mirándolo desde debajo del mueble.
+
+El ascenso es corto y fácil a propósito: mesita, sofá, butaca. La dificultad no
+es física. Es decidirse.
+
+> *«El pecho de Aldo sube y baja. Nero se enrosca ahí. Aldo no se despierta,
+> pero su mano se cierra un poco.»*
+
+### 5 · El invierno *(cinemática)*
+> *«Pasan los meses. Nero ya no cabe en una mano. Aprende dónde da el sol a cada
+> hora, qué escalón cruje y en qué silla no debe dormir. Aprende la casa como se
+> aprende un idioma: sin darse cuenta.»*
+
+### 6 · Lo que se tira — EL ESTUDIO
+Aldo lleva toda la tarde leyendo y no le hace caso. Nero conoce la solución:
+tirar cosas al suelo hasta que alguien reaccione.
+
+Derriba la taza del café. Aldo levanta la vista. Y por primera vez, se ríe.
+
+Arriba, en lo alto de la librería, hay una caja de zapatos con fotografías. Y un
+ratón de trapo que ya no es de nadie.
+
+> *«El ratón huele a otra casa y a otro tiempo. Nero decide que ahora es suyo.»*
+
+### 7 · Las cajas — LA SALA (revisitada) · **PUNTO DE GIRO**
+La sala está llena de cajas de mudanza. Los muebles no están donde deben. El sofá
+tapado con una sábana. La butaca vacía.
+
+Nero no entiende lo que ve, pero entiende que algo se acabó. Trepa por lo que
+sobra buscando su ratón de trapo, que alguien guardó en una caja cerrada.
+
+> *«Todo huele a él, pero en el sitio equivocado.»*
+
+El episodio no explica nada. Igual que no se le explica a un gato.
+
+### 8 · La tormenta — LA COCINA (revisitada)
+Aldo no ha vuelto. Es de noche, hay tormenta y no hay luz.
+
+Nero quiere llegar a la ventana alta para ver el camino. La ruta habitual no
+sirve a oscuras: hay que tirar la olla del colgador para que el contrapeso baje y
+la balda suba.
+
+> *«Nero espera en la ventana. Cuenta los coches que no son.»*
+
+Al final, unos faros. Un coche que sí para. Pero quien baja no es Aldo: es una
+chica con una mochila y los ojos rojos.
+
+### 9 · El altillo — EL CUARTO
+Uma se ha encerrado en el cuarto de arriba. Aldo está en el hospital, se pondrá
+bien, pero eso ella todavía no se lo cree.
+
+La cama alta es un altillo con escalera. Nero sube usando todo lo aprendido: los
+cajones, las repisas, el salto largo. Y sube con algo en la boca.
+
+> *«Nero deja el ratón de trapo sobre la almohada. Uma lo mira. Se ríe con la
+> nariz, que es como se ríe la gente que ha llorado.»*
+
+**Cierre:**
+> *«La casa nunca estuvo vacía. Estaba esperando a que alguien la volviera a
+> llenar. Abajo suena una llave.»*
 
 ---
 
-## 💭 Memorias de la Casa
+## Reglas de escritura
 
-### Kitchen Memories
-1. **"La Aruña"** (Sofá destrozado)
-   > "Sus garras encuentran el sofá. Siente la tela rasgar.
-   > Instinto ancestral. Marca, rasguña, destruye.
-   > Luego escucha pasos. Se congela.
-   > Una voz: '¿Nero?' No grita. Solo su nombre. Suave."
-
-2. **"El Plato"** (Comida preparada)
-   > "En la cocina hay un plato. Con carne y agua.
-   > Nero nunca comió así. Nunca nadie preparó nada para él.
-   > Come temblando, esperando que se lo quiten.
-   > Nadie lo hace."
-
-3. **"Las Plantas"** (Derribadas)
-   > "Una maceta se cae. Tierra esparcida. Nero corre asustado.
-   > El dueño aparece. Nero espera golpes.
-   > En cambio: 'Está bien. Eres pequeño. No sabías.'
-   > Recoge la tierra en silencio, cariñoso."
-
-4. **"La Biblioteca"** (Escritorio del dueño)
-   > "Libros apilados. Fotos de lugares lejanos. Una vida en objetos.
-   > Nero salta entre ellos. Derriba plumas, papeles.
-   > Ve una foto: el dueño, más joven, solo.
-   > Ve otra: igual, aún solo.
-   > Entiende sin entender: ambos lo eran."
+1. **Nero no piensa en palabras.** Los recuerdos describen lo que huele, lo que
+   pesa, lo que suena. Nunca «Nero se sintió triste».
+2. **No se explica lo que un gato no entendería.** La enfermedad de Aldo se ve en
+   cajas y ausencias, jamás en un cartel.
+3. **Cada recuerdo es una frase y un remate.** La frase describe; el remate en
+   negrita da el giro emocional.
+4. **La casa habla.** Cuando un espacio se repite, algo ha cambiado de sitio. Ese
+   cambio es la información.
 
 ---
 
-## 🌙 Acto 3: La Aceptación
-
-### Escena: La Sala (Primera Noche)
-
-**Setting:**
-- La casa de noche, tranquila
-- Nero está en el sofá destrozado (su marca, su territorio)
-- El dueño está cerca: leyendo, trabajando, simplemente existiendo
-- Silencio compartido
-
-**Narrativa:**
-> "Nero está en el sofá que destrozó. Cansado.
-> El dueño entra con té. Se sienta al otro extremo.
-> Leen juntos. Nero no duerme, solo... existe.
-> Después de un tiempo, el dueño estira una mano.
-> Acaricia a Nero con dos dedos.
-> Suave. Esperando rechazo.
-> Nero se acerca. Los dos están solos.
-> Ahora, juntos."
-
-**Memoria Final: "Hogar"**
-> "Nero había estado buscando algo sin saberlo.
-> No un lugar. No comida. No seguridad.
-> Alguien que lo viera sin pretensiones.
-> Alguien que dijera su nombre como quien dice: 'Ya no estás solo.'
-> Y que creyera la misma cosa de sí mismo."
-
----
-
-## 🎮 Cómo Se Integra con el Juego Actual
-
-### Mapa de Actos
+## Continuidad de la casa
 
 ```
-ACTO 0: LA CALLE
-├─ Tutorial: Escape de la caja
-└─ Rama A/B: Camioneta (éxito) vs Conductor (fracaso)
-   [Mecánica: Timer 45seg, 3 saltos arriesgados]
-
-    ↓ (Ambas convergen)
-
-ACTO 1: LA CASA - DÍA (Kitchen & Exploration)
-├─ Primera entrada, exploración libre
-├─ Memorias de instinto: araña, destruye, prueba comida
-├─ Descubre que alguien preparó la casa para él
-└─ Encuentra objetos del dueño (fotos, libros, vida)
-
-    ↓
-
-ACTO 2: LA CASA - TARDE (Deeper Exploration)
-├─ Juego más complejo
-├─ Interacción con el dueño (gentil, observador, paciente)
-├─ Memorias de bondad: el dueño no grita, entiende, lo cuida
-└─ Nero comienza a cambiar de actitud
-
-    ↓
-
-ACTO 3: LA CASA - NOCHE (Acceptance)
-├─ Primer momento de conexión genuina
-├─ El dueño y Nero comparten silencio
-├─ Una mano toca suavemente
-└─ "Hogar" (Fin de la historia de origen)
+        ARRIBA        [9] El cuarto · altillo
+          │
+       escalera ──────[7] rellano (meta del ep. 7)
+          │
+     PLANTA BAJA
+     ┌────────┬──────────┬──────────┐
+     │ Cocina │   Sala   │ Estudio  │
+     │ [3][8] │  [4][7]  │   [6]    │
+     └────────┴──────────┴──────────┘
 ```
 
----
-
-## 🎨 Temas Narrativos
-
-### Dos soledades encuentran compañía
-
-**Para Nero:**
-1. **Abandono** → Sobrevivencia en la calle (instinto)
-2. **Coraje/Suerte** → Llega a la casa (bifurcación narrativa)
-3. **Confianza** → Descubre que no será golpeado
-4. **Aceptación** → Encuentra hogar en una mano gentil
-
-**Para el dueño:**
-1. **Soledad crónica** → Vida de observador, solitaria
-2. **Descubrimiento** → Ve a Nero, ve una oportunidad
-3. **Vulnerabilidad** → Se atreve a cuidar, a amar
-4. **Aceptación** → Descubre que ya no está solo
-
-**El tema central:**
-> "Dos seres rotos encuentran que juntos pueden estar enteros."
-
-### Perspectiva Feline (La forma en que Nero ve el mundo)
-
-- El mundo es ENORME y amenazante
-- Los humanos son impredecibles (pueden golpear o acariciar)
-- La comida es esperanza
-- El silencio compartido es paz
-- Una mano gentil es TODO
-
----
-
-## 📝 Estructura de Memorias (10 Total)
-
-### Acto 0: LA CALLE (2 Memorias)
-- [ ] Memoria 0-1: **"El Sueño"** (abandonado)
-  - Trigger: Primeros 10 segundos del juego (automática)
-- [ ] Memoria 0-2: **"La Caja"** (despertar y trepar)
-  - Trigger: Escapar de la caja
-
-### Acto 1: LA CAMIONETA (2 Memorias - Bifurcación)
-- [ ] Memoria 1-1a: **"El Viaje"** (RAMA A - éxito)
-  - Trigger: Subirse al balde en tiempo
-- [ ] Memoria 1-1b: **"Las Manos"** (RAMA B - fracaso)
-  - Trigger: Tiempo expira / conductor toma a Nero
-  - *Nota: Solo UNA se activa per playthrough*
-
-### Acto 2: LA CASA (4 Memorias)
-- [ ] Memoria 2-1: **"La Aruña"** (sofá - instinto)
-  - Trigger: Araña el sofá
-- [ ] Memoria 2-2: **"El Plato"** (comida - primer acto de amor)
-  - Trigger: Comer de la comida preparada
-- [ ] Memoria 2-3: **"Las Plantas"** (bondad - no hay castigo)
-  - Trigger: Derribar una maceta y el dueño responder con amor
-- [ ] Memoria 2-4: **"La Biblioteca"** (empatía - ambos solos)
-  - Trigger: Explorar el escritorio / fotos del dueño
-
-### Acto 3: LA NOCHE (2 Memorias)
-- [ ] Memoria 3-1: **"Conexión"** (el primer toque)
-  - Trigger: El dueño acaricia a Nero
-- [ ] Memoria 3-2: **"Hogar"** (aceptación final)
-  - Trigger: Fin del nivel / cinemática final
-
----
-
-## 🎬 Decisiones Finales
-
-✅ **La familia**: Un adulto solitario (no una familia)
-✅ **Bifurcación**: Variaciones ocultas (mismo juego, se revela en segundo playthrough)
-✅ **Destrucción**: Sofá (instinto), comida (se prepara para él), plantas (accidentes)
-
-## 🎯 Decisiones Finales (Confirmadas)
-
-✅ **Tono**: Juguetón con profundidad
-- Humor y torpeza gatuna (instinto, curiosidad)
-- Momentos emocionales genuinos y reflexivos
-- Balance: no es ligero, pero tampoco sobreserio
-
-✅ **Cierre del prólogo**: Cinemática de amanecer
-- Final del Acto 3: Nero durmiendo en el regazo del dueño
-- Fade out → Amanecer → "Ahora comienza la verdadera aventura"
-- Transición a los 3 actos de exploración/gameplay
-
-✅ **Rol del dueño**: Personaje dinámico
-- Aparece en diferentes cuartos (cocina, sala, habitación)
-- Evolucionan en su relación a través del gameplay
-- A veces está triste (Nero intenta consolarlo)
-- A veces juega (sorpresas, persecuciones)
-- Un personaje real, no solo background
-
----
-
-## 🎬 Cinemática de Transición (Amanecer)
-
-**Fade OUT del final del Acto 3**
-```
-[Silencio compartido. El dueño leyendo, Nero dormido en su regazo]
-[Gradualmente, luz dorada entra por la ventana]
-
-NARRADOR (suave, reflexivo):
-"Nero no sabía que estaba buscando un hogar.
- Tampoco sabía que su dueño estaba buscando compañía.
- A veces, lo que necesitamos nos encuentra antes de que lo busquemos."
-
-[Sonido: leve ronroneo de Nero]
-
-"Y ahora, ambos despiertan a un nuevo día.
- Juntos."
-
-[FADE IN: Amanecer en la cocina. Luz cálida. El dueño prepara café. 
- Nero se despereza, salta al piso, listo para explorar]
-
-"La aventura verdadera apenas comienza."
-
-[FADE TO: Pantalla de 3 actos - "Acto 1: La Cocina"]
-```
-
----
-
-**Status**: Visión narrativa completa ✅ | Próximo: Escribir diálogos y cinemáticas
+Mismos muebles, misma disposición, distinta luz y distinto estado. La cajonera
+del episodio 3 es la misma del 8. La butaca del 4 es la que está vacía en el 7.

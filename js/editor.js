@@ -73,8 +73,25 @@ function download(name, obj) {
 }
 
 // ---------- validación de alcance ----------
+// Los interactivos (cajones, contrapesos) también son plataformas: si no se
+// cuentan, el validador da falsos positivos en los niveles con puzzle.
+function allPlatforms(s) {
+  const extra = [];
+  for (const d of (s.interactives || [])) {
+    const host = s.platforms[d.host];
+    if (d.kind === 'drawer' && host) {
+      extra.push({ x: host.x + host.w - 14, y: host.y + 90 + (d.slot || 0) * 100,
+                   w: d.out || 120, h: 12, kind: 'drawer' });
+    } else if (d.kind === 'counterweight') {
+      extra.push({ x: d.x, y: d.y, w: d.w || 180, h: 14, kind: 'shelf' });
+      extra.push({ x: d.x, y: d.y - (d.travel || 200), w: d.w || 180, h: 14, kind: 'shelf' });
+    }
+  }
+  return s.platforms.concat(extra);
+}
+
 function reachableFromBelow(idx) {
-  const P = scenes[cur].platforms, p = P[idx];
+  const P = allPlatforms(scenes[cur]), p = P[idx];
   if (p.kind === 'floor') return true;
   for (const q of P) {
     if (q === p || q.y <= p.y) continue;             // q debe estar más abajo
@@ -88,7 +105,7 @@ function reachableFromBelow(idx) {
 
 function sceneIssues() {
   const s = scenes[cur], issues = [];
-  s.platforms.forEach((p, i) => {
+  allPlatforms(s).forEach((p, i) => {
     if (!reachableFromBelow(i)) issues.push(`Plataforma ${i} (${p.kind}) inalcanzable: ninguna plataforma inferior queda a ≤${SUPER_H}px de salto.`);
   });
   // metas personalizadas (jumps_counted, custom_*) se resuelven en código, no requieren plataforma

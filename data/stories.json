@@ -1,11 +1,11 @@
 {
   "title": {
-    "kicker": "una historia de gato en tres actos",
+    "kicker": "temporada 1",
     "title": "N E R O",
-    "body": "La familia salió temprano y la casa parece vacía. Pero una casa nunca está vacía: está llena de los que viven en ella. Nero va a demostrarlo, saltando."
+    "body": "Un gatito abandonado en una caja encuentra una casa. Aprende a vivir en ella. Y cuando la casa se rompe, descubre lo que de verdad significaba."
   },
   "ui": {
-    "hint": "Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso",
-    "final": "Nero se acurruca en la cama alta y oye las llaves en la puerta. La casa nunca estuvo vacía: estaba llena de ellos."
+    "hint": "Desliza ↑ para saltar · toca un mueble para saltar hacia él · arrastra al lado para andar sigiloso",
+    "final": "La casa nunca estuvo vacía: estaba esperando a que alguien la volviera a llenar.<br><br>Abajo suena una llave en la cerradura."
   }
 }

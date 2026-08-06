@@ -1,42 +1,40 @@
 # Nero · una historia de gato 🐈‍⬛
 
-Juego de exploración doméstica protagonizado por un gato negro "líquido".
+**Temporada 1 · «La casa que no estaba vacía»**
+
+Un gatito abandonado en una caja encuentra una casa. Aprende a vivir en ella. Y
+cuando la casa se rompe, descubre lo que de verdad significaba.
 
 **Jugable:** [nero.maldonado.pro](https://nero.maldonado.pro) ✨
 
-Arquitectura modular, sin dependencias externas, totalmente configurable y escalable.
+## Los episodios
+
+| # | Episodio | Espacio | Mecánica |
+|---|---|---|---|
+| 0 | La caja | Calle | Saltos acumulados |
+| 1 | El callejón | Calle | Contrarreloj · ramas A/B |
+| 2 | Unas manos | Calle | Cinemática (rama B) |
+| 3 | El primer día | Cocina | Escalera de cajones |
+| 4 | El regazo | Sala | Ascenso corto |
+| 5 | El invierno | — | Cinemática |
+| 6 | Lo que se tira | Estudio | Derribar objetos |
+| 7 | Las cajas | Sala ↺ | Trepar por lo que sobra |
+| 8 | La tormenta | Cocina ↺ | Contrapeso |
+| 9 | El altillo | Cuarto | Todo lo aprendido |
+
+Cuatro espacios que se repiten y se transforman: la cocina del episodio 3 es la
+misma del 8, la butaca del 4 es la que está vacía en el 7. La casa se aprende y
+luego se desconoce.
+
+Guion completo en [`STORY.md`](STORY.md) · diseño de puzzles en [`PUZZLES.md`](PUZZLES.md).
 
 ## Las páginas del proyecto
 
 | Página | Qué es |
 |---|---|
-| `index.html` | **El juego** (motor 3D con Three.js): las 9 escenas de `data/scenes.json` — prólogo de la caja, callejón con la camioneta (ramas A/B y contrarreloj), cinemáticas, y los 3 actos clásicos — con render 2.5D estilo soft y el modelo rigeado de Nero (`assets/nero.glb`) |
-| `2d.html` | La versión 2D clásica (canvas) del mismo contenido; comparte `core.js`, `physics.js` y los datos |
-| `editor.html` | **Editor de niveles e historia**: edita `data/*.json` visualmente, valida alcances de salto y prueba el borrador en 3D o 2D al instante (`?draft=1`) |
-
-> Ambos frontends leen los mismos `data/scenes.json` + `data/stories.json` y comparten motor:
-> lo que edites en el editor o en los datos aplica al 3D y al 2D por igual.
-
-### El prólogo, como lo cuenta [STORY.md](STORY.md)
-
-- **Acto 0 · La caja**: Nero (cachorro, visible dentro de la caja en corte) salta una y otra vez;
-  con cada golpe las solapas se abren un poco más y entra más luz. Al octavo salto, salta fuera.
-- **Acto 1 · El callejón**: la camioneta está estacionada con el motor apagado. El camino del
-  jugador es el de la historia: bolsa de basura → escombros → **espejo lateral** → el balde.
-  45 segundos. Si lo logra, Rama A (viaja en la camioneta); si el tiempo se agota, Rama B
-  (el conductor lo encuentra y lo recoge). Ambas convergen en la cocina.
-
-## La historia
-
-La familia salió temprano y la casa parece vacía. Nero recorre tres habitaciones
-recogiendo los recuerdos que la familia deja en las cosas (9 en total, 3 por acto):
-
-- **Acto I · La cocina** (mañana) — la taza del abuelo, la monstera de mamá, la ventana al camino de la escuela.
-- **Acto II · La sala** (tarde) — la manta del sofá, el retrato de la playa, la puerta entreabierta del pasillo.
-- **Acto III · El cuarto** (noche) — el ratón de trapo, el móvil de estrellas, y la cama alta donde todo termina bien.
-
-Cada acto tiene su propia luz (paleta pastel de mañana, tarde y noche), su mobiliario
-y su meta. Pantalla de título, tarjetas de acto y final con recuento de recuerdos.
+| `index.html` | **El juego** (Three.js, cámara ortográfica, estética de papel) |
+| `2d.html` | La versión 2D clásica en canvas, sobre los mismos datos |
+| `editor.html` | Editor de niveles e historia con validador de alcance |
 
 ## Cómo jugar
 

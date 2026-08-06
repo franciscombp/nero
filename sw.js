@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nero-pwa-v5';
+const CACHE_NAME = 'nero-pwa-v6';
 const ASSETS = [
   './',
   './index.html',
