@@ -2,7 +2,7 @@ export const CONFIG = {
   WORLD_W: 900,
   WORLD_H: 1750,
   FLOOR_Y: 1690,
-  CEILING_Y: 80,
+  CEILING_Y: 420,
   GRAV: 2400,
   JUMP_VX: 330,
   JUMP_VY: 880,

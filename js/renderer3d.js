@@ -42,10 +42,16 @@ export function createRenderer3D(canvas) {
   renderer.toneMappingExposure = 1.18;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(46, 1, 10, 8000);
-  let camDist = 1000;
+  // Cámara ORTOGRÁFICA: sin deformación de perspectiva, el mundo se lee como un
+  // recortable 2D por capas. Un picado mínimo (~5°) deja ver las tapas de los
+  // muebles para que el jugador sepa dónde puede aterrizar.
+  const camera = new THREE.OrthographicCamera(-500, 500, 500, -500, -4000, 8000);
+  const CAM_DIST = 2600;
+  const CAM_PITCH = 0.088;                       // tan(5°)
+  let viewH = 1000, viewW = 1000;                // tamaño visible en unidades de mundo
   const lookTarget = new THREE.Vector3(0, 300, 0);
-  camera.position.set(0, 380, camDist);
+  camera.position.set(0, 300 + CAM_DIST * CAM_PITCH, CAM_DIST);
+  camera.lookAt(lookTarget);
 
   // --- luces ---
   const amb = new THREE.AmbientLight(0xFFFFFF, 0.45);
@@ -70,13 +76,60 @@ export function createRenderer3D(canvas) {
   let sceneTime = 'morning';
   const sway = [];                     // { obj, amp, speed, phase }
 
+  // ---------- textura de papel (fibra + grano), generada una vez ----------
+  // Es el ingrediente que convierte los volúmenes en cartulina: se multiplica
+  // sobre el color base, así que sirve para toda la paleta.
+  const paperTex = (() => {
+    const S = 512;
+    const cvs = document.createElement('canvas');
+    cvs.width = cvs.height = S;
+    const c2 = cvs.getContext('2d');
+    c2.fillStyle = '#ffffff';
+    c2.fillRect(0, 0, S, S);
+    // manchas suaves: irregularidad del pulpado
+    for (let i = 0; i < 340; i++) {
+      const r = 12 + Math.random() * 60;
+      const a = 0.012 + Math.random() * 0.03;
+      c2.fillStyle = Math.random() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
+      c2.beginPath();
+      c2.arc(Math.random() * S, Math.random() * S, r, 0, Math.PI * 2);
+      c2.fill();
+    }
+    // fibras cortas entrecruzadas
+    c2.lineWidth = 1;
+    for (let i = 0; i < 2600; i++) {
+      const x = Math.random() * S, y = Math.random() * S;
+      const ang = Math.random() * Math.PI;
+      const len = 3 + Math.random() * 12;
+      c2.strokeStyle = Math.random() < 0.5
+        ? `rgba(0,0,0,${0.02 + Math.random() * 0.05})`
+        : `rgba(255,255,255,${0.03 + Math.random() * 0.06})`;
+      c2.beginPath();
+      c2.moveTo(x, y);
+      c2.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+      c2.stroke();
+    }
+    const t = new THREE.CanvasTexture(cvs);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(3, 3);
+    t.anisotropy = 4;
+    return t;
+  })();
+
   // ---------- helpers de construcción ----------
   const mats = new Map();
   function M(color, o = {}) {
-    const key = `${color}|${o.emissive ?? ''}|${o.ei ?? ''}|${o.opacity ?? ''}`;
+    const key = `${color}|${o.emissive ?? ''}|${o.ei ?? ''}|${o.opacity ?? ''}|${o.smooth ? 's' : 'f'}`;
     if (!o.noCache && mats.has(key)) return mats.get(key);
     const m = new THREE.MeshStandardMaterial({
-      color, roughness: o.rough ?? 0.92, metalness: 0,
+      color,
+      map: o.noPaper ? null : paperTex,
+      bumpMap: o.noPaper ? null : paperTex,
+      bumpScale: 0.9,
+      // caras planas = pliegues marcados: la lectura de "papel doblado"
+      flatShading: !o.smooth,
+      roughness: o.rough ?? 0.95,
+      metalness: 0,
       ...(o.emissive != null ? { emissive: o.emissive, emissiveIntensity: o.ei ?? 0.8 } : {}),
       ...(o.opacity != null ? { transparent: true, opacity: o.opacity } : {})
     });
@@ -84,22 +137,24 @@ export function createRenderer3D(canvas) {
     return m;
   }
   function shadowed(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; return mesh; }
+  // Caja "de cartulina": el bisel de un solo segmento deja un canto plano que
+  // capta la luz como el borde de una hoja doblada.
   function rbox(w, h, d, color, r = 8, o = {}) {
-    const rad = Math.min(r, w / 2.2, h / 2.2, d / 2.2);
-    return shadowed(new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, rad), M(color, o)));
+    const rad = Math.min(r * 0.5 + 2, w / 2.4, h / 2.4, d / 2.4);
+    return shadowed(new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 1, rad), M(color, o)));
   }
   function pbox(w, h, d, color, o = {}) {
     return shadowed(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(color, o)));
   }
+  // cilindros y esferas con pocos lados: facetas visibles, nada de plástico liso
   function cyl(rT, rB, h, color, o = {}) {
-    return shadowed(new THREE.Mesh(new THREE.CylinderGeometry(rT, rB, h, 22), M(color, o)));
+    return shadowed(new THREE.Mesh(new THREE.CylinderGeometry(rT, rB, h, o.seg ?? 8), M(color, o)));
   }
   function sph(r, color, o = {}) {
-    return shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, 22, 16), M(color, o)));
+    return shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, o.seg ?? 9, o.seg2 ?? 6), M(color, o)));
   }
   function disc(r, h, color, o = {}) {
-    const m = cyl(r, r, h, color, o);
-    return m;
+    return cyl(r, r, h, color, { seg: 20, ...o });
   }
   function put(mesh, x, y, z) { mesh.position.set(x, y, z); return mesh; }
   function clearGroup(g) {
@@ -154,10 +209,51 @@ export function createRenderer3D(canvas) {
     return g;
   }
 
+  // ---------- motas de polvo suspendidas ----------
+  // Se ven sobre todo al cruzar los haces de las lámparas: dan aire y escala.
+  let dust = null;
+  function buildDust() {
+    if (dust) { room.add(dust); return; }
+    const N = 70;
+    const pos = new Float32Array(N * 3);
+    const seed = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * (W2 + 60);
+      pos[i * 3 + 1] = Math.random() * (tY(CY) + 60);
+      pos[i * 3 + 2] = -260 + Math.random() * 420;
+      seed[i] = Math.random() * 100;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    dust = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: 0xFFF0D8, size: 2.2, transparent: true, opacity: 0.3,
+      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: false
+    }));
+    dust.userData = { seed, base: pos.slice(0) };
+    dust.frustumCulled = false;
+    room.add(dust);
+  }
+
+  function updateDust(dt) {
+    if (!dust) return;
+    const p = dust.geometry.attributes.position;
+    const { seed, base } = dust.userData;
+    for (let i = 0; i < seed.length; i++) {
+      const s = seed[i];
+      // deriva lenta: sube y ondula, y reaparece abajo al salir por arriba
+      const drift = (time * (6 + (s % 5))) % (tY(CY) + 120);
+      p.array[i * 3] = base[i * 3] + Math.sin(time * 0.35 + s) * 26;
+      p.array[i * 3 + 1] = (base[i * 3 + 1] + drift) % (tY(CY) + 120);
+    }
+    p.needsUpdate = true;
+  }
+
   // ---------- habitación ----------
   function buildRoom(L) {
     clearGroup(room);
+    dust = null;                 // clearGroup lo desechó: se reconstruye abajo
     sway.length = 0;
+    buildDust();
     const night = L.time === 'night';
     const domestic = isDomestic(L.time);
     const accent = night ? COL.lilac : COL.coral;
@@ -471,15 +567,37 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'window': {
-        g.add(put(rbox(p.w, 20, 250, COL.wood, 8), 0, -10, SURF_Z));
-        g.add(put(rbox(174, 206, 16, COL.woodDk, 26), 0, 128, WALL_Z + 12));
-        const paneCol = night ? 0xAFC2E8 : (L.time === 'afternoon' ? 0xFFE1C8 : 0xFFF3D8);
-        g.add(put(rbox(142, 174, 8, paneCol, 22, { emissive: paneCol, ei: night ? 0.4 : 0.75, noCache: true }), 0, 128, WALL_Z + 20));
-        if (!night) {
-          const wsun = disc(30, 5, COL.butter, { emissive: 0xF0C987, ei: 0.9 });
-          wsun.rotation.x = Math.PI / 2;
-          g.add(put(wsun, 12, 146, WALL_Z + 27));
+        // alféizar anclado al muro + ventana alta de cocina antigua (cabe bajo el techo)
+        g.add(put(rbox(p.w, 20, 200, COL.wood, 8), 0, -10, WALL_Z + 110));
+        g.add(put(rbox(p.w + 16, 14, 12, COL.woodDk, 4), 0, -17, WALL_Z + 16));
+        for (const sx2 of [-(p.w / 2 - 40), p.w / 2 - 40]) {
+          g.add(put(rbox(15, 42, 54, COL.woodDk, 4), sx2, -40, WALL_Z + 40));
         }
+        g.add(put(rbox(190, 126, 16, COL.woodDk, 10), 0, 74, WALL_Z + 12));
+        const paneCol = night ? 0xAFC2E8 : (L.time === 'afternoon' ? 0xFFE1C8 : 0xFFF3D8);
+        g.add(put(rbox(156, 96, 8, paneCol, 6, { emissive: paneCol, ei: night ? 0.5 : 0.9, noCache: true }), 0, 74, WALL_Z + 20));
+        g.add(put(rbox(8, 96, 5, COL.woodDk, 2), 0, 74, WALL_Z + 26));   // parteluz
+        break;
+      }
+      case 'landing': {
+        // RELLANO del piso de arriba con la puerta del pasillo entreabierta.
+        // Sustituye a la antigua "puerta flotante": ahora se entiende que arriba
+        // hay otro nivel de la casa.
+        const zc = WALL_Z + 150;
+        g.add(put(rbox(p.w, 22, 260, COL.wood, 8), 0, -11, zc));               // suelo del rellano
+        g.add(put(rbox(p.w + 20, 16, 14, COL.woodDk, 5), 0, -18, WALL_Z + 18)); // zócalo
+        g.add(put(rbox(14, 70, 250, COL.wood, 5), -p.w / 2 - 7, 35, zc));      // barandilla lateral
+        g.add(put(rbox(p.w, 12, 14, COL.wood, 4), 0, 64, zc + 120));           // pasamanos
+        for (let i = 1; i <= 3; i++) {
+          g.add(put(rbox(9, 56, 9, COL.wood, 3), -p.w / 2 + i * (p.w / 4), 30, zc + 120));
+        }
+        // marco de la puerta con la luz cálida del pasillo saliendo por la rendija
+        g.add(put(rbox(p.w - 40, 230, 20, COL.woodDk, 6), 10, 115, WALL_Z + 14));
+        g.add(put(rbox(p.w - 96, 210, 8, COL.butter, 4, { emissive: 0xF0C987, ei: 0.95 }), -4, 110, WALL_Z + 24));
+        const leaf = rbox(56, 214, 12, COL.wood, 5);
+        put(leaf, p.w / 2 - 44, 112, WALL_Z + 46);
+        leaf.rotation.y = 0.5;
+        g.add(leaf);
         break;
       }
       case 'door': {
@@ -496,14 +614,34 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'bed': {
-        // cama alta: postes cortos "flotantes" como en 2D, no columnas hasta el suelo
-        const legH = Math.min(Math.max(drop - 30, 30), 150);
-        g.add(put(rbox(p.w, 30, 300, COL.cream, 13), 0, -15, SURF_Z));
-        g.add(put(rbox(p.w * 0.62, 34, 310, COL.lilac, 13), p.w * 0.17, -13, SURF_Z));
-        g.add(put(rbox(58, 20, 130, COL.blush, 9), -p.w / 2 + 44, 2, SURF_Z - 40));
-        g.add(put(rbox(20, 96, 300, COL.wood, 9), -p.w / 2 - 10, 14, SURF_Z));
-        legs4(g, p.w / 2 - 16, 128, -30, legH, 9, COL.woodDk);
-        g.add(put(rbox(p.w, 10, 10, COL.woodDk, 3), 0, -30 - legH + 26, SURF_Z + 128));
+        // CAMA ALTA (loft) de verdad: cuatro postes hasta el suelo, travesaños,
+        // escalera lateral y barandilla. Así deja de leerse como una cama pegada
+        // al techo y se entiende como un altillo al que se sube.
+        const postH = drop;                       // llegan al suelo
+        g.add(put(rbox(p.w, 26, 290, COL.cream, 10), 0, -13, SURF_Z));          // somier
+        g.add(put(rbox(p.w * 0.6, 30, 300, COL.lilac, 11), p.w * 0.19, -10, SURF_Z));  // manta
+        g.add(put(rbox(62, 22, 128, COL.blush, 8), -p.w / 2 + 46, 4, SURF_Z - 44));    // almohada
+        // cabecero + barandilla frontal (deja el hueco de subida a la derecha)
+        g.add(put(rbox(18, 92, 290, COL.wood, 7), -p.w / 2 - 4, 40, SURF_Z));
+        g.add(put(rbox(p.w * 0.52, 12, 14, COL.wood, 4), -p.w * 0.2, 44, SURF_Z + 140));
+        g.add(put(rbox(12, 46, 14, COL.wood, 4), -p.w * 0.46, 20, SURF_Z + 140));
+        g.add(put(rbox(12, 46, 14, COL.wood, 4), p.w * 0.06, 20, SURF_Z + 140));
+        // postes a las cuatro esquinas, hasta el piso
+        for (const [lx, lz] of [[-(p.w / 2 - 12), -120], [p.w / 2 - 12, -120],
+                                [-(p.w / 2 - 12), 120], [p.w / 2 - 12, 120]]) {
+          g.add(put(rbox(20, postH, 20, COL.woodDk, 5), lx, -26 - postH / 2, SURF_Z + lz));
+        }
+        // travesaños de refuerzo
+        g.add(put(rbox(p.w - 20, 12, 12, COL.woodDk, 4), 0, -26 - postH * 0.45, SURF_Z + 120));
+        g.add(put(rbox(p.w - 20, 12, 12, COL.woodDk, 4), 0, -26 - postH * 0.9, SURF_Z + 120));
+        // escalera lateral: peldaños reales entre dos largueros
+        const ladX = p.w / 2 + 26;
+        g.add(put(rbox(12, postH, 12, COL.wood, 4), ladX, -26 - postH / 2, SURF_Z + 60));
+        g.add(put(rbox(12, postH, 12, COL.wood, 4), ladX, -26 - postH / 2, SURF_Z - 60));
+        const rungs = Math.max(3, Math.floor(postH / 90));
+        for (let i = 1; i <= rungs; i++) {
+          g.add(put(rbox(14, 10, 130, COL.woodDk, 4), ladX, -26 - postH * (i / (rungs + 1)), SURF_Z));
+        }
         break;
       }
       case 'dresser': {
@@ -549,9 +687,14 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'top': {
-        g.add(put(rbox(p.w, 20, 260, COL.coral, 8), 0, -10, SURF_Z));
+        // repisa alta anclada al muro con riel y ménsulas gruesas
+        g.add(put(rbox(p.w, 20, 230, COL.coral, 8), 0, -10, WALL_Z + 127));
+        g.add(put(rbox(p.w + 16, 14, 12, COL.woodDk, 4), 0, -16, WALL_Z + 18));
+        for (const sx2 of [-(p.w / 2 - 34), p.w / 2 - 34]) {
+          g.add(put(rbox(16, 52, 58, COL.woodDk, 4), sx2, -44, WALL_Z + 46));
+        }
         const plant = new THREE.Group();
-        plant.position.set(p.w / 2 - 60, 0, SURF_Z);
+        plant.position.set(p.w / 2 - 60, 0, WALL_Z + 127);
         plant.add(put(cyl(26, 19, 48, COL.butter), 0, 24, 0));
         const leafSpots = [[-24, 66, 0.5], [22, 74, -0.45], [-8, 84, 0.15], [12, 60, -0.2], [-30, 78, 0.7]];
         for (const [lx, ly, rz] of leafSpots) {
@@ -565,10 +708,17 @@ export function createRenderer3D(canvas) {
         g.add(plant);
         break;
       }
-      default: { // shelf
-        g.add(put(rbox(p.w, 18, 250, COL.wood, 8), 0, -9, SURF_Z));
-        g.add(put(rbox(14, 22, 14, COL.woodDk, 4), -(p.w / 2 - 26), -20, SURF_Z - 90));
-        g.add(put(rbox(14, 22, 14, COL.woodDk, 4), p.w / 2 - 26, -20, SURF_Z - 90));
+      default: { // shelf — anclada a la pared con escuadras y riel, nunca flotando
+        const depth = 210;
+        const zBack = WALL_Z + 12;                 // arranca en la pared
+        const zc = zBack + depth / 2;
+        g.add(put(rbox(p.w, 18, depth, COL.wood, 8), 0, -9, zc));
+        // riel de pared a lo ancho: la repisa "nace" del muro
+        g.add(put(rbox(p.w + 18, 14, 12, COL.woodDk, 4), 0, -14, zBack + 4));
+        // ménsulas: bloque corto contra el muro bajo la tabla
+        for (const sx2 of [-(p.w / 2 - 32), p.w / 2 - 32]) {
+          g.add(put(rbox(15, 44, 62, COL.woodDk, 4), sx2, -40, zBack + 40));
+        }
       }
     }
     return g;
@@ -828,8 +978,12 @@ export function createRenderer3D(canvas) {
         if (n.material) {
           n.material.color.set(COL.cat);      // Nero es un gato negro
           n.material.emissive?.set(0x000000); // el export de Blender trae emissive blanco
-          n.material.roughness = Math.max(n.material.roughness ?? 0.9, 0.85);
+          n.material.roughness = 0.98;
           n.material.metalness = 0;
+          // el gato también es de papel: facetas marcadas y grano de fibra
+          n.material.flatShading = true;
+          n.material.map = paperTex;
+          n.material.needsUpdate = true;
         }
       }
     });
@@ -942,9 +1096,14 @@ export function createRenderer3D(canvas) {
   function resize(w, h) {
     W = w; H = h;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    const halfTan = Math.tan(camera.fov * Math.PI / 360);
-    camDist = Math.max(640, Math.min(1250, 510 / (halfTan * camera.aspect)));
+    // El encuadre fija la ALTURA de la habitación: el cuarto llena la pantalla
+    // como una caja de sombras. Si a lo ancho no cabe, la cámara panea.
+    const halfH = ((FY - CY) + 330) / 2;
+    const halfW = halfH * (w / h);
+    viewH = halfH * 2;
+    viewW = halfW * 2;
+    camera.left = -halfW; camera.right = halfW;
+    camera.top = halfH; camera.bottom = -halfH;
     camera.updateProjectionMatrix();
   }
 
@@ -959,8 +1118,11 @@ export function createRenderer3D(canvas) {
     buildProps(L, state);
     applyTint(L);
     // cámara al fondo de la habitación, sin animación
-    camera.position.set(0, 330, camDist);
-    lookTarget.set(0, 260, 0);
+    const half0 = viewH / 2, lo0 = half0 - 100, hi0 = tY(CY) + 190 - half0;
+    const startY = hi0 <= lo0 ? (lo0 + hi0) / 2 : lo0;
+    camera.position.set(0, startY + CAM_DIST * CAM_PITCH, CAM_DIST);
+    lookTarget.set(0, startY, 0);
+    camera.lookAt(lookTarget);
   }
 
   function applyTint(L) {
@@ -1057,6 +1219,8 @@ export function createRenderer3D(canvas) {
       }
     });
 
+    updateDust(dt);
+
     // balanceo suave (móvil de estrellas, planta)
     for (const s of sway) {
       s.obj.rotation.z = Math.sin(time * s.speed + s.phase) * s.amp;
@@ -1065,17 +1229,19 @@ export function createRenderer3D(canvas) {
     // cámara: sigue al gato (o al punto de foco explícito, p. ej. la caja del prólogo)
     const px = state.focus ? tX(state.focus.x) : tX(cat.x);
     const py = state.focus ? tY(state.focus.y) : tY(cat.y);
-    const halfTan = Math.tan(camera.fov * Math.PI / 360);
-    const viewH = 2 * camDist * halfTan;
-    const cy = Math.max(viewH * 0.42 - 40, Math.min(tY(CY) - viewH * 0.30, py + 110));
-    // picado suave (~15°): la habitación se lee como diorama visto desde arriba
-    const targetPos = { x: Math.max(-170, Math.min(170, px * 0.28)), y: cy + 260, z: camDist };
+    // encuadre vertical acotado a la habitación (ortográfica: sin parallax de cámara)
+    const half = viewH / 2;
+    const loY = half - 100, hiY = tY(CY) + 190 - half;
+    const cy = hiY <= loY ? (loY + hiY) / 2 : Math.max(loY, Math.min(hiY, py + 60));
+    // paneo horizontal solo si la habitación no cabe a lo ancho
+    const panX = Math.max(0, (W2 - viewW) / 2 + 40);
+    const cx = panX === 0 ? 0 : Math.max(-panX, Math.min(panX, px));
     const ck = 1 - Math.pow(0.012, dt);
-    camera.position.x += (targetPos.x - camera.position.x) * ck;
-    camera.position.y += (targetPos.y - camera.position.y) * ck * 0.8;
-    camera.position.z = camDist;
-    lookTarget.x += (Math.max(-240, Math.min(240, px * 0.5)) - lookTarget.x) * ck;
-    lookTarget.y += (cy - 20 - lookTarget.y) * ck * 0.8;
+    camera.position.x += (cx - camera.position.x) * ck;
+    camera.position.y += ((cy + CAM_DIST * CAM_PITCH) - camera.position.y) * ck * 0.85;
+    camera.position.z = CAM_DIST;
+    lookTarget.x += (cx - lookTarget.x) * ck;
+    lookTarget.y += (cy - lookTarget.y) * ck * 0.85;
     camera.lookAt(lookTarget);
 
     // la luz sigue el ascenso para que la sombra no se degrade
