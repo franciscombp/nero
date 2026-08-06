@@ -727,6 +727,7 @@ export function createRenderer3D(canvas) {
   // ---------- props dinámicos ----------
   let yarnMesh = null, knockG = null, knockBrokenG = null, bookMeshes = [];
   let pushMeshes = [];
+  let drawerMeshes = [];
   let counterSprite = null, counterLast = '';
 
   // Contador de saltos flotante (textura de canvas sobre un sprite)
@@ -803,8 +804,21 @@ export function createRenderer3D(canvas) {
     yarnMesh = knockG = knockBrokenG = null;
     bookMeshes = [];
     pushMeshes = [];
+    drawerMeshes = [];
     counterSprite = null;
     counterLast = '';
+
+    // cajones del puzzle vertical: salen hacia la cámara y su tapa es el escalón
+    for (const o of (state.interactives ?? [])) {
+      if (o.kind !== 'drawer' || !o.platform) { drawerMeshes.push(null); continue; }
+      const pl = o.platform, g = new THREE.Group();
+      const dw = pl.w, dh = 78, dd = 210;
+      g.add(put(rbox(dw, dh, dd, COL.drawer, 5), 0, -dh / 2 + 6, 0));            // cuerpo
+      g.add(put(rbox(14, dh + 10, dd + 8, COL.woodDk, 4), dw / 2 - 5, -dh / 2 + 6, 0)); // frente
+      g.add(put(rbox(30, 11, 11, COL.woodDk, 4), dw / 2 + 6, -dh / 2 + 6, 0));   // tirador
+      drawerMeshes.push(g);
+      dynamic.add(g);
+    }
 
     for (const obj of (state.pushables ?? [])) {
       const g = buildPushable(obj);
@@ -1220,6 +1234,17 @@ export function createRenderer3D(canvas) {
     });
 
     updateDust(dt);
+
+    // cajones: deslizan hacia la cámara según su apertura
+    (state.interactives ?? []).forEach((o, i) => {
+      const g = drawerMeshes[i];
+      if (!g || !o.platform) return;
+      const pl = o.platform, h = o.host;
+      // cerrado: metido dentro del mueble · abierto: sobresale por el costado
+      const inX = h.x + h.w - pl.w / 2 - 10;
+      const outX = pl.x + pl.w / 2;
+      g.position.set(tX(inX + (outX - inX) * o.open), tY(pl.y), SURF_Z + 30);
+    });
 
     // balanceo suave (móvil de estrellas, planta)
     for (const s of sway) {

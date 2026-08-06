@@ -38,7 +38,7 @@
 <script type="module">
 // Nero en el motor 3D: mismo contenido y mecánicas que el juego 2D (data/scenes.json),
 // renderizado como diorama 2.5D. La lógica de gameplay replica index.html.
-import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition } from './js/core.js';
+import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive } from './js/core.js';
 import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createRenderer3D } from './js/renderer3d.js';
@@ -175,6 +175,7 @@ async function main() {
       if (dy > 30 && Math.abs(dy) > Math.abs(dx)) { doDrop(); return; }
     }
     const { wx, wy } = r3d.screenToWorld(e.clientX, e.clientY);
+    if (levelState.mode === 'play' && tryInteract(wx, wy)) return;
     if (levelState.mode === 'play' && curLevel()?.goalKind !== 'jumps_counted' &&
         targetJumpAction(cat, levelState.platforms, wx, wy)) {
       hideHintOnce();
@@ -212,6 +213,10 @@ async function main() {
 
     const L = levels[idx];
     levelState.pushables = (L.pushables || []).map(p => createPushable(p));
+    // interactivos del puzzle: se copian las plataformas base para poder
+    // inyectar los cajones abiertos sin mutar los datos del nivel
+    levelState.basePlatforms = levelState.platforms.slice();
+    levelState.interactives = createInteractives(L, levelState.platforms);
     levelState.puzzles = L.puzzles || [];
     levelState.puzzleSolved = {};
     levelState.boxTiltAngle = 0;
@@ -311,6 +316,42 @@ async function main() {
     });
   }
 
+  // Los interactivos abiertos se añaden AL FINAL de la lista de plataformas:
+  // así los índices de las metas custom y del knock siguen siendo válidos.
+  function stepInteractives(dt) {
+    const list = levelState.interactives;
+    if (!list || !list.length) return;
+    let dirty = false;
+    for (const o of list) {
+      if (Math.abs(o.target - o.open) > 0.001) {
+        o.open += (o.target - o.open) * Math.min(1, dt * 6);
+        if (Math.abs(o.target - o.open) < 0.01) o.open = o.target;
+        dirty = true;
+      }
+    }
+    if (!dirty && levelState.platforms.length !== levelState.basePlatforms.length + list.filter(o => o.open > 0.55).length) dirty = true;
+    if (dirty) {
+      levelState.platforms = levelState.basePlatforms.concat(
+        list.filter(o => o.open > 0.55 && o.platform).map(o => o.platform));
+    }
+  }
+
+  // Devuelve true si el tap abrió un cajón (y por tanto no debe saltar)
+  function tryInteract(wx, wy) {
+    const list = levelState.interactives;
+    if (!list || !list.length) return false;
+    for (const o of list) {
+      const p = o.platform;
+      if (!p) continue;
+      const hit = wx > p.x - 30 && wx < p.x + p.w + 30 && wy > p.y - 40 && wy < p.y + 90;
+      if (!hit) continue;
+      if (canOpenInteractive(o, cat, list)) { o.target = 1; hideHintOnce(); return true; }
+      if (o.open > 0.5 && cat.y < p.y - 20) { o.target = 0; return true; }   // cerrar desde arriba
+      return false;
+    }
+    return false;
+  }
+
   function collect(id) {
     if (levelState.found[id]) return;
     levelState.found[id] = true;
@@ -354,6 +395,7 @@ async function main() {
         physics.stepPushables(levelState.pushables, cat, levelState.platforms, dt, L);
       }
       applySneak(cat, levelState.platforms, sneakDir(), dt, getMovementMods().speed);
+      stepInteractives(dt);
 
       const kn = levelState.knock;
       if (kn && kn.broken && kn.memoryId) collect(kn.memoryId);
@@ -437,6 +479,7 @@ async function main() {
       bookShelfIdx: levelState.bookShelfIdx,
       platforms: levelState.platforms,
       pushables: levelState.pushables,
+      interactives: levelState.interactives,
       boxTilt: levelState.boxTiltAngle,
       boxPulse: levelState.boxPulse || 0,
       baby: !!L?.mechanics?.babyKitten,

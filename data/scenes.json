@@ -869,6 +869,32 @@
         "y": 300,
         "text": "La cama alta, tibia de tantas noches.<br><b>Se oye la puerta de casa: ya volvieron. Nero cierra los ojos.</b>"
       }
+    ],
+    "interactives": [
+      {
+        "id": "cajon_bajo",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 2,
+        "out": 120,
+        "needsBelow": null
+      },
+      {
+        "id": "cajon_medio",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 1,
+        "out": 120,
+        "needsBelow": "cajon_bajo"
+      },
+      {
+        "id": "cajon_alto",
+        "kind": "drawer",
+        "host": 3,
+        "slot": 0,
+        "out": 120,
+        "needsBelow": "cajon_medio"
+      }
     ]
   }
 ]

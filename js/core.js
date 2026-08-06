@@ -243,6 +243,45 @@ export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   return cat.onGround && cat.y === goal.y && cat.x > goal.x && cat.x < goal.x + goal.w;
 }
 
+// ---------- Interactivos (puzzles verticales, ver PUZZLES.md) ----------
+// Cada interactivo abierto se inyecta como plataforma real, así que la física y
+// el salto dirigido funcionan sin cambios.
+export function createInteractives(levelData, platforms) {
+  return (levelData.interactives || []).map(d => {
+    const host = platforms[d.host];
+    const obj = { ...d, open: 0, target: 0, host, platform: null };
+    if (d.kind === 'drawer') {
+      // El cajón sale LATERALMENTE: en vista ortográfica de perfil, salir hacia
+      // la cámara sería invisible. Su tapa sobresale y forma el escalón.
+      const topY = host.y + 90 + (d.slot ?? 0) * 100;
+      const out = d.out ?? 120;
+      const side = d.side ?? 1;                    // 1 = sale a la derecha
+      obj.platform = {
+        x: side > 0 ? host.x + host.w - 14 : host.x - out + 14,
+        y: topY, w: out, h: 12, kind: 'drawer', ref: obj
+      };
+    }
+    return obj;
+  });
+}
+
+// ¿Puede el gato abrir este cajón ahora mismo? Solo si lo alcanza (está a su
+// altura o justo encima) y si el de abajo ya está abierto. De ahí sale el
+// "el orden importa" sin escribir una sola regla de puzzle a mano.
+export function canOpenInteractive(obj, cat, interactives) {
+  if (obj.open > 0.5) return false;
+  if (obj.needsBelow) {
+    const below = interactives.find(o => o.id === obj.needsBelow);
+    if (!below || below.open < 0.9) return false;
+  }
+  const p = obj.platform;
+  if (!p) return false;
+  const h = obj.host;
+  const dy = cat.y - p.y;                     // positivo: el gato está por debajo
+  return dy > -60 && dy < 260 &&
+         cat.x > h.x - 170 && cat.x < h.x + h.w + p.w + 170;
+}
+
 export function checkPuzzleCondition(puzzle, levelState) {
   const { type, params } = puzzle;
 
