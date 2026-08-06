@@ -766,6 +766,7 @@ export function createRenderer3D(canvas) {
   let pushMeshes = [];
   let drawerMeshes = [];
   let cwMeshes = [];
+  let carryMeshes = [], panMeshes = [];
   let counterSprite = null, counterLast = '';
 
   // Contador de saltos flotante (textura de canvas sobre un sprite)
@@ -844,6 +845,7 @@ export function createRenderer3D(canvas) {
     pushMeshes = [];
     drawerMeshes = [];
     cwMeshes = [];
+    carryMeshes = []; panMeshes = [];
     counterSprite = null;
     counterLast = '';
 
@@ -860,6 +862,34 @@ export function createRenderer3D(canvas) {
       put(rope, 0, 606, 0);
       g.add(rope);
       cwMeshes.push(g);
+      dynamic.add(g);
+      // bandeja: el sitio donde hay que hacer caer el peso
+      if (o.pan) {
+        const pg = new THREE.Group();
+        pg.add(put(rbox(o.pan.w, 12, 130, 0x8A8375, 4), 0, -6, 0));
+        pg.add(put(rbox(o.pan.w, 26, 10, 0x9A9385, 3), 0, 7, 62));
+        pg.add(put(rbox(o.pan.w, 26, 10, 0x9A9385, 3), 0, 7, -62));
+        for (const sx2 of [-o.pan.w / 2 + 8, o.pan.w / 2 - 8]) {
+          const rope = cyl(2, 2, 900, 0x6B5B45, { seg: 5 });
+          put(rope, sx2, 456, 0);
+          pg.add(rope);
+        }
+        pg.position.set(tX(o.pan.x + o.pan.w / 2), tY(o.pan.y), SURF_Z + 20);
+        panMeshes.push(pg);
+        dynamic.add(pg);
+      } else panMeshes.push(null);
+    }
+
+    // objetos que Nero puede llevar en la boca
+    for (const c of (state.carryables ?? [])) {
+      const g = new THREE.Group();
+      if (c.kind === 'book') {
+        g.add(put(rbox(46, 14, 62, COL.coral, 3), 0, 0, 0));
+        g.add(put(rbox(42, 5, 58, COL.cream, 2), 0, 8, 0));
+      } else {
+        g.add(put(rbox(40, 34, 40, COL.sand, 5), 0, 0, 0));
+      }
+      carryMeshes.push(g);
       dynamic.add(g);
     }
 
@@ -1295,6 +1325,15 @@ export function createRenderer3D(canvas) {
       const g = cwMeshes[i];
       if (!g || o.kind !== 'counterweight' || !o.platform) return;
       g.position.set(tX(o.platform.x + o.platform.w / 2), tY(o.platform.y), SURF_Z + 20);
+    });
+
+    // objetos transportables: en el suelo, en la boca del gato o cayendo
+    (state.carryables ?? []).forEach((c, i) => {
+      const g = carryMeshes[i];
+      if (!g) return;
+      g.visible = !c.consumed;
+      g.position.set(tX(c.x), tY(c.y) + (c.held ? 0 : 12), c.held ? 60 : SURF_Z + 40);
+      g.rotation.z = c.falling ? time * 5 : 0;
     });
 
     // cajones: deslizan lateralmente según su apertura

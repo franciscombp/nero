@@ -1,277 +1,198 @@
+// Interfaz de Nero.
+//
+// Principio: el HUD no habla, señala. Vive en los bordes, en gris y translúcido;
+// el texto narrativo va abajo como subtítulo de cine y nunca tapa la habitación;
+// y antes de cada episodio NO hay modal: el título aparece sobre la escena y el
+// juego arranca solo. Los modales se reservan para el inicio, las cinemáticas y
+// el final, que son los tres momentos en los que sí queremos detener al jugador.
 export function createUI() {
+  const $ = id => document.getElementById(id);
   const elements = {
-    acto: document.getElementById('acto'),
-    paws: document.getElementById('paws'),
-    memory: document.getElementById('memory'),
-    hint: document.getElementById('hint'),
-    overlay: document.getElementById('overlay'),
-    oface: document.getElementById('oface'),
-    okicker: document.getElementById('okicker'),
-    otitle: document.getElementById('otitle'),
-    osub: document.getElementById('osub'),
-    otext: document.getElementById('otext'),
-    obtn: document.getElementById('obtn'),
-    reset: document.getElementById('reset')
+    epLabel: $('epLabel'), epNum: $('epNum'), epName: $('epName'),
+    dots: $('dots'),
+    titlecard: $('titlecard'), tcNum: $('tcNum'), tcName: $('tcName'),
+    subtitle: $('subtitle'),
+    hint: $('hint'),
+    overlay: $('overlay'),
+    oface: $('oface'), okicker: $('okicker'), otitle: $('otitle'),
+    osub: $('osub'), otext: $('otext'), obtn: $('obtn'),
+    reset: $('reset'),
+    // alias heredados para no romper llamadas antiguas
+    memory: $('subtitle'), acto: $('epLabel'), paws: $('dots')
   };
 
-  let hintShown = true;
-  let memoryTimeout = null;
+  let hintShown = false;
+  let subTimer = null, titleTimer = null, labelTimer = null, hintTimer = null;
 
-  function updateHUD(level, levels, memories, found, puzzles, puzzleSolved) {
+  // ---------- HUD ----------
+  function updateHUD(level, levels, memories, found) {
     const L = levels[level];
-    elements.acto.textContent = `${L.kicker} · ${L.name}`;
+    if (elements.epNum) elements.epNum.textContent = L.kicker || '';
+    if (elements.epName) elements.epName.textContent = L.name || '';
     updatePaws(memories, found);
-    if (puzzles && puzzles.length > 0) {
-      updatePuzzleProgress(puzzles, puzzleSolved);
-    }
   }
 
+  // Progreso como puntos: legible de un vistazo, sin invitar a hurgar en menús.
   function updatePaws(memories, found) {
-    elements.paws.innerHTML = memories.map((m, i) =>
-      `<span class="p${found[m.id] ? ' on' : ''}" data-idx="${i}" data-id="${m.id}" style="cursor: pointer;">🐾</span>`).join('');
-
-    // Add click handlers to show progress
-    document.querySelectorAll('#paws .p').forEach((el, idx) => {
-      el.addEventListener('click', () => {
-        const found_count = Object.values(found).filter(Boolean).length;
-        const total_count = memories.length;
-        const paw_idx = idx + 1;
-        let progressText = `<b>Recuerdos: ${found_count} / ${total_count}</b><br><br>`;
-
-        memories.forEach((m, i) => {
-          const isFound = found[m.id];
-          const icon = isFound ? '🟢' : '⭕';
-          progressText += `${icon} ${i + 1}. ${m.text.split('<')[0]}<br>`;
-        });
-
-        showCard({
-          kicker: 'Progreso',
-          title: `Recuerdos (${paw_idx}/${total_count})`,
-          text: progressText,
-          btn: 'Cerrar',
-          then: () => { /* dismiss */ }
-        });
-      });
-    });
+    if (!elements.dots) return;
+    elements.dots.innerHTML = (memories || [])
+      .map(m => `<i class="${found && found[m.id] ? 'on' : ''}"></i>`).join('');
   }
 
-  function showMemory(html) {
-    elements.memory.innerHTML = html;
-    elements.memory.classList.add('show');
-    clearTimeout(memoryTimeout);
-    memoryTimeout = setTimeout(() => elements.memory.classList.remove('show'), 4600);
+  // ---------- Cartel de episodio (no bloqueante) ----------
+  function showEpisode(kicker, name, intro) {
+    if (elements.tcNum) elements.tcNum.textContent = kicker || '';
+    if (elements.tcName) elements.tcName.textContent = name || '';
+    elements.titlecard?.classList.add('show');
+    elements.epLabel?.classList.remove('show');
+    clearTimeout(titleTimer);
+    clearTimeout(labelTimer);
+    titleTimer = setTimeout(() => {
+      elements.titlecard?.classList.remove('show');
+      // el título grande se retira y deja una etiqueta mínima en la esquina
+      labelTimer = setTimeout(() => elements.epLabel?.classList.add('show'), 500);
+    }, 2400);
+    if (intro) setTimeout(() => showMemory(intro, 6200), 900);
   }
 
+  // ---------- Subtítulo narrativo ----------
+  function showMemory(html, ms = 5000) {
+    if (!elements.subtitle) return;
+    elements.subtitle.innerHTML = html;
+    elements.subtitle.classList.add('show');
+    clearTimeout(subTimer);
+    subTimer = setTimeout(() => elements.subtitle.classList.remove('show'), ms);
+  }
   function hideMemory() {
-    elements.memory.classList.remove('show');
+    clearTimeout(subTimer);
+    elements.subtitle?.classList.remove('show');
   }
 
+  // ---------- Pista contextual ----------
+  // Solo se muestra cuando el jugador lleva rato sin avanzar, y se va sola.
+  function showHint(text, ms = 5200) {
+    if (!elements.hint || !text) return;
+    elements.hint.innerHTML = text;
+    elements.hint.classList.add('show');
+    hintShown = true;
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => {
+      elements.hint.classList.remove('show');
+      hintShown = false;
+    }, ms);
+  }
+  function hideHint() {
+    clearTimeout(hintTimer);
+    elements.hint?.classList.remove('show');
+    hintShown = false;
+  }
+  function resetHint() { hideHint(); }
+  function setHintText(text) { if (elements.hint) elements.hint.dataset.text = text || ''; }
+  function getHintText() { return elements.hint?.dataset.text || ''; }
+
+  // ---------- Modales (inicio, cinemáticas, final) ----------
   function showCard(cfg) {
-    elements.oface.textContent = cfg.face ?? '🐈‍⬛';
-    elements.okicker.textContent = cfg.kicker ?? '';
-    elements.otitle.textContent = cfg.title ?? '';
-    elements.otitle.style.display = cfg.title ? '' : 'none';
-    elements.osub.textContent = cfg.sub ?? '';
-    elements.osub.style.display = cfg.sub ? '' : 'none';
-    elements.otext.innerHTML = cfg.text ?? '';
-    elements.obtn.textContent = cfg.btn ?? 'Continuar';
-    elements.overlay.classList.add('show');
-    elements.obtn.onclick = () => {
-      elements.overlay.classList.remove('show');
-      cfg.then?.();
-    };
+    if (elements.oface) elements.oface.textContent = cfg.face ?? '🐈‍⬛';
+    if (elements.okicker) elements.okicker.textContent = cfg.kicker ?? '';
+    if (elements.otitle) {
+      elements.otitle.textContent = cfg.title ?? '';
+      elements.otitle.style.display = cfg.title ? '' : 'none';
+    }
+    if (elements.osub) {
+      elements.osub.textContent = cfg.sub ?? '';
+      elements.osub.style.display = cfg.sub ? '' : 'none';
+    }
+    if (elements.otext) elements.otext.innerHTML = cfg.text ?? '';
+    if (elements.obtn) {
+      elements.obtn.textContent = cfg.btn ?? 'Continuar';
+      elements.obtn.style.display = cfg.btn === null ? 'none' : '';
+      elements.obtn.onclick = () => { hideCard(); cfg.then?.(); };
+    }
+    elements.overlay?.classList.add('show');
   }
-
-  function hideCard() {
-    elements.overlay.classList.remove('show');
-  }
+  function hideCard() { elements.overlay?.classList.remove('show'); }
 
   function showTitle(story) {
     showCard({
-      kicker: story?.title?.kicker ?? 'una historia de gato en tres actos',
+      kicker: story?.title?.kicker ?? '',
       title: story?.title?.title ?? 'N E R O',
-      text: story?.title?.body ?? 'La familia salió temprano y la casa parece vacía. Pero una casa nunca está vacía: está llena de los que viven en ella. Nero va a demostrarlo, saltando.',
-      btn: 'Empezar',
-      then: () => { /* handled by caller */ }
+      text: story?.title?.body ?? '',
+      btn: 'Empezar'
     });
   }
-
-  function showAct(level, levels, story) {
+  function showAct(level, levels) {
     const L = levels[level];
-    showCard({
-      kicker: L.kicker,
-      sub: L.name,
-      title: '',
-      text: L.intro,
-      btn: 'Jugar',
-      then: () => { /* handled by caller */ }
-    });
+    showEpisode(L.kicker, L.name, L.intro);
   }
-
   function showEnding(totalFound, levels, story) {
+    const total = levels.reduce((n, s) => n + (s.memories?.length || 0), 0);
     showCard({
-      face: '🌙',
-      kicker: 'fin',
-      title: '',
-      sub: 'La casa llena',
-      text: `${story?.ui?.final ?? 'Nero se acurruca en la cama alta y oye las llaves en la puerta. La casa nunca estuvo vacía: estaba llena de ellos.'}<br><br>🐾 Recuerdos encontrados: <b>${totalFound} / ${levels.reduce((sum, scene) => sum + scene.memories.length, 0)}</b>`,
-      btn: 'Jugar otra vez',
-      then: () => { /* handled by caller */ }
+      face: '🌙', kicker: 'fin', sub: 'La casa llena',
+      text: `${story?.ui?.final ?? ''}<br><br><b>${totalFound} / ${total}</b> recuerdos`,
+      btn: 'Jugar otra vez'
     });
   }
 
-  function hideHint() {
-    if (hintShown) {
-      hintShown = false;
-      elements.hint.style.opacity = 0;
-    }
-  }
+  function onResetClick(cb) { elements.reset?.addEventListener('click', cb); }
 
-  function resetHint() {
-    hintShown = true;
-    elements.hint.style.opacity = 1;
-  }
-
-  function setHintText(text) {
-    elements.hint.innerHTML = text;
-  }
-
-  function updatePuzzleProgress(puzzles, puzzleSolved) {
-    const solved = Object.values(puzzleSolved || {}).filter(Boolean).length;
-    const total = puzzles?.length || 0;
-
-    let display = '';
-    for (let i = 0; i < total; i++) {
-      display += puzzleSolved?.[i] ? '■ ' : '□ ';
-    }
-
-    // Store for display
-    window.puzzleProgress = `${display}(${solved}/${total})`;
-  }
-
-  function onResetClick(callback) {
-    elements.reset.addEventListener('click', callback);
-  }
-
-  // Timer functionality for level challenges
-  let levelTimer = null;
-  let timerInterval = null;
-  let timerElement = null;
-
+  // ---------- Contrarreloj ----------
+  let levelTimer = null, timerInterval = null, timerElement = null;
   function createTimerElement() {
     if (!timerElement) {
       timerElement = document.createElement('div');
       timerElement.id = 'level-timer';
-      timerElement.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        font-size: 32px;
-        font-weight: bold;
-        z-index: 100;
-        text-align: right;
-        color: #4A4139;
-        font-family: monospace;
-        text-shadow: 2px 2px 4px rgba(255,255,255,0.3);
-        transition: color 0.1s ease;
-      `;
       document.body.appendChild(timerElement);
     }
     return timerElement;
   }
-
   function startLevelTimer(duration, onExpire) {
     levelTimer = duration;
-    const timerEl = createTimerElement();
-    timerEl.style.display = 'block';
-
-    const updateDisplay = () => {
+    const el = createTimerElement();
+    el.style.display = 'block';
+    const paint = () => {
       if (levelTimer <= 0) {
-        timerEl.textContent = '0s';
-        timerEl.style.color = '#E8967E';
+        el.textContent = '0"';
+        el.style.color = '#E8967E';
         clearInterval(timerInterval);
+        timerInterval = null;
         onExpire?.();
         return;
       }
-
-      timerEl.textContent = `${levelTimer}s`;
-      if (levelTimer <= 5) {
-        timerEl.style.color = '#E8967E';
-        timerEl.style.animation = 'pulse 0.3s ease-in-out';
-      } else if (levelTimer <= 15) {
-        timerEl.style.color = '#F0C987';
-        timerEl.style.animation = 'none';
-      } else {
-        timerEl.style.color = '#4A4139';
-        timerEl.style.animation = 'none';
-      }
+      el.textContent = levelTimer + '"';
+      el.style.color = levelTimer <= 5 ? '#E8967E'
+                     : levelTimer <= 15 ? '#F0C987'
+                     : 'rgba(255,250,242,0.75)';
     };
-
-    updateDisplay();
-    timerInterval = setInterval(() => {
-      levelTimer--;
-      updateDisplay();
-    }, 1000);
+    paint();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => { levelTimer--; paint(); }, 1000);
   }
-
   function stopLevelTimer() {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-    if (timerElement) {
-      timerElement.style.display = 'none';
-    }
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (timerElement) timerElement.style.display = 'none';
   }
+  function getLevelTimer() { return levelTimer ?? 0; }
 
-  function getLevelTimer() {
-    return levelTimer ?? 0;
-  }
-
-  // Cinematic display
+  // ---------- Cinemáticas ----------
   let cinematicTimeout = null;
-
-  function showCinematic(cinematicText, duration = 3000) {
-    showCard({
-      face: '🎬',
-      kicker: '',
-      title: '',
-      text: cinematicText,
-      btn: 'Continuar',
-      then: () => { /* will be handled by auto-advance */ }
-    });
-
+  function showCinematic(text, duration = 4000) {
+    showCard({ face: '', kicker: '', title: '', text, btn: null });
     clearTimeout(cinematicTimeout);
-    cinematicTimeout = setTimeout(() => {
-      hideCard();
-    }, duration);
+    cinematicTimeout = setTimeout(hideCard, duration);
   }
-
-  function hideCinematic() {
-    clearTimeout(cinematicTimeout);
-    hideCard();
-  }
+  function hideCinematic() { clearTimeout(cinematicTimeout); hideCard(); }
 
   return {
     elements,
-    updateHUD,
-    updatePaws,
-    showMemory,
-    hideMemory,
-    showCard,
-    hideCard,
-    showTitle,
-    showAct,
-    showEnding,
-    hideHint,
-    resetHint,
-    setHintText,
+    updateHUD, updatePaws,
+    showEpisode,
+    showMemory, hideMemory,
+    showCard, hideCard,
+    showTitle, showAct, showEnding,
+    showHint, hideHint, resetHint, setHintText, getHintText,
     onResetClick,
     isHintShown: () => hintShown,
-    startLevelTimer,
-    stopLevelTimer,
-    getLevelTimer,
-    showCinematic,
-    hideCinematic
+    startLevelTimer, stopLevelTimer, getLevelTimer,
+    showCinematic, hideCinematic
   };
 }

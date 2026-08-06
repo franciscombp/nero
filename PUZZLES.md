@@ -110,7 +110,71 @@ editor pueda autorizarlos sin tocar código:
 Cada interactivo abierto se inyecta en `levelState.platforms` como plataforma real,
 así que **la física y el salto dirigido funcionan sin cambios**.
 
-## Orden de implementación
+---
+
+## Revisión: por qué seguían siendo raros
+
+El primer diseño acertó el principio (*caer es gratis, subir es el recurso*) pero
+falló en la práctica, y conviene decir por qué.
+
+**Todos los puzzles colapsaban en el mismo verbo: «haz aparecer una plataforma».**
+Cajones, contrapesos, cajas apiladas — mecánicamente eran la misma acción con
+tres pieles distintas. La sala no era una máquina: era una escalera decorada. Y
+la causa raíz no era la verticalidad, era **que el objetivo siempre fuera la
+altura**. Si lo único que pides es subir, toda solución es un escalón.
+
+## La corrección: que la altura deje de ser la meta
+
+Dos ideas que solo funcionan juntas.
+
+### 1 · La causa corre cuesta abajo
+
+En una habitación vertical lo único que viaja gratis es **hacia abajo**. Así que
+las cadenas se construyen al revés de como se construyen en horizontal: **subes
+para actuar, y la consecuencia aterriza más abajo**.
+
+La altura deja de ser el premio y pasa a ser la transmisión. Machinarium encadena
+de lado; nosotros encadenamos por gravedad. Eso no se puede copiar de un juego
+horizontal — es nuestro.
+
+### 2 · Nero lleva una sola cosa en la boca
+
+Inventario de una pieza, que además es exactamente lo que puede hacer un gato.
+Subir un objeto **cuesta**; soltarlo es gratis. Con eso la altura se convierte en
+una moneda que gastas, no en un muro que escalas.
+
+### El resultado
+
+La gramática pasa a ser: **«haz que X caiga sobre Y»**, donde X hay que subirlo
+primero. Es un puzzle imposible en una sala plana (no hay nada que caiga) y
+genera formas muy distintas con pocas piezas:
+
+| Pieza | Qué hace al recibir un peso |
+|---|---|
+| **Bandeja de polea** | Baja, y la balda del otro lado sube |
+| **Balancín** | Lanza hacia arriba lo que hay en el otro extremo |
+| **Tapa / rejilla** | Cede y abre un paso inferior |
+| **Superficie inclinada** | Lo desvía y lo hace rodar a otro sitio |
+
+Y el fallo también es información: si sueltas el libro en el sitio equivocado,
+cae al suelo y **puedes volver a por él**. Nunca se pierde la partida; se pierde
+tiempo, que es exactamente lo que debe costar equivocarse.
+
+## Implementado
+
+- **Escalera de cajones** (ep. 3 tutorial, ep. 9 examen) — el orden importa
+- **Contrapeso por derribo** (ep. 8) — tiras la olla, sube la balda
+- **Llevar y soltar** (ep. 6) — el caso completo: coges el libro del escritorio,
+  lo subes dos repisas, lo sueltas sobre la bandeja de la polea y la balda sube
+  los 130 px que faltaban. Sin resolverlo, el último tramo son 390 px: imposible
+
+## Siguiente
+
+`seesaw` (balancín) y `hatch` (tapa que cede) son variantes baratas de lo ya
+construido: ambas son «recibir un peso» con otro efecto. Con ellas, los episodios
+4 y 7 dejan de ser ascensos y pasan a ser máquinas.
+
+## Orden de implementación (original)
 
 1. `drawer` — el verbo más claro y el que más rinde (dos actos lo usan)
 2. `counterweight` — reutiliza el `pushables` que ya existe como disparador

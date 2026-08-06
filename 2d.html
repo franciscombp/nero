@@ -11,19 +11,17 @@
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div class="pill" id="acto">—</div>
-  <div class="pill" id="paws"></div>
-  <a class="pill" id="modeswap" href="index.html" title="Versión 3D">3D</a>
-  <div class="pill" id="reset">↺</div>
-  <div id="level-selector" style="display: none; position: fixed; top: 60px; right: 20px; z-index: 1000; background: rgba(0,0,0,0.9); border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto; pointer-events: auto;">
-    <div style="color: #fff; font-size: 12px; margin-bottom: 8px; font-weight: bold;">NIVEL:</div>
-    <div id="level-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
-    <button id="close-levels" style="width: 100%; margin-top: 8px; padding: 6px; background: #666; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Cerrar</button>
-  </div>
-  <button id="dev-levels" style="position: fixed; top: 20px; right: 20px; z-index: 999; padding: 6px 12px; background: rgba(100,100,100,0.8); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; pointer-events: auto;">🎮 NIVELES</button>
+  <div id="epLabel"><b id="epNum"></b><span id="epName"></span></div>
+  <div id="dots"></div>
+  <button id="reset" title="Reiniciar episodio">↺</button>
 </div>
-<div id="memory"></div>
-<div id="hint">Desliza ↑ ↖ ↗ para saltar (largo = supersalto) · ↓ para bajar<br>Toca un mueble para saltar hacia él · arrastra al lado = sigiloso</div>
+<div id="titlecard"><b id="tcNum"></b><span id="tcName"></span></div>
+<div id="subtitle"></div>
+<div id="hint"></div>
+<div id="dev">
+  <div id="level-selector" style="display:none"><div id="level-list"></div><button id="close-levels">Cerrar</button></div>
+  <button id="dev-levels">NIVELES</button>
+</div>
 <div id="overlay"><div id="ocard">
   <div class="catface" id="oface">🐈‍⬛</div>
   <div class="kicker" id="okicker"></div>

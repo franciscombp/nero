@@ -45,135 +45,171 @@ html, body {
     transparent 52%, rgba(18, 16, 24, 0.14) 76%, rgba(18, 16, 24, 0.42) 100%);
 }
 
-/* ==================== HUD ==================== */
+/* ==================== HUD ====================
+   Regla: el HUD no compite con la escena. Vive en los bordes, en gris, y se
+   aparta solo. Lo que guía al jugador es el brillo de los objetos, no el texto. */
 #hud {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
+  top: 0; left: 0; right: 0;
+  padding: 14px 16px calc(14px + env(safe-area-inset-top, 0px));
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   pointer-events: none;
-  color: var(--ink);
-  transition: opacity var(--transition-normal), backdrop-filter var(--transition-normal);
-  z-index: 5;
-  backdrop-filter: blur(2px);
+  z-index: 6;
 }
 
-.pill {
-  background: rgba(251, 246, 238, 0.92);
-  border: 1.5px solid rgba(74, 65, 57, 0.25);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px);
-  transition: all var(--transition-fast);
+/* Etiqueta discreta del episodio, arriba a la izquierda */
+#epLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(255, 250, 242, 0.55);
+  text-shadow: 0 1px 6px rgba(20, 16, 26, 0.75);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+#epLabel.show { opacity: 1; }
+#epLabel b { font-weight: 700; margin-right: 8px; opacity: 0.85; }
+#epLabel span { font-weight: 400; opacity: 0.75; }
 
-.pill:hover:not(#reset) {
-  background: rgba(251, 246, 238, 0.98);
-  border-color: rgba(74, 65, 57, 0.35);
+/* Progreso: puntos, no emojis. Se rellenan al encontrar un recuerdo. */
+#dots { display: flex; gap: 7px; align-items: center; }
+#dots i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255, 250, 242, 0.22);
+  box-shadow: 0 1px 4px rgba(20, 16, 26, 0.5);
+  transition: background 0.45s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
-#paws {
-  letter-spacing: 3px;
-  font-size: 14px;
-}
-
-#paws .p {
-  opacity: 0.2;
-  transition: opacity var(--transition-fast);
-  display: inline-block;
-}
-
-#paws .p.on {
-  opacity: 1;
-  animation: pawPulse 0.4s ease-out;
-}
-
-@keyframes pawPulse {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); opacity: 1; }
+#dots i.on {
+  background: var(--accent);
+  transform: scale(1.35);
+  box-shadow: 0 0 10px rgba(232, 150, 126, 0.75);
 }
 
 #reset {
   pointer-events: auto;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-  transform-origin: center;
+  width: 30px; height: 30px;
+  border: none; border-radius: 50%;
+  background: rgba(255, 250, 242, 0.1);
+  color: rgba(255, 250, 242, 0.5);
+  font-size: 15px; line-height: 1;
+  font-family: inherit;
+  opacity: 0.5;
+  transition: opacity 0.3s, background 0.3s, transform 0.2s;
 }
+#reset:hover { opacity: 1; background: rgba(255, 250, 242, 0.2); }
+#reset:active { transform: scale(0.88); }
 
-#reset:active {
-  transform: scale(0.85);
-}
-
-#acto {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-/* ==================== Memory Card ==================== */
-#memory {
+/* ==================== Cartel de episodio ====================
+   Aparece grande al empezar, se retira solo. Sustituye a la tarjeta modal. */
+#titlecard {
   position: fixed;
-  left: 50%;
-  bottom: 11dvh;
-  transform: translateX(-50%) translateY(16px);
-  max-width: min(85vw, 450px);
-  background: var(--card);
-  border: 1.5px solid rgba(74, 65, 57, 0.2);
-  border-radius: 18px;
-  padding: 18px 24px;
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--ink);
-  box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transition: opacity var(--transition-normal), transform var(--transition-normal);
-  pointer-events: none;
+  left: 0; right: 0; top: 34%;
   text-align: center;
-  will-change: opacity, transform;
+  pointer-events: none;
+  z-index: 7;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
 }
-
-#memory.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-  pointer-events: auto;
-}
-
-#memory b {
-  color: var(--accent);
+#titlecard.show { opacity: 1; transform: translateY(0); }
+#titlecard b {
+  display: block;
+  font-size: 11.5px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
   font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 12px;
+  text-shadow: 0 2px 12px rgba(20, 16, 26, 0.8);
+}
+#titlecard span {
+  display: block;
+  font-size: 34px;
+  letter-spacing: 2px;
+  color: rgba(255, 251, 244, 0.96);
+  text-shadow: 0 3px 22px rgba(20, 16, 26, 0.85);
 }
 
-/* ==================== Hint ==================== */
+/* ==================== Subtítulo (recuerdos) ====================
+   Abajo, como un subtítulo de cine. NUNCA tapa el centro de la habitación. */
+#subtitle {
+  position: fixed;
+  left: 50%; bottom: calc(7dvh + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(12px);
+  width: min(88vw, 560px);
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(255, 251, 244, 0.94);
+  text-shadow: 0 2px 14px rgba(20, 16, 26, 0.95), 0 0 34px rgba(20, 16, 26, 0.8);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s ease, transform 0.55s ease;
+  z-index: 6;
+}
+#subtitle.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#subtitle b { color: var(--soft); font-weight: 600; }
+
+/* ==================== Pista contextual ====================
+   Solo aparece si el jugador lleva rato sin avanzar. */
 #hint {
   position: fixed;
-  left: 50%;
-  bottom: 3.5dvh;
+  left: 50%; bottom: calc(2.6dvh + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  width: max-content;
-  max-width: 90vw;
-  font-size: 12px;
-  color: rgba(74, 65, 57, 0.55);
+  width: max-content; max-width: 88vw;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  color: rgba(255, 250, 242, 0.5);
+  text-shadow: 0 1px 8px rgba(20, 16, 26, 0.9);
   text-align: center;
   pointer-events: none;
-  transition: opacity 0.8s ease-out;
-  opacity: 1;
-  line-height: 1.5;
-  letter-spacing: 0.2px;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  z-index: 6;
 }
+#hint.show { opacity: 1; }
+
+/* Cronómetro del contrarreloj: discreto, bajo el HUD */
+#level-timer {
+  position: fixed !important;
+  top: calc(52px + env(safe-area-inset-top, 0px)) !important;
+  right: 16px !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  color: rgba(255, 250, 242, 0.75) !important;
+  text-shadow: 0 2px 10px rgba(20, 16, 26, 0.9) !important;
+  z-index: 6 !important;
+}
+
+/* Herramientas de desarrollo (solo en 2d.html) */
+#dev { position: fixed; bottom: 10px; right: 10px; z-index: 20; }
+#dev button {
+  background: rgba(30, 26, 34, 0.6); color: rgba(255, 250, 242, 0.6);
+  border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px;
+  cursor: pointer; font-family: inherit;
+}
+#level-selector {
+  position: absolute; bottom: 34px; right: 0;
+  background: rgba(24, 20, 28, 0.94); border-radius: 10px; padding: 8px;
+  max-height: 60vh; overflow-y: auto; min-width: 190px;
+}
+#level-list { display: flex; flex-direction: column; gap: 3px; }
+#level-list button {
+  width: 100%; text-align: left; padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.07); color: #EFE7DC;
+  border: none; border-radius: 5px; font-size: 11px; cursor: pointer;
+  font-family: inherit;
+}
+#level-list button:hover { background: rgba(255, 255, 255, 0.16); }
 
 /* ==================== Overlay & Cards ==================== */
 #overlay {

@@ -243,6 +243,35 @@ export function checkGoalTrigger(cat, platforms, goalKind, levelState) {
   return cat.onGround && cat.y === goal.y && cat.x > goal.x && cat.x < goal.x + goal.w;
 }
 
+// ---------- Objetos que Nero lleva en la boca ----------
+// Inventario de UNA sola pieza: subir algo cuesta, soltarlo es gratis. Eso
+// convierte la altura en moneda en vez de en meta.
+export function createCarryables(levelData, platforms) {
+  return (levelData.carryables || []).map(d => {
+    const host = platforms[d.host];
+    return {
+      ...d,
+      x: host ? host.x + (d.offset ?? 60) : (d.x ?? 0),
+      y: host ? host.y : (d.y ?? 0),
+      vx: 0, vy: 0,
+      held: false, falling: false, landed: false
+    };
+  });
+}
+
+export function nearCarryable(cat, c) {
+  return !c.held && !c.falling &&
+         Math.abs(cat.x - c.x) < 70 && Math.abs(cat.y - c.y) < 90;
+}
+
+// ¿El objeto soltado cayó dentro de la bandeja de un contrapeso?
+export function landedOnPan(c, obj) {
+  const pan = obj.pan;
+  if (!pan) return false;
+  return c.x > pan.x - 20 && c.x < pan.x + pan.w + 20 &&
+         Math.abs(c.y - pan.y) < 60;
+}
+
 // ---------- Interactivos (puzzles verticales, ver PUZZLES.md) ----------
 // Cada interactivo abierto se inyecta como plataforma real, así que la física y
 // el salto dirigido funcionan sin cambios.

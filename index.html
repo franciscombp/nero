@@ -19,12 +19,12 @@
 <canvas id="game"></canvas>
 <div id="vignette"></div>
 <div id="hud">
-  <div class="pill" id="acto">—</div>
-  <div class="pill" id="paws"></div>
-  <a class="pill" id="modeswap" href="2d.html" title="Versión 2D clásica">2D</a>
-  <div class="pill" id="reset">↺</div>
+  <div id="epLabel"><b id="epNum"></b><span id="epName"></span></div>
+  <div id="dots"></div>
+  <button id="reset" title="Reiniciar episodio">↺</button>
 </div>
-<div id="memory"></div>
+<div id="titlecard"><b id="tcNum"></b><span id="tcName"></span></div>
+<div id="subtitle"></div>
 <div id="hint"></div>
 <div id="overlay"><div id="ocard">
   <div class="catface" id="oface">🐈‍⬛</div>
@@ -38,7 +38,7 @@
 <script type="module">
 // Nero en el motor 3D: mismo contenido y mecánicas que el juego 2D (data/scenes.json),
 // renderizado como diorama 2.5D. La lógica de gameplay replica index.html.
-import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive } from './js/core.js';
+import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive, createCarryables, nearCarryable, landedOnPan } from './js/core.js';
 import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createRenderer3D } from './js/renderer3d.js';
@@ -102,9 +102,12 @@ async function main() {
     return { speed: L.mechanics.speed || 0.7, jump: L.mechanics.jumpHeight || 0.8 };
   }
 
-  let hintShown = true;
-  function hideHintOnce() {
-    if (hintShown) { hintShown = false; ui.hideHint(); }
+  // El jugador solo recibe texto de ayuda si lleva rato sin avanzar. Cualquier
+  // acción con sentido reinicia el reloj: guiar sin estorbar.
+  let idleT = 0, hintsGiven = 0;
+  function noteProgress() {
+    idleT = 0;
+    ui.hideHint();
   }
 
   let jumpBuffer = null;   // pulsación en el aire → se dispara al aterrizar (game feel)
@@ -113,7 +116,7 @@ async function main() {
     const L = curLevel();
     const wasGrounded = cat.onGround;
     if (jumpAction(cat, dir, big, getMovementMods())) {
-      hideHintOnce();
+      noteProgress();
       jumpBuffer = null;
       // Nivel de la caja: cada salto desde el suelo cuenta y sacude la caja
       if (L?.goalKind === 'jumps_counted' && wasGrounded) {
@@ -154,7 +157,7 @@ async function main() {
     if (Math.abs(dx) > 22 && Math.abs(dx) > Math.abs(dy) * 1.4) {
       sneakTouch = Math.sign(dx);
       pressT = null;
-      hideHintOnce();
+      noteProgress();
     }
   });
   function releasePointer(e) {
@@ -175,10 +178,11 @@ async function main() {
       if (dy > 30 && Math.abs(dy) > Math.abs(dx)) { doDrop(); return; }
     }
     const { wx, wy } = r3d.screenToWorld(e.clientX, e.clientY);
+    if (levelState.mode === 'play' && tryCarry(wx, wy)) return;
     if (levelState.mode === 'play' && tryInteract(wx, wy)) return;
     if (levelState.mode === 'play' && curLevel()?.goalKind !== 'jumps_counted' &&
         targetJumpAction(cat, levelState.platforms, wx, wy)) {
-      hideHintOnce();
+      noteProgress();
     } else {
       const dir = Math.abs(wx - cat.x) > 40 ? Math.sign(wx - cat.x) : 0;
       doJump(dir, heldMs > 350);
@@ -217,6 +221,7 @@ async function main() {
     // inyectar los cajones abiertos sin mutar los datos del nivel
     levelState.basePlatforms = levelState.platforms.slice();
     levelState.interactives = createInteractives(L, levelState.platforms);
+    levelState.carryables = createCarryables(L, levelState.platforms);
     levelState.puzzles = L.puzzles || [];
     levelState.puzzleSolved = {};
     levelState.boxTiltAngle = 0;
@@ -232,8 +237,10 @@ async function main() {
     }
     ui.updateHUD(idx, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
     ui.setHintText(L.hint ?? story?.ui?.hint ?? '');
-    ui.resetHint();
-    hintShown = true;
+    ui.hideHint();
+    ui.hideMemory();          // que no quede colgado el subtítulo del episodio anterior
+    idleT = 0;
+    hintsGiven = 0;
   }
 
   // Efectos que solo deben dispararse al empezar a JUGAR el nivel (no con la tarjeta abierta)
@@ -246,7 +253,7 @@ async function main() {
     setTimeout(() => {
       if (levelState.mode !== 'play') return;
       for (const m of levelState.memories) if (m.trigger === 'start') collect(m.id);
-    }, 800);
+    }, L?.intro ? 7400 : 900);
 
     // niveles solo-cinemática: se cuentan solos
     if (L?.mechanics?.cinematicOnly) {
@@ -280,6 +287,9 @@ async function main() {
 
   function completeLevel(target) {
     ui.stopLevelTimer();
+    // salir de 'play' YA: si no, durante la espera el episodio siguiente queda
+    // anunciado pero con la sala anterior todavía cargada
+    levelState.mode = 'ui';
     const next = target ?? levelState.level + 1;
     if (next < levels.length) {
       levelState.level = next;
@@ -306,14 +316,14 @@ async function main() {
     });
   }
 
+  // Sin modal entre episodios: el título aparece sobre la habitación, la
+  // introducción baja como subtítulo y el jugador ya tiene el control.
   function showAct() {
     levelState.mode = 'ui';
     startLevel(levelState.level);
     const L = curLevel();
-    ui.showCard({
-      kicker: L.kicker, sub: L.name, text: L.intro, btn: 'Jugar',
-      then: enterPlay
-    });
+    ui.showEpisode(L.kicker, L.name, L.intro);
+    setTimeout(enterPlay, 650);
   }
 
   // Los interactivos abiertos se añaden AL FINAL de la lista de plataformas:
@@ -348,6 +358,78 @@ async function main() {
     }
   }
 
+  // Objetos en la boca. Llevarlos arriba es el coste; soltarlos es gratis.
+  // De ahí sale la gramática: "haz que X caiga sobre Y".
+  function stepCarryables(dt) {
+    const list = levelState.carryables;
+    if (!list || !list.length) return;
+    for (const c of list) {
+      if (c.held) {                       // viaja en la boca, delante del morro
+        c.x = cat.x + cat.facing * 26;
+        c.y = cat.y - 30;
+        continue;
+      }
+      if (!c.falling) continue;
+      c.vy += CONFIG.GRAV * 0.85 * dt;
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      // aterriza sobre la primera superficie que encuentre: plataformas y,
+      // sobre todo, las bandejas de los contrapesos (que no son plataformas)
+      // solo cuentan las superficies POR DEBAJO del punto de suelta: si no, el
+      // objeto se quedaría en la misma repisa desde la que lo tiras
+      const below = (c.dropY ?? 0) + 30;
+      let ground = CONFIG.FLOOR_Y - 6;
+      for (const pl of levelState.platforms) {
+        if (c.x > pl.x && c.x < pl.x + pl.w && pl.y > below && pl.y < ground) ground = pl.y - 6;
+      }
+      for (const o of (levelState.interactives || [])) {
+        const pan = o.pan;
+        if (!pan) continue;
+        if (c.x > pan.x - 10 && c.x < pan.x + pan.w + 10 && pan.y > below && pan.y < ground) {
+          ground = pan.y - 6;
+        }
+      }
+      if (c.y >= ground) {
+        c.y = ground; c.vy = 0; c.vx = 0;
+        c.falling = false; c.landed = true;
+        // ¿cayó en la bandeja de algún contrapeso? entonces dispara la máquina
+        for (const o of (levelState.interactives || [])) {
+          if (o.kind === 'counterweight' && o.trigger === 'drop:' + c.id && landedOnPan(c, o)) {
+            o.target = 1;
+            c.consumed = true;
+            noteProgress();
+          }
+        }
+      }
+    }
+  }
+
+  // Coger / soltar con el mismo toque
+  function tryCarry(wx, wy) {
+    const list = levelState.carryables;
+    if (!list || !list.length) return false;
+    const held = list.find(c => c.held);
+    if (held) {                            // soltar: cae desde donde esté el gato
+      held.held = false;
+      held.falling = true;
+      held.dropY = cat.y;              // desde dónde se soltó: define qué puede pararlo
+      held.vx = cat.facing * 30;
+      held.vy = 0;
+      noteProgress();
+      return true;
+    }
+    for (const c of list) {
+      if (c.consumed) continue;
+      const hit = Math.abs(wx - c.x) < 60 && Math.abs(wy - c.y) < 70;
+      if (hit && cat.onGround && nearCarryable(cat, c)) {
+        c.held = true; c.landed = false;
+        noteProgress();
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Devuelve true si el tap abrió un cajón (y por tanto no debe saltar)
   function tryInteract(wx, wy) {
     const list = levelState.interactives;
@@ -357,7 +439,7 @@ async function main() {
       if (!p || o.kind !== 'drawer') continue;
       const hit = wx > p.x - 30 && wx < p.x + p.w + 30 && wy > p.y - 40 && wy < p.y + 90;
       if (!hit) continue;
-      if (canOpenInteractive(o, cat, list)) { o.target = 1; hideHintOnce(); return true; }
+      if (canOpenInteractive(o, cat, list)) { o.target = 1; noteProgress(); return true; }
       if (o.open > 0.5 && cat.y < p.y - 20) { o.target = 0; return true; }   // cerrar desde arriba
       return false;
     }
@@ -366,6 +448,7 @@ async function main() {
 
   function collect(id) {
     if (levelState.found[id]) return;
+    idleT = 0;
     levelState.found[id] = true;
     levelState.totalFound++;
     const m = levelState.memories.find(m => m.id === id);
@@ -408,6 +491,7 @@ async function main() {
       }
       applySneak(cat, levelState.platforms, sneakDir(), dt, getMovementMods().speed);
       stepInteractives(dt);
+      stepCarryables(dt);
 
       const kn = levelState.knock;
       if (kn && kn.broken && kn.memoryId) collect(kn.memoryId);
@@ -437,6 +521,15 @@ async function main() {
           levelState.puzzleSolved[puzzle.id] = true;
           ui.updateHUD(levelState.level, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
         }
+      }
+
+      // ¿atascado? a los 15 s sin avanzar se ofrece la pista del episodio,
+      // y solo dos veces: si no sirve, es un problema de diseño, no de texto
+      idleT += dt;
+      if (idleT > 15 && hintsGiven < 2 && !ui.isHintShown()) {
+        const h = ui.getHintText();
+        if (h) { ui.showHint(h); hintsGiven++; }
+        idleT = 0;
       }
 
       // meta
@@ -492,6 +585,7 @@ async function main() {
       platforms: levelState.platforms,
       pushables: levelState.pushables,
       interactives: levelState.interactives,
+      carryables: levelState.carryables,
       boxTilt: levelState.boxTiltAngle,
       boxPulse: levelState.boxPulse || 0,
       baby: !!L?.mechanics?.babyKitten,

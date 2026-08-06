@@ -486,8 +486,8 @@
       "bg": "#F3E6D8",
       "band": "#E7D5BF"
     },
-    "intro": "Aldo lleva toda la tarde leyendo y no le hace caso. Nero conoce el método: tirar cosas al suelo hasta que alguien reaccione. Arriba, en lo alto de la librería, hay una caja de zapatos.",
-    "hint": "Pasa junto a la taza para tirarla · sube hasta lo alto de la librería",
+    "intro": "Aldo lleva toda la tarde leyendo y no le hace caso. Arriba, en lo alto de la librería, hay una caja de zapatos que huele a otra casa. Pero el último tramo está demasiado lejos: hará falta algo con peso.",
+    "hint": "Sube el libro en la boca y suéltalo sobre la bandeja de la polea",
     "mechanics": {
       "wallSlide": true
     },
@@ -535,15 +535,8 @@
         "kind": "frameshelf"
       },
       {
-        "x": 380,
-        "y": 950,
-        "w": 180,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
         "x": 610,
-        "y": 820,
+        "y": 690,
         "w": 210,
         "h": 18,
         "kind": "top"
@@ -552,7 +545,7 @@
     "goalKind": "top",
     "knock": {
       "platform": 2,
-      "offset": 60,
+      "offset": 50,
       "type": "mug",
       "memoryId": "e6_taza"
     },
@@ -580,6 +573,30 @@
         "x": 640,
         "y": 420,
         "text": "En la caja de zapatos hay fotos viejas y un ratón de trapo sin orejas.<br><b>Huele a otra casa y a otro tiempo. Ahora es suyo.</b>"
+      }
+    ],
+    "carryables": [
+      {
+        "id": "libro",
+        "kind": "book",
+        "host": 2,
+        "offset": 180
+      }
+    ],
+    "interactives": [
+      {
+        "id": "balda",
+        "kind": "counterweight",
+        "x": 380,
+        "y": 950,
+        "w": 180,
+        "travel": 130,
+        "trigger": "drop:libro",
+        "pan": {
+          "x": 250,
+          "y": 1330,
+          "w": 150
+        }
       }
     ]
   },
