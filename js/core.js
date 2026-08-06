@@ -1,8 +1,8 @@
 export const CONFIG = {
-  WORLD_W: 900,
+  WORLD_W: 1700,        // 5,1 m de pared: una habitación de verdad
   WORLD_H: 1750,
   FLOOR_Y: 1690,
-  CEILING_Y: 420,
+  CEILING_Y: 830,       // techo a 2,55 m sobre el suelo
   GRAV: 2400,
   JUMP_VX: 330,
   JUMP_VY: 880,
@@ -149,9 +149,9 @@ export function loadLevel(levelState, levelData) {
   ] : [];
 }
 
-export function resetCat(cat) {
+export function resetCat(cat, spawnX) {
   const FLOOR_Y = CONFIG.FLOOR_Y;
-  cat.x = 140;
+  cat.x = spawnX ?? 140;
   cat.y = FLOOR_Y;
   cat.vx = 0;
   cat.vy = 0;
@@ -282,7 +282,7 @@ export function createInteractives(levelData, platforms) {
     if (d.kind === 'drawer') {
       // El cajón sale LATERALMENTE: en vista ortográfica de perfil, salir hacia
       // la cámara sería invisible. Su tapa sobresale y forma el escalón.
-      const topY = host.y + 90 + (d.slot ?? 0) * 100;
+      const topY = host.y + 70 + (d.slot ?? 0) * 85;
       const out = d.out ?? 120;
       const side = d.side ?? 1;                    // 1 = sale a la derecha
       obj.platform = {

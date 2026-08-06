@@ -18,7 +18,7 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       }
@@ -55,7 +55,8 @@
         "text": "Al octavo golpe el cartón se rasga y entra el aire.<br><b>Afuera todo es enorme. Y es suyo.</b>"
       }
     ],
-    "hint": "Salta ↑ una y otra vez: cada golpe abre más la caja"
+    "hint": "Salta ↑ una y otra vez: cada golpe abre más la caja",
+    "spawn": 850
   },
   {
     "name": "El callejón",
@@ -79,7 +80,7 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
@@ -132,7 +133,8 @@
         "text": "El motor ruge debajo de sus patas y el callejón se aleja.<br><b>No sabe adónde va. Va.</b>"
       }
     ],
-    "hint": "Trepa los escombros y el espejo hasta el balde ¡antes de que la camioneta arranque!"
+    "hint": "Trepa los escombros y el espejo hasta el balde ¡antes de que la camioneta arranque!",
+    "spawn": 120
   },
   {
     "name": "Unas manos",
@@ -155,7 +157,7 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
@@ -200,7 +202,8 @@
         "y": 300,
         "text": "Unas manos enormes lo levantan como se levanta algo que se puede romper.<br><b>Alguien lo vio.</b>"
       }
-    ]
+    ],
+    "spawn": 120
   },
   {
     "name": "El primer día",
@@ -210,7 +213,7 @@
       "bg": "#F4ECE3",
       "band": "#E8DCC9"
     },
-    "intro": "La casa es gigantesca y Nero cabe en una mano. Huele a comida, y la comida está en la encimera, a una altura imposible. La mesa no basta: hay que inventar una escalera.",
+    "intro": "La casa es gigantesca y Nero cabe en una mano. Huele a comida, y la comida está arriba, en la encimera. Desde el suelo no se ve qué hay allí: solo el canto.",
     "hint": "Toca los cajones para abrirlos · solo puedes abrir el que alcanzas",
     "mechanics": {
       "babyKitten": true,
@@ -222,80 +225,80 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 330,
-        "y": 1580,
-        "w": 150,
-        "h": 16,
-        "kind": "chair"
-      },
-      {
-        "x": 290,
-        "y": 1470,
-        "w": 260,
-        "h": 20,
-        "kind": "table"
-      },
-      {
         "x": 60,
-        "y": 1310,
-        "w": 180,
-        "h": 16,
-        "kind": "dresser"
-      },
-      {
-        "x": 600,
-        "y": 1210,
-        "w": 260,
+        "y": 1380,
+        "w": 620,
         "h": 26,
         "kind": "counter"
       },
       {
-        "x": 300,
-        "y": 1080,
-        "w": 170,
-        "h": 14,
+        "x": 150,
+        "y": 1090,
+        "w": 380,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 90,
-        "y": 950,
+        "x": 880,
+        "y": 1540,
         "w": 170,
-        "h": 14,
-        "kind": "shelf"
+        "h": 16,
+        "kind": "chair"
+      },
+      {
+        "x": 1080,
+        "y": 1440,
+        "w": 420,
+        "h": 22,
+        "kind": "table"
+      },
+      {
+        "x": 1250,
+        "y": 1220,
+        "w": 300,
+        "h": 18,
+        "kind": "window"
+      },
+      {
+        "x": 760,
+        "y": 1430,
+        "w": 90,
+        "h": 260,
+        "kind": "block"
       }
     ],
     "goalKind": "counter",
     "knock": null,
     "yarn": true,
-    "bookShelf": 5,
+    "bookShelf": 2,
     "interactives": [
       {
         "id": "cajon_bajo",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 2,
-        "out": 115,
+        "out": 130,
         "needsBelow": null
       },
       {
         "id": "cajon_medio",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 1,
-        "out": 115,
+        "out": 130,
         "needsBelow": "cajon_bajo"
       },
       {
         "id": "cajon_alto",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 0,
-        "out": 115,
+        "out": 130,
         "needsBelow": "cajon_medio"
       }
     ],
@@ -310,7 +313,7 @@
       {
         "id": "e3_cajon",
         "trigger": "platform",
-        "pi": 3,
+        "pi": 1,
         "x": 300,
         "y": 700,
         "text": "El cajón cede con un ruido enorme. Nero se queda quieto.<br><b>Nadie viene a regañarlo. Entonces sigue.</b>"
@@ -322,7 +325,9 @@
         "y": 500,
         "text": "Un plato con comida y, al lado, un cuenco de agua limpia.<br><b>Alguien lo puso ahí. Para él.</b>"
       }
-    ]
+    ],
+    "carryables": [],
+    "spawn": 900
   },
   {
     "name": "El regazo",
@@ -344,57 +349,64 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 90,
-        "y": 1580,
-        "w": 190,
+        "x": 120,
+        "y": 1540,
+        "w": 300,
         "h": 18,
         "kind": "table"
       },
       {
-        "x": 320,
-        "y": 1470,
-        "w": 300,
+        "x": 520,
+        "y": 1550,
+        "w": 520,
         "h": 20,
         "kind": "sofa"
       },
       {
-        "x": 610,
-        "y": 1360,
-        "w": 220,
+        "x": 1180,
+        "y": 1540,
+        "w": 300,
         "h": 22,
         "kind": "armchair"
       },
       {
-        "x": 120,
-        "y": 1240,
-        "w": 180,
-        "h": 14,
+        "x": 150,
+        "y": 1405,
+        "w": 300,
+        "h": 20,
+        "kind": "dresser"
+      },
+      {
+        "x": 200,
+        "y": 1190,
+        "w": 320,
+        "h": 16,
         "kind": "frameshelf"
       },
       {
-        "x": 400,
-        "y": 1120,
-        "w": 190,
-        "h": 14,
+        "x": 640,
+        "y": 1090,
+        "w": 340,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 110,
-        "y": 990,
-        "w": 170,
-        "h": 14,
+        "x": 1120,
+        "y": 1290,
+        "w": 300,
+        "h": 16,
         "kind": "shelf"
       }
     ],
     "goalKind": "armchair",
     "knock": null,
     "yarn": true,
-    "bookShelf": 5,
+    "bookShelf": 6,
     "memories": [
       {
         "id": "e4_manta",
@@ -407,7 +419,7 @@
       {
         "id": "e4_retrato",
         "trigger": "platform",
-        "pi": 4,
+        "pi": 5,
         "x": 420,
         "y": 390,
         "text": "En el retrato hay una niña pequeña subida a los hombros de Aldo.<br><b>La casa no siempre estuvo tan callada.</b>"
@@ -419,7 +431,8 @@
         "y": 300,
         "text": "El pecho de Aldo sube y baja. Nero se enrosca ahí y cierra los ojos.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
       }
-    ]
+    ],
+    "spawn": 150
   },
   {
     "name": "El invierno",
@@ -438,28 +451,21 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 330,
-        "y": 1580,
-        "w": 150,
+        "x": 880,
+        "y": 1540,
+        "w": 170,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 290,
-        "y": 1470,
-        "w": 260,
-        "h": 20,
-        "kind": "table"
-      },
-      {
-        "x": 600,
-        "y": 1210,
-        "w": 260,
+        "x": 60,
+        "y": 1380,
+        "w": 620,
         "h": 26,
         "kind": "counter"
       }
@@ -476,7 +482,8 @@
         "y": 600,
         "text": "Nero aprende dónde da el sol a cada hora y qué escalón cruje.<br><b>Aprende la casa como se aprende un idioma: sin darse cuenta.</b>"
       }
-    ]
+    ],
+    "spawn": 900
   },
   {
     "name": "Lo que se tira",
@@ -486,7 +493,7 @@
       "bg": "#F3E6D8",
       "band": "#E7D5BF"
     },
-    "intro": "Aldo lleva toda la tarde leyendo y no le hace caso. Arriba, en lo alto de la librería, hay una caja de zapatos que huele a otra casa. Pero el último tramo está demasiado lejos: hará falta algo con peso.",
+    "intro": "Aldo lleva toda la tarde leyendo. Arriba del todo, en la librería, hay una caja de zapatos que huele a otra casa. Pero desde abajo no se ve qué hay en las baldas: hará falta subir algo con peso.",
     "hint": "Sube el libro en la boca y suéltalo sobre la bandeja de la polea",
     "mechanics": {
       "wallSlide": true
@@ -495,49 +502,49 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 110,
-        "y": 1570,
-        "w": 150,
+        "x": 140,
+        "y": 1540,
+        "w": 170,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 280,
-        "y": 1450,
-        "w": 240,
-        "h": 18,
+        "x": 360,
+        "y": 1440,
+        "w": 420,
+        "h": 20,
         "kind": "desk"
       },
       {
-        "x": 600,
-        "y": 1330,
-        "w": 180,
-        "h": 14,
+        "x": 900,
+        "y": 1405,
+        "w": 360,
+        "h": 20,
+        "kind": "dresser"
+      },
+      {
+        "x": 420,
+        "y": 1290,
+        "w": 300,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 330,
-        "y": 1200,
-        "w": 180,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 80,
-        "y": 1080,
-        "w": 180,
-        "h": 14,
+        "x": 940,
+        "y": 1190,
+        "w": 320,
+        "h": 16,
         "kind": "frameshelf"
       },
       {
-        "x": 610,
-        "y": 690,
-        "w": 210,
+        "x": 1320,
+        "y": 1020,
+        "w": 320,
         "h": 18,
         "kind": "top"
       }
@@ -545,7 +552,7 @@
     "goalKind": "top",
     "knock": {
       "platform": 2,
-      "offset": 50,
+      "offset": 60,
       "type": "mug",
       "memoryId": "e6_taza"
     },
@@ -580,25 +587,26 @@
         "id": "libro",
         "kind": "book",
         "host": 2,
-        "offset": 180
+        "offset": 320
       }
     ],
     "interactives": [
       {
         "id": "balda",
         "kind": "counterweight",
-        "x": 380,
-        "y": 950,
-        "w": 180,
+        "x": 1300,
+        "y": 1260,
+        "w": 300,
         "travel": 130,
         "trigger": "drop:libro",
         "pan": {
-          "x": 250,
-          "y": 1330,
-          "w": 150
+          "x": 700,
+          "y": 1350,
+          "w": 170
         }
       }
-    ]
+    ],
+    "spawn": 160
   },
   {
     "name": "Las cajas",
@@ -609,7 +617,7 @@
       "band": "#D9CFC4"
     },
     "intro": "La sala está llena de cajas de mudanza. El sofá tapado con una sábana. La butaca vacía. Nero no entiende lo que ve, pero entiende que algo se acabó: alguien guardó su ratón de trapo.",
-    "hint": "Trepa por las cajas hasta el rellano de la escalera",
+    "hint": "El suelo está bloqueado: hay que pasar por encima de las cajas",
     "mechanics": {
       "wallSlide": true
     },
@@ -617,78 +625,71 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 80,
-        "y": 1560,
-        "w": 170,
-        "h": 130,
+        "x": 120,
+        "y": 1490,
+        "w": 220,
+        "h": 200,
         "kind": "boxstack"
       },
       {
-        "x": 560,
-        "y": 1470,
-        "w": 300,
+        "x": 420,
+        "y": 1550,
+        "w": 480,
         "h": 20,
         "kind": "sofa"
       },
       {
-        "x": 300,
-        "y": 1430,
-        "w": 190,
-        "h": 260,
+        "x": 380,
+        "y": 1330,
+        "w": 210,
+        "h": 360,
         "kind": "boxstack"
       },
       {
-        "x": 60,
-        "y": 1300,
-        "w": 180,
-        "h": 390,
+        "x": 980,
+        "y": 1390,
+        "w": 240,
+        "h": 300,
         "kind": "boxstack"
       },
       {
-        "x": 330,
-        "y": 1180,
-        "w": 180,
-        "h": 14,
+        "x": 700,
+        "y": 1190,
+        "w": 320,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 620,
-        "y": 1050,
-        "w": 190,
-        "h": 14,
+        "x": 1180,
+        "y": 1090,
+        "w": 330,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 300,
-        "y": 920,
-        "w": 180,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 40,
-        "y": 790,
-        "w": 190,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 560,
-        "y": 660,
-        "w": 300,
-        "h": 22,
+        "x": 1320,
+        "y": 1020,
+        "w": 320,
+        "h": 20,
         "kind": "landing"
+      },
+      {
+        "x": 900,
+        "y": 1460,
+        "w": 80,
+        "h": 230,
+        "kind": "block"
       }
     ],
     "goalKind": "landing",
     "knock": null,
     "yarn": false,
-    "bookShelf": 7,
+    "bookShelf": 5,
     "memories": [
       {
         "id": "e7_sabana",
@@ -700,7 +701,7 @@
       {
         "id": "e7_caja",
         "trigger": "platform",
-        "pi": 4,
+        "pi": 3,
         "x": 140,
         "y": 700,
         "text": "Dentro de una caja cerrada con cinta reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo.</b>"
@@ -712,7 +713,8 @@
         "y": 420,
         "text": "Desde el rellano se ve la puerta de la calle abierta de par en par.<br><b>Entran y salen personas que no son Aldo.</b>"
       }
-    ]
+    ],
+    "spawn": 180
   },
   {
     "name": "La tormenta",
@@ -731,50 +733,50 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 330,
-        "y": 1580,
-        "w": 150,
-        "h": 16,
-        "kind": "chair"
-      },
-      {
-        "x": 290,
-        "y": 1470,
-        "w": 260,
-        "h": 20,
-        "kind": "table"
-      },
-      {
         "x": 60,
-        "y": 1310,
-        "w": 180,
-        "h": 16,
-        "kind": "dresser"
-      },
-      {
-        "x": 600,
-        "y": 1210,
-        "w": 260,
+        "y": 1380,
+        "w": 620,
         "h": 26,
         "kind": "counter"
       },
       {
-        "x": 80,
-        "y": 790,
-        "w": 240,
-        "h": 20,
+        "x": 880,
+        "y": 1540,
+        "w": 170,
+        "h": 16,
+        "kind": "chair"
+      },
+      {
+        "x": 1080,
+        "y": 1440,
+        "w": 420,
+        "h": 22,
+        "kind": "table"
+      },
+      {
+        "x": 1250,
+        "y": 1220,
+        "w": 300,
+        "h": 18,
         "kind": "window"
+      },
+      {
+        "x": 760,
+        "y": 1430,
+        "w": 90,
+        "h": 260,
+        "kind": "block"
       }
     ],
     "goalKind": "window",
     "knock": {
-      "platform": 4,
-      "offset": 70,
+      "platform": 1,
+      "offset": 420,
       "type": "mug",
       "memoryId": "e8_olla"
     },
@@ -784,10 +786,10 @@
       {
         "id": "balda",
         "kind": "counterweight",
-        "x": 330,
-        "y": 1130,
-        "w": 190,
-        "travel": 170,
+        "x": 760,
+        "y": 1390,
+        "w": 260,
+        "travel": 110,
         "trigger": "knock"
       }
     ],
@@ -813,7 +815,8 @@
         "y": 500,
         "text": "Nero espera en la ventana contando los coches que no son.<br><b>Hasta que unos faros sí paran. Y quien baja no es Aldo.</b>"
       }
-    ]
+    ],
+    "spawn": 900
   },
   {
     "name": "El altillo",
@@ -823,8 +826,8 @@
       "bg": "#E7E3F0",
       "band": "#DBD6E9"
     },
-    "intro": "Uma se ha encerrado en el cuarto de arriba. Aldo está en el hospital y se pondrá bien, pero ella todavía no se lo cree. Nero sube. Y sube con algo en la boca.",
-    "hint": "Usa todo lo aprendido: cajones, repisas y el salto largo",
+    "intro": "Uma se ha encerrado en el cuarto. Aldo está en el hospital y se pondrá bien, pero ella todavía no se lo cree. El suelo está lleno de cosas tiradas: habrá que llegar por arriba. Y Nero sube con algo en la boca.",
+    "hint": "El suelo está bloqueado · usa los cajones y las repisas",
     "mechanics": {
       "wallSlide": true
     },
@@ -832,65 +835,65 @@
       {
         "x": 0,
         "y": 1690,
-        "w": 900,
+        "w": 1700,
         "h": 60,
         "kind": "floor"
       },
       {
-        "x": 330,
-        "y": 1570,
-        "w": 150,
+        "x": 80,
+        "y": 1420,
+        "w": 300,
+        "h": 18,
+        "kind": "dresser"
+      },
+      {
+        "x": 470,
+        "y": 1540,
+        "w": 170,
         "h": 16,
         "kind": "chair"
       },
       {
-        "x": 120,
-        "y": 1450,
-        "w": 230,
-        "h": 18,
+        "x": 660,
+        "y": 1440,
+        "w": 380,
+        "h": 20,
         "kind": "desk"
       },
       {
-        "x": 20,
-        "y": 1330,
-        "w": 180,
+        "x": 120,
+        "y": 1190,
+        "w": 300,
         "h": 16,
-        "kind": "dresser"
-      },
-      {
-        "x": 250,
-        "y": 1200,
-        "w": 160,
-        "h": 14,
         "kind": "shelf"
       },
       {
-        "x": 60,
-        "y": 1080,
-        "w": 150,
-        "h": 14,
-        "kind": "shelf"
-      },
-      {
-        "x": 260,
-        "y": 950,
-        "w": 170,
-        "h": 14,
+        "x": 560,
+        "y": 1090,
+        "w": 320,
+        "h": 16,
         "kind": "starshelf"
       },
       {
-        "x": 400,
-        "y": 820,
-        "w": 150,
-        "h": 14,
+        "x": 1000,
+        "y": 1290,
+        "w": 300,
+        "h": 16,
         "kind": "shelf"
       },
       {
-        "x": 570,
-        "y": 690,
-        "w": 310,
+        "x": 1200,
+        "y": 1505,
+        "w": 440,
         "h": 26,
         "kind": "bed"
+      },
+      {
+        "x": 1090,
+        "y": 1390,
+        "w": 90,
+        "h": 300,
+        "kind": "block"
       }
     ],
     "goalKind": "bed",
@@ -901,25 +904,25 @@
       {
         "id": "cajon_bajo",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 2,
-        "out": 120,
+        "out": 130,
         "needsBelow": null
       },
       {
         "id": "cajon_medio",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 1,
-        "out": 120,
+        "out": 130,
         "needsBelow": "cajon_bajo"
       },
       {
         "id": "cajon_alto",
         "kind": "drawer",
-        "host": 3,
+        "host": 1,
         "slot": 0,
-        "out": 120,
+        "out": 130,
         "needsBelow": "cajon_medio"
       }
     ],
@@ -934,7 +937,7 @@
       {
         "id": "e9_estrellas",
         "trigger": "platform",
-        "pi": 6,
+        "pi": 5,
         "x": 390,
         "y": 390,
         "text": "El móvil de estrellas gira despacio sobre una cama que nadie usaba.<br><b>Alguien la dejó preparada por si acaso.</b>"
@@ -946,6 +949,7 @@
         "y": 300,
         "text": "Nero deja el ratón de trapo sobre la almohada y espera.<br><b>Uma se ríe con la nariz, que es como se ríe quien ha llorado.</b>"
       }
-    ]
+    ],
+    "spawn": 520
   }
 ]

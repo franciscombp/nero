@@ -10,8 +10,8 @@ const W2 = CONFIG.WORLD_W, FY = CONFIG.FLOOR_Y, CY = CONFIG.CEILING_Y;
 const X0 = W2 / 2;
 const tX = x => x - X0;          // mundo 2D → 3D (x centrado)
 const tY = y => FY - y;          // mundo 2D (y hacia abajo) → 3D (y hacia arriba, suelo=0)
-const WALL_Z = -320;             // cara de la pared del fondo
-const SURF_D = 300, SURF_Z = -70; // profundidad de superficies pisables (z ∈ [-220, 80])
+const WALL_Z = -430;             // cara de la pared del fondo
+const SURF_D = 300, SURF_Z = -185; // los muebles quedan tras el plano de juego (z<0)
 
 const COL = {
   ink: 0x4A4139, cat: 0x26221D,
@@ -42,15 +42,23 @@ export function createRenderer3D(canvas) {
   renderer.toneMappingExposure = 1.18;
 
   const scene = new THREE.Scene();
-  // Cámara ORTOGRÁFICA: sin deformación de perspectiva, el mundo se lee como un
-  // recortable 2D por capas. Un picado mínimo (~5°) deja ver las tapas de los
-  // muebles para que el jugador sepa dónde puede aterrizar.
-  const camera = new THREE.OrthographicCamera(-500, 500, 500, -500, -4000, 8000);
-  const CAM_DIST = 2600;
-  const CAM_PITCH = 0.088;                       // tan(5°)
-  let viewH = 1000, viewW = 1000;                // tamaño visible en unidades de mundo
-  const lookTarget = new THREE.Vector3(0, 300, 0);
-  camera.position.set(0, 300 + CAM_DIST * CAM_PITCH, CAM_DIST);
+  // CÁMARA A LA ALTURA DEL GATO.
+  //
+  // Es la regla del juego, no un ajuste estético: la cámara se sitúa a la altura
+  // de los ojos de Nero y mira horizontal. Todo lo que queda por ENCIMA de esa
+  // línea se ve desde abajo — o sea, de una mesa ves el canto y los bajos, nunca
+  // lo que hay encima. No sabes qué te espera arriba hasta que subes.
+  //
+  // Y la cámara se ancla a la altura del SUELO QUE PISAS, no al gato: al saltar
+  // no sube contigo. Por eso saltar a un sitio nuevo es siempre a ciegas, y por
+  // eso los gatos se cuelgan y se caen.
+  const camera = new THREE.PerspectiveCamera(54, 1, 20, 9000);
+  const CAM_DIST = 900;                          // distancia al plano de juego
+  const EYE = 62;                                // ojos de Nero sobre sus patas
+  let camAnchor = 0, camAnchorGoal = 0;          // altura de la superficie pisada
+  let halfViewW = 400, viewH = 900, viewW = 800;
+  const lookTarget = new THREE.Vector3(0, EYE, 0);
+  camera.position.set(0, EYE, CAM_DIST);
   camera.lookAt(lookTarget);
 
   // --- luces ---
@@ -306,7 +314,7 @@ export function createRenderer3D(canvas) {
       room.add(ceil, beam);
 
       // lámparas colgantes escalonadas: charcos de luz cálida a lo largo del ascenso
-      const pendants = [[-270, 380], [40, 640], [320, 900], [-90, 1180]];
+      const pendants = [[-W2 * 0.28, 300], [W2 * 0.05, 380], [W2 * 0.32, 320]];
       for (const [px2, len] of pendants) {
         room.add(buildPendant(px2, len, night));
       }
@@ -616,6 +624,14 @@ export function createRenderer3D(canvas) {
         }
         break;
       }
+      case 'block': {
+        // Estorbo del suelo: cubo de basura, caja, mochila. No se puede cruzar
+        // por abajo — hay que ir por encima de los muebles.
+        const bh = Math.max(p.h, 40);
+        g.add(put(rbox(p.w, bh, 200, 0x7C7468, 8), 0, -bh / 2, SURF_Z + 30));
+        g.add(put(rbox(p.w + 14, 16, 214, 0x655E54, 5), 0, 2, SURF_Z + 30));
+        break;
+      }
       case 'landing': {
         // RELLANO del piso de arriba con la puerta del pasillo entreabierta.
         // Sustituye a la antigua "puerta flotante": ahora se entiende que arriba
@@ -651,34 +667,14 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'bed': {
-        // CAMA ALTA (loft) de verdad: cuatro postes hasta el suelo, travesaños,
-        // escalera lateral y barandilla. Así deja de leerse como una cama pegada
-        // al techo y se entiende como un altillo al que se sube.
-        const postH = drop;                       // llegan al suelo
-        g.add(put(rbox(p.w, 26, 290, COL.cream, 10), 0, -13, SURF_Z));          // somier
-        g.add(put(rbox(p.w * 0.6, 30, 300, COL.lilac, 11), p.w * 0.19, -10, SURF_Z));  // manta
-        g.add(put(rbox(62, 22, 128, COL.blush, 8), -p.w / 2 + 46, 4, SURF_Z - 44));    // almohada
-        // cabecero + barandilla frontal (deja el hueco de subida a la derecha)
-        g.add(put(rbox(18, 92, 290, COL.wood, 7), -p.w / 2 - 4, 40, SURF_Z));
-        g.add(put(rbox(p.w * 0.52, 12, 14, COL.wood, 4), -p.w * 0.2, 44, SURF_Z + 140));
-        g.add(put(rbox(12, 46, 14, COL.wood, 4), -p.w * 0.46, 20, SURF_Z + 140));
-        g.add(put(rbox(12, 46, 14, COL.wood, 4), p.w * 0.06, 20, SURF_Z + 140));
-        // postes a las cuatro esquinas, hasta el piso
-        for (const [lx, lz] of [[-(p.w / 2 - 12), -120], [p.w / 2 - 12, -120],
-                                [-(p.w / 2 - 12), 120], [p.w / 2 - 12, 120]]) {
-          g.add(put(rbox(20, postH, 20, COL.woodDk, 5), lx, -26 - postH / 2, SURF_Z + lz));
-        }
-        // travesaños de refuerzo
-        g.add(put(rbox(p.w - 20, 12, 12, COL.woodDk, 4), 0, -26 - postH * 0.45, SURF_Z + 120));
-        g.add(put(rbox(p.w - 20, 12, 12, COL.woodDk, 4), 0, -26 - postH * 0.9, SURF_Z + 120));
-        // escalera lateral: peldaños reales entre dos largueros
-        const ladX = p.w / 2 + 26;
-        g.add(put(rbox(12, postH, 12, COL.wood, 4), ladX, -26 - postH / 2, SURF_Z + 60));
-        g.add(put(rbox(12, postH, 12, COL.wood, 4), ladX, -26 - postH / 2, SURF_Z - 60));
-        const rungs = Math.max(3, Math.floor(postH / 90));
-        for (let i = 1; i <= rungs; i++) {
-          g.add(put(rbox(14, 10, 130, COL.woodDk, 4), ladX, -26 - postH * (i / (rungs + 1)), SURF_Z));
-        }
+        // Cama normal de 55 cm: con la casa a escala real el altillo ya no pinta
+        const legH = Math.max(drop - 26, 14);
+        g.add(put(rbox(p.w, 26, 420, COL.cream, 8), 0, -13, SURF_Z));            // colchón
+        g.add(put(rbox(p.w * 0.62, 30, 430, COL.lilac, 10), p.w * 0.19, -10, SURF_Z));
+        g.add(put(rbox(150, 26, 190, COL.blush, 9), -p.w / 2 + 100, 6, SURF_Z - 90));
+        g.add(put(rbox(22, 150, 420, COL.wood, 7), -p.w / 2 - 6, 62, SURF_Z));   // cabecero
+        g.add(put(rbox(20, 70, 420, COL.wood, 6), p.w / 2 + 5, 22, SURF_Z));     // piecero
+        legs4(g, p.w / 2 - 18, 180, -26, legH, 9, COL.woodDk);
         break;
       }
       case 'dresser': {
@@ -1195,15 +1191,13 @@ export function createRenderer3D(canvas) {
   function resize(w, h) {
     W = w; H = h;
     renderer.setSize(w, h, false);
-    // El encuadre fija la ALTURA de la habitación: el cuarto llena la pantalla
-    // como una caja de sombras. Si a lo ancho no cabe, la cámara panea.
-    const halfH = ((FY - CY) + 330) / 2;
-    const halfW = halfH * (w / h);
-    viewH = halfH * 2;
-    viewW = halfW * 2;
-    camera.left = -halfW; camera.right = halfW;
-    camera.top = halfH; camera.bottom = -halfH;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    // cuánto mundo se ve a la distancia del plano de juego
+    const halfH = CAM_DIST * Math.tan(camera.fov * Math.PI / 360);
+    halfViewW = halfH * camera.aspect;
+    viewH = halfH * 2;
+    viewW = halfViewW * 2;
   }
 
   function loadScene(L, state) {
@@ -1217,10 +1211,9 @@ export function createRenderer3D(canvas) {
     buildProps(L, state);
     applyTint(L);
     // cámara al fondo de la habitación, sin animación
-    const half0 = viewH / 2, lo0 = half0 - 100, hi0 = tY(CY) + 190 - half0;
-    const startY = hi0 <= lo0 ? (lo0 + hi0) / 2 : lo0;
-    camera.position.set(0, startY + CAM_DIST * CAM_PITCH, CAM_DIST);
-    lookTarget.set(0, startY, 0);
+    camAnchor = camAnchorGoal = 0;
+    camera.position.set(0, EYE, CAM_DIST);
+    lookTarget.set(0, EYE + 8, 0);
     camera.lookAt(lookTarget);
   }
 
@@ -1354,25 +1347,29 @@ export function createRenderer3D(canvas) {
 
     // cámara: sigue al gato (o al punto de foco explícito, p. ej. la caja del prólogo)
     const px = state.focus ? tX(state.focus.x) : tX(cat.x);
-    const py = state.focus ? tY(state.focus.y) : tY(cat.y);
-    // encuadre vertical acotado a la habitación (ortográfica: sin parallax de cámara)
-    const half = viewH / 2;
-    const loY = half - 100, hiY = tY(CY) + 190 - half;
-    const cy = hiY <= loY ? (loY + hiY) / 2 : Math.max(loY, Math.min(hiY, py + 60));
-    // paneo horizontal solo si la habitación no cabe a lo ancho
-    const panX = Math.max(0, (W2 - viewW) / 2);
-    const cx = panX === 0 ? 0 : Math.max(-panX, Math.min(panX, px));
-    const ck = 1 - Math.pow(0.012, dt);
+    // El ancla solo se mueve cuando Nero tiene los pies en algo: saltar no
+    // levanta la cámara, así que el salto va siempre "a ciegas".
+    if (state.focus) camAnchorGoal = tY(state.focus.y);
+    else if (cat.onGround || cat.state === 'hang') camAnchorGoal = tY(cat.y);
+    const ak = 1 - Math.pow(0.006, dt);
+    camAnchor += (camAnchorGoal - camAnchor) * ak;
+
+    const panX = Math.max(0, W2 / 2 - halfViewW + 30);
+    const cx = Math.max(-panX, Math.min(panX, px));
+    const eyeY = Math.max(viewH * 0.28, camAnchor + EYE);
+    const ck = 1 - Math.pow(0.008, dt);
     camera.position.x += (cx - camera.position.x) * ck;
-    camera.position.y += ((cy + CAM_DIST * CAM_PITCH) - camera.position.y) * ck * 0.85;
+    camera.position.y += (eyeY - camera.position.y) * ck;
     camera.position.z = CAM_DIST;
-    lookTarget.x += (cx - lookTarget.x) * ck;
-    lookTarget.y += (cy - lookTarget.y) * ck * 0.85;
+    // mirada horizontal: la línea del horizonte parte la pantalla y separa
+    // "lo que ves" de "lo que solo intuyes"
+    lookTarget.set(camera.position.x, camera.position.y + 8, 0);
     camera.lookAt(lookTarget);
 
     // la luz sigue el ascenso para que la sombra no se degrade
-    dir.position.set(420, py + 1100, 700);
-    dir.target.position.set(0, py, 0);
+    // la luz acompaña la altura de la cámara para que la sombra no se degrade
+    dir.position.set(420, camAnchor + 1100, 700);
+    dir.target.position.set(0, camAnchor, 0);
   }
 
   function render() {

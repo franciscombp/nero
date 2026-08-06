@@ -1,4 +1,75 @@
-# Puzzles verticales · diseño
+# Diseño de Nero · la mirada del gato
+
+## El principio que ordena todo lo demás
+
+> **La cámara está a la altura de los ojos de Nero y se ancla al suelo que pisa.**
+
+No es un ajuste estético: es la regla del juego. Tiene tres consecuencias que
+generan por sí solas casi todo el diseño.
+
+**1 · No ves lo que hay arriba.** Todo lo que queda por encima de la línea de los
+ojos se ve *desde abajo*. De una mesa ves el canto y los bajos, nunca lo que hay
+encima. No hace falta niebla ni zonas bloqueadas: la perspectiva lo hace sola, y
+es exactamente cómo un gato experimenta una casa.
+
+**2 · Saltar es siempre a ciegas.** La cámara se ancla a la altura de la
+superficie que pisas, no al gato: al saltar **no sube contigo**. Saltas a un sitio
+que has visto solo de canto. Por eso los gatos se cuelgan de los bordes, calculan
+mal y se caen — y por eso es gracioso.
+
+**3 · El reto real es la memoria.** Como solo ves un trozo de habitación y solo
+conoces las alturas que ya has pisado, el jugador va construyendo un mapa mental
+de la casa. Saber que sobre la cómoda hay una repisa que no se ve desde el suelo
+*es* el progreso. La habitación no se resuelve: se aprende.
+
+## La casa es una casa
+
+Escala real: **336 unidades ≈ 1 metro**. Nada de torres de repisas flotantes.
+
+| Mueble | Altura real |
+|---|---|
+| Asiento de silla / sofá | 45 cm |
+| Cama | 55 cm |
+| Mesa / escritorio | 75 cm |
+| Cómoda, aparador | 80–85 cm |
+| Encimera | 92 cm |
+| Alféizar | 1,40 m |
+| Repisas de pared | 1,20 – 1,80 m |
+| Techo | 2,55 m |
+
+Las habitaciones miden **5,1 m de ancho** y se recorren de lado; la cámara ve
+metro y medio a la vez. Los muebles se apoyan en el suelo y contra las paredes,
+como en una casa de verdad.
+
+## Por qué el suelo no es una autopista
+
+Si se puede cruzar la habitación andando, no hay juego. Por eso hay **estorbos**
+(`block`): el cubo de la basura, una caja, una mochila. Son sólidos y no se
+saltan de frente — hay que ir **por encima de los muebles**, que es justo lo que
+hace un gato.
+
+Así el trayecto obvio (el suelo) queda cortado y el interesante (silla → mesa →
+encimera → repisa) se vuelve obligatorio.
+
+## Los puzzles, entonces
+
+Con este marco los puzzles dejan de ser «haz aparecer una plataforma» y pasan a
+apoyarse en lo que el jugador **sabe** de la habitación:
+
+- **Escalera de cajones** — solo abres el cajón que alcanzas, así que el orden
+  sale solo. Y desde el suelo no ves que la encimera tiene comida: lo descubres
+  al subir.
+- **Llevar y soltar** — Nero lleva **una sola cosa en la boca**. Subirla cuesta,
+  soltarla es gratis: la altura se convierte en moneda. La gramática es «haz que
+  X caiga sobre Y», imposible en una sala plana porque no habría nada que caiga.
+- **Contrapeso** — recibe el peso que le tiras y sube otra cosa.
+
+La regla de seguridad se mantiene: **caer es gratis**. Un gato cae de pie, ningún
+error es irreversible, y equivocarse cuesta tiempo, nunca la partida.
+
+---
+
+## Anexo · cómo llegamos hasta aquí
 
 ## El problema
 

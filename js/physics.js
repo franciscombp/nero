@@ -15,11 +15,24 @@ export function createPhysics(config) {
       return;
     }
 
-    const prevY = cat.y;
+    const prevY = cat.y, prevX = cat.x;
     cat.vy += GRAV * dt;
     cat.x += cat.vx * dt;
     cat.y += cat.vy * dt;
     cat.x = Math.max(cat.w/2, Math.min(WORLD_W - cat.w/2, cat.x));
+
+    // Obstáculos sólidos (una caja, el cubo de la basura, una puerta cerrada):
+    // cortan el paso por el suelo y obligan a ir POR ENCIMA de los muebles.
+    for (const p of platforms) {
+      if (p.kind !== 'block') continue;
+      const overlapY = cat.y > p.y && cat.y - cat.h < p.y + p.h;
+      if (!overlapY) continue;
+      const half = cat.w * 0.35;
+      if (cat.x + half > p.x && cat.x - half < p.x + p.w) {
+        cat.x = prevX < p.x + p.w / 2 ? p.x - half : p.x + p.w + half;
+        if (Math.sign(cat.vx) === Math.sign(cat.x - prevX) * -1) cat.vx = 0;
+      }
+    }
 
     const wasGrounded = cat.onGround;
     cat.onGround = false;

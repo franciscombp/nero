@@ -26,6 +26,21 @@ Cuatro espacios que se repiten y se transforman: la cocina del episodio 3 es la
 misma del 8, la butaca del 4 es la que está vacía en el 7. La casa se aprende y
 luego se desconoce.
 
+## Se juega con los ojos de un gato
+
+La cámara está a la altura de Nero y se ancla al suelo que pisa. Lo que queda por
+encima de esa línea **se ve desde abajo**: de una mesa ves el canto y los bajos,
+nunca lo que hay encima. Y al saltar la cámara no sube contigo, así que saltas
+siempre a un sitio que solo has visto de canto — por eso los gatos se cuelgan y
+se caen.
+
+El reto no es la puntería: es **la memoria**. Solo ves metro y medio de una
+habitación de cinco, y solo conoces las alturas que ya has pisado. Ir sabiendo
+que sobre la cómoda hay una repisa que no se ve desde el suelo *es* el progreso.
+
+La casa está a escala real (336 u ≈ 1 m) y el suelo está cortado por estorbos,
+así que la ruta interesante —silla, mesa, encimera, repisa— es la única.
+
 Guion completo en [`STORY.md`](STORY.md) · diseño de puzzles en [`PUZZLES.md`](PUZZLES.md).
 
 ## Las páginas del proyecto

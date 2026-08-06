@@ -212,7 +212,7 @@ async function main() {
   // ---------- Flujo de niveles ----------
   function startLevel(idx) {
     levelState.level = idx;
-    resetCat(cat);
+    resetCat(cat, levels[idx].spawn);
     loadLevel(levelState, levels[idx]);
 
     const L = levels[idx];

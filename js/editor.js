@@ -2,7 +2,7 @@
 // Edita data/scenes.json + data/stories.json, guarda borradores en localStorage
 // y permite probarlos al instante en el juego 2D o el prototipo 3D (?draft=1).
 
-const WORLD_W = 900, WORLD_H = 1750, FLOOR_Y = 1690, CEILING_Y = 80;
+const WORLD_W = 1700, WORLD_H = 1750, FLOOR_Y = 1690, CEILING_Y = 830;
 // Alturas calibradas del gameplay (ver actions.js): salto normal ~161px, supersalto ~276px.
 // Alcance horizontal medido de un supersalto aterrizando ~150px más arriba: ~265px (+26px de agarre de borde).
 const JUMP_H = 161, SUPER_H = 276, REACH_X = 260;
@@ -80,7 +80,7 @@ function allPlatforms(s) {
   for (const d of (s.interactives || [])) {
     const host = s.platforms[d.host];
     if (d.kind === 'drawer' && host) {
-      extra.push({ x: host.x + host.w - 14, y: host.y + 90 + (d.slot || 0) * 100,
+      extra.push({ x: host.x + host.w - 14, y: host.y + 70 + (d.slot || 0) * 85,
                    w: d.out || 120, h: 12, kind: 'drawer' });
     } else if (d.kind === 'counterweight') {
       extra.push({ x: d.x, y: d.y, w: d.w || 180, h: 14, kind: 'shelf' });
