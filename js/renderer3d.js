@@ -52,11 +52,19 @@ export function createRenderer3D(canvas) {
   // Y la cámara se ancla a la altura del SUELO QUE PISAS, no al gato: al saltar
   // no sube contigo. Por eso saltar a un sitio nuevo es siempre a ciegas, y por
   // eso los gatos se cuelgan y se caen.
-  const camera = new THREE.PerspectiveCamera(54, 1, 20, 9000);
+  // Cámara ORTOGRÁFICA: sin perspectiva no hay paralaje, y sin paralaje los
+  // muebles no se desfasan de donde la física dice que están. La cámara en
+  // perspectiva daba profundidad, pero cada superficie vive a su propio Z
+  // (SURF_Z, WALL_Z...) para que nada tape a Nero — y bajo perspectiva eso
+  // desplazaba cada mueble en pantalla según su distancia a la cámara. Con
+  // ortográfica todos esos planos se proyectan alineados: es la estética
+  // plana de ilustración 2D que ya usa el papel y el faceted shading.
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 20, 9000);
   const CAM_DIST = 900;                          // distancia al plano de juego
   const EYE = 62;                                // ojos de Nero sobre sus patas
+  const ORTHO_HALF_H = 470;                      // medio alto del encuadre, en unidades de mundo
   let camAnchor = 0, camAnchorGoal = 0;          // altura de la superficie pisada
-  let halfViewW = 400, viewH = 900, viewW = 800;
+  let halfViewW = 400, viewH = ORTHO_HALF_H * 2, viewW = 800;
   const lookTarget = new THREE.Vector3(0, EYE, 0);
   camera.position.set(0, EYE, CAM_DIST);
   camera.lookAt(lookTarget);
@@ -1279,13 +1287,14 @@ export function createRenderer3D(canvas) {
   function resize(w, h) {
     W = w; H = h;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    // cuánto mundo se ve a la distancia del plano de juego
-    const halfH = CAM_DIST * Math.tan(camera.fov * Math.PI / 360);
-    halfViewW = halfH * camera.aspect;
-    viewH = halfH * 2;
+    // cuánto mundo se ve: fijo en vertical, el ancho sigue el aspecto de la pantalla
+    const aspect = w / h;
+    halfViewW = ORTHO_HALF_H * aspect;
+    viewH = ORTHO_HALF_H * 2;
     viewW = halfViewW * 2;
+    camera.left = -halfViewW; camera.right = halfViewW;
+    camera.top = ORTHO_HALF_H; camera.bottom = -ORTHO_HALF_H;
+    camera.updateProjectionMatrix();
   }
 
   function loadScene(L, state) {

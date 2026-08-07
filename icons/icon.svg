@@ -1,1 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="120" fill="#11131a"/><rect x="72" y="72" width="368" height="368" rx="92" fill="#ff8c67"/><circle cx="256" cy="238" r="96" fill="#11131a"/><circle cx="225" cy="238" r="13" fill="#fff"/><circle cx="287" cy="238" r="13" fill="#fff"/><path d="M188 316c22 36 58 54 68 54s46-18 68-54" stroke="#fff" stroke-width="20" stroke-linecap="round" fill="none"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="40%" r="68%">
+      <stop offset="0%" stop-color="#FBF6EE"/>
+      <stop offset="48%" stop-color="#F0C987"/>
+      <stop offset="100%" stop-color="#C97F5C"/>
+    </radialGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBF6EE" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#FBF6EE" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- fondo: el mismo charco cálido de las lámparas del juego, a sangre completa
+       para que sobreviva el recorte circular de los iconos "maskable" -->
+  <rect width="512" height="512" fill="url(#glow)"/>
+
+  <!-- esquina doblada: el gesto craft/origami del juego, discreto -->
+  <path d="M512 512 L512 400 L400 512 Z" fill="url(#fold)"/>
+  <path d="M0 0 L104 0 L0 104 Z" fill="url(#fold)"/>
+
+  <!-- Nero: sentado, silueta simple, escalada un poco para caber entera en la
+       zona segura circular que recortan los iconos "maskable" -->
+  <g fill="#26221D" transform="translate(256 256) scale(.9) translate(-256 -256)">
+    <!-- cola, enrollada por delante de las patas -->
+    <path d="M362 400c34-4 56-30 54-62-1-16-10-28-22-28-10 0-17 8-17 19 0 14 8 20 16 20-2 16-14 30-35 37z"/>
+    <!-- cuerpo sentado: caderas anchas en el suelo, hombros más estrechos -->
+    <path d="M256 226c-52 0-94 24-94 74v58c0 46 42 74 94 74s94-28 94-74v-58c0-50-42-74-94-74z"/>
+    <!-- cabeza -->
+    <circle cx="256" cy="200" r="62"/>
+    <!-- orejas -->
+    <path d="M203 165l-30-46c-4-6 3-13 9-9l45 28z"/>
+    <path d="M309 165l30-46c4-6-3-13-9-9l-45 28z"/>
+  </g>
+  <!-- ojos: dos puntos claros, la firma visual del gato en el juego -->
+  <g transform="translate(256 256) scale(.9) translate(-256 -256)">
+    <circle cx="234" cy="202" r="7" fill="#FBF6EE"/>
+    <circle cx="278" cy="202" r="7" fill="#FBF6EE"/>
+  </g>
+</svg>

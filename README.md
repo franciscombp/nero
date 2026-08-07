@@ -163,6 +163,21 @@ Abre `editor.html`: dibuja la habitación, coloca recuerdos y puzzles, y el
 validador avisa si dejas una plataforma inalcanzable. Exporta a
 `data/scenes.json` o pruébalo en caliente con `index.html?draft=1`.
 
+## Sin conexión
+
+Nero es una PWA instalable ("Añadir a pantalla de inicio"). El service worker
+(`sw.js`) sirve **red primero, caché como respaldo**: con conexión siempre
+pide la copia más nueva de cada archivo; sin conexión, juega con la última
+que se cargó.
+
+Cuando publicas una versión nueva, súbele el número a `APP_VERSION` en
+`sw.js`. Eso es lo único que hace que el navegador note el cambio: instala la
+versión nueva en segundo plano, pero **no la activa sola** — se queda en
+espera hasta que el jugador confirma la barra *"Hay una versión nueva de
+Nero · Actualizar"* que dispara `js/pwa.js`. Así no se recarga la página a
+mitad de un salto. La comprobación se repite al volver a la pestaña o al
+recuperar la conexión.
+
 ## 🚀 Deploy a GitHub Pages
 
 El proyecto se deploya automáticamente a GitHub Pages en cada push a `main`:

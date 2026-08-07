@@ -1,4 +1,9 @@
-const CACHE_NAME = 'nero-pwa-v11';
+// Versión de la app cacheada. Súbela en cada release: es lo único que hace
+// que el navegador note que sw.js cambió y arranque el ciclo de actualización
+// (instala en segundo plano, se queda "en espera" y js/pwa.js avisa al
+// jugador con una barra en vez de recargar la página a medio nivel).
+const APP_VERSION = 'v12';
+const CACHE_NAME = 'nero-pwa-' + APP_VERSION;
 const ASSETS = [
   './',
   './index.html',
@@ -18,6 +23,7 @@ const ASSETS = [
   './js/editor.js',
   './js/levelEditor.js',
   './js/assetLoader.js',
+  './js/pwa.js',
   './js/vendor/three.module.min.js',
   './js/vendor/three.core.min.js',
   './js/vendor/RoundedBoxGeometry.js',
@@ -28,18 +34,29 @@ const ASSETS = [
   './data/scenes.json',
   './data/stories.json',
   './data/story_origins.json',
+  './icons/icon.svg',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
-  self.skipWaiting();
+  // Sin skipWaiting aquí: si ya hay una versión sirviendo la página, esta se
+  // queda "en espera" hasta que el jugador confirme la barra de actualización
+  // (o cierre todas las pestañas). La primera instalación no tiene a quién
+  // esperar, así que el navegador la activa igual en cuanto termina.
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
   self.clients.claim();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // Red primero, caché como respaldo (para jugar sin conexión una vez visitado).

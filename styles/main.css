@@ -409,3 +409,38 @@ html, body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==================== Aviso de actualización de la PWA ==================== */
+#updateBar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 140%);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 999px;
+  background: rgba(38, 34, 29, .92);
+  color: #FBF6EE;
+  font-family: inherit;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+  max-width: min(92vw, 380px);
+}
+#updateBar.show { transform: translate(-50%, 0); }
+#updateBar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#updateBar button {
+  flex: none;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: #E8967E;
+  color: #26221D;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+#updateBar button:active { transform: scale(.96); }

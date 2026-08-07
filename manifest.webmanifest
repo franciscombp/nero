@@ -1,21 +1,31 @@
 {
   "name": "Nero · una historia de gato",
   "short_name": "Nero",
-  "description": "Una experiencia de juego de exploración en una casa llena de recuerdos.",
-  "start_url": "https://franciscombp.github.io/nero/",
+  "description": "Un gato aprende una casa entera desde treinta centímetros del suelo. Temporada 1 completa, jugable sin conexión.",
+  "start_url": "https://franciscombp.github.io/nero/index.html",
+  "scope": "https://franciscombp.github.io/nero/",
   "display": "standalone",
-  "background_color": "#11131a",
-  "theme_color": "#11131a",
+  "orientation": "portrait",
+  "background_color": "#F4ECE3",
+  "theme_color": "#F4ECE3",
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
