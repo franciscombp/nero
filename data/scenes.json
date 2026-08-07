@@ -7,7 +7,7 @@
       "bg": "#2C2C2C",
       "band": "#1A1A1A"
     },
-    "intro": "Llueve. Nero no sabe cómo llegó aquí: solo que hay cartón por todos lados y que la única salida está arriba. Salta. Otra vez. Otra vez.",
+    "intro": "Llueve sobre el cartón. Nero no sabe cómo llegó aquí, solo que el mundo tiene cuatro paredes blandas y que la única salida está arriba.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -55,7 +55,7 @@
         "text": "Al octavo golpe el cartón se rasga y entra el aire.<br><b>Afuera todo es enorme. Y es suyo.</b>"
       }
     ],
-    "hint": "Salta ↑ una y otra vez: cada golpe abre más la caja",
+    "hint": "Desliza ↑ (o pulsa ↑) una y otra vez · cada golpe abre más la caja",
     "spawn": 850
   },
   {
@@ -66,7 +66,7 @@
       "bg": "#3A3A3A",
       "band": "#2C2C2C"
     },
-    "intro": "Una camioneta con el motor apagado y un camino de escombros hasta el balde. No estará ahí para siempre.",
+    "intro": "Una camioneta con el motor apagado, y entre ella y Nero un montón de cosas que alguien tiró. Los faros se encienden.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -86,35 +86,35 @@
       },
       {
         "x": 90,
-        "y": 1580,
+        "y": 1600,
         "w": 130,
         "h": 110,
         "kind": "trashbag"
       },
       {
         "x": 270,
-        "y": 1465,
+        "y": 1510,
         "w": 150,
         "h": 225,
         "kind": "crate"
       },
       {
         "x": 330,
-        "y": 1340,
+        "y": 1420,
         "w": 150,
         "h": 125,
         "kind": "crate"
       },
       {
         "x": 575,
-        "y": 1230,
+        "y": 1330,
         "w": 80,
         "h": 12,
         "kind": "mirror"
       },
       {
         "x": 700,
-        "y": 1120,
+        "y": 1240,
         "w": 180,
         "h": 20,
         "kind": "truckbed"
@@ -133,8 +133,8 @@
         "text": "El motor ruge debajo de sus patas y el callejón se aleja.<br><b>No sabe adónde va. Va.</b>"
       }
     ],
-    "hint": "Trepa los escombros y el espejo hasta el balde ¡antes de que la camioneta arranque!",
-    "spawn": 120
+    "hint": "Salta en diagonal: desliza ↗ · o mantén → y pulsa ↑",
+    "spawn": 45
   },
   {
     "name": "Unas manos",
@@ -144,7 +144,7 @@
       "bg": "#3A3A3A",
       "band": "#2C2C2C"
     },
-    "intro": "No llegó a tiempo. Resbala, cae y se queda quieto en el barro esperando lo peor.",
+    "intro": "No llegó. Resbala, cae, y se queda muy quieto en el barro, que es lo que hacen los gatos cuando ya no se les ocurre nada.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -213,12 +213,12 @@
       "bg": "#F4ECE3",
       "band": "#E8DCC9"
     },
-    "intro": "La casa es gigantesca y Nero cabe en una mano. Huele a comida, y la comida está arriba, en la encimera. Desde el suelo no se ve qué hay allí: solo el canto.",
-    "hint": "Toca los cajones para abrirlos · solo puedes abrir el que alcanzas",
+    "intro": "La casa es enorme y Nero cabe en una mano. Huele a comida. La comida está arriba, y desde el suelo de la cocina lo de arriba es solo un canto de madera.",
+    "hint": "Toca un cajón para abrirlo · solo se abre el que alcanzas",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
-      "jumpHeight": 0.8,
+      "jumpHeight": 1,
       "wallSlide": true
     },
     "platforms": [
@@ -238,7 +238,7 @@
       },
       {
         "x": 150,
-        "y": 1090,
+        "y": 1160,
         "w": 380,
         "h": 16,
         "kind": "shelf"
@@ -337,12 +337,12 @@
       "bg": "#F7E8DF",
       "band": "#F1DCC0"
     },
-    "intro": "Anochece. Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva media hora mirándolo desde debajo del mueble. Subir es fácil. Llegar con las manos vacías, no.",
-    "hint": "Sube a la repisa alta: hay algo ahí arriba que no se ve desde el suelo",
+    "intro": "Aldo se ha dormido en la butaca con la tele encendida. Nero lleva media hora mirándolo desde debajo del mueble, decidiéndose.",
+    "hint": "Sube a la repisa alta · desde el suelo no se ve lo que hay encima",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
-      "jumpHeight": 0.8,
+      "jumpHeight": 1,
       "wallSlide": true
     },
     "platforms": [
@@ -440,7 +440,7 @@
         "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
       }
     ],
-    "spawn": 150,
+    "spawn": 95,
     "carryables": [
       {
         "id": "raton",
@@ -511,8 +511,8 @@
       "bg": "#F3E6D8",
       "band": "#E7D5BF"
     },
-    "intro": "Aldo lleva toda la tarde leyendo. Arriba del todo, en la librería, hay una caja de zapatos que huele a otra casa. Pero desde abajo no se ve qué hay en las baldas: hará falta subir algo con peso.",
-    "hint": "Sube el libro en la boca y suéltalo sobre la bandeja de la polea",
+    "intro": "Aldo lleva toda la tarde leyendo y Nero lleva toda la tarde mirando la librería. Arriba del todo hay una caja de zapatos que huele a otra casa.",
+    "hint": "Coge el libro con la boca, súbelo y suéltalo sobre la bandeja",
     "mechanics": {
       "wallSlide": true
     },
@@ -634,8 +634,8 @@
       "bg": "#E9E2DA",
       "band": "#D9CFC4"
     },
-    "intro": "La sala está llena de cajas de mudanza. El sofá tapado con una sábana. La butaca vacía. Nero no entiende lo que ve, pero entiende que algo se acabó: alguien guardó su ratón de trapo.",
-    "hint": "Las cajas se abren por las solapas · solo puedes abrir la que alcanzas",
+    "intro": "Los muebles no están donde deben. El sofá tapado con una sábana, la butaca vacía, y su ratón de trapo dentro de una caja con cinta.",
+    "hint": "Las cajas se abren por las solapas · solo la que alcanzas",
     "mechanics": {
       "wallSlide": true
     },
@@ -732,7 +732,7 @@
         "text": "Desde el rellano se ve la puerta de la calle abierta de par en par.<br><b>Entran y salen personas que no son Aldo.</b>"
       }
     ],
-    "spawn": 180,
+    "spawn": 60,
     "interactives": [
       {
         "id": "solapa_baja",
@@ -771,8 +771,8 @@
       "bg": "#2F3040",
       "band": "#262734"
     },
-    "intro": "Aldo no ha vuelto. Hay tormenta y no hay luz. Nero quiere llegar a la ventana alta para ver el camino, pero a oscuras la ruta de siempre no alcanza. Del colgador cuelga una olla pesada.",
-    "hint": "Tira la olla: su peso hará subir la balda",
+    "intro": "Aldo no ha vuelto. Hay tormenta, no hay luz, y la casa que Nero se sabía de memoria ya no está donde la dejó.",
+    "hint": "Tira la olla del colgador · su peso levanta la balda",
     "mechanics": {
       "wallSlide": true
     },
@@ -873,8 +873,8 @@
       "bg": "#E7E3F0",
       "band": "#DBD6E9"
     },
-    "intro": "Uma se ha encerrado en el cuarto. Aldo está en el hospital y se pondrá bien, pero ella todavía no se lo cree. El suelo está lleno de cosas tiradas: habrá que llegar por arriba. Y Nero sube con algo en la boca.",
-    "hint": "El suelo está bloqueado · usa los cajones y las repisas",
+    "intro": "Uma se ha encerrado en el cuarto. Aldo se pondrá bien, pero ella todavía no se lo cree. Nero sube a decírselo como sabe.",
+    "hint": "El suelo está lleno · sube por los cajones y las repisas",
     "mechanics": {
       "wallSlide": true
     },

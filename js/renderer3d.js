@@ -72,7 +72,11 @@ export function createRenderer3D(canvas) {
   sc.left = -680; sc.right = 680; sc.top = 800; sc.bottom = -800;
   sc.near = 100; sc.far = 4500;
   dir.shadow.bias = -0.0006;
-  scene.add(amb, hemi, dir, dir.target);
+  // Luz de contra que persigue a Nero. Un gato negro sobre un callejón nocturno
+  // era literalmente invisible: esto le dibuja el borde SIEMPRE, en cualquier
+  // escena, sin tocar la iluminación general.
+  const rim = new THREE.PointLight(0xFFE3C0, 0, 620, 2);
+  scene.add(amb, hemi, dir, dir.target, rim);
 
   // --- grupos ---
   const room = new THREE.Group();      // estático por escena
@@ -1311,19 +1315,23 @@ export function createRenderer3D(canvas) {
       hemi.color.set(0xA8B2C4); hemi.groundColor.set(0x565660); hemi.intensity = 0.72;
       dir.color.set(0xC4CCDC); dir.intensity = 1.05;
       amb.intensity = 0.34;
+      rim.color.set(0xDCE6FF); rim.intensity = 700;
     } else if (L.time === 'night') {
       hemi.color.set(0xCBC2E0); hemi.groundColor.set(0x565064); hemi.intensity = 0.42;
       dir.color.set(0xB8B0DE); dir.intensity = 0.6;
       amb.intensity = 0.2;
+      rim.color.set(0xC8D6FF); rim.intensity = 950;
     } else if (L.time === 'afternoon' || L.time === 'evening') {
       const deep = L.time === 'evening';
       hemi.color.set(deep ? 0xF3C9AE : 0xFFE8DC); hemi.groundColor.set(0xB09484); hemi.intensity = deep ? 0.5 : 0.58;
       dir.color.set(deep ? 0xF0B088 : 0xFFD9B8); dir.intensity = deep ? 1.05 : 1.2;
       amb.intensity = 0.24;
+      rim.color.set(0xFFD9A8); rim.intensity = deep ? 620 : 420;
     } else {
       hemi.color.set(0xFFF2DC); hemi.groundColor.set(0xB8A488); hemi.intensity = 0.62;
       dir.color.set(0xFFE9C4); dir.intensity = 1.3;
       amb.intensity = 0.26;
+      rim.color.set(0xFFF0D4); rim.intensity = 380;
     }
   }
 
@@ -1454,6 +1462,9 @@ export function createRenderer3D(canvas) {
     // la luz acompaña la altura de la cámara para que la sombra no se degrade
     dir.position.set(420, camAnchor + 1100, 700);
     dir.target.position.set(0, camAnchor, 0);
+
+    // el contraluz va con él, por detrás y por encima del hombro
+    rim.position.set(tX(cat.x) - cat.facing * 120, tY(cat.y) + 150, -210);
   }
 
   function render() {

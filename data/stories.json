@@ -1,11 +1,11 @@
 {
   "title": {
-    "kicker": "temporada 1",
+    "kicker": "temporada 1 · la casa que no estaba vacía",
     "title": "N E R O",
-    "body": "Un gatito abandonado en una caja encuentra una casa. Aprende a vivir en ella. Y cuando la casa se rompe, descubre lo que de verdad significaba."
+    "body": "Un gato aprende una casa entera desde treinta centímetros del suelo. Aprende qué se ve y qué hay que recordar.<br><br>Y cuando la casa se rompe, descubre para qué servía sabérsela de memoria."
   },
   "ui": {
-    "hint": "Desliza ↑ para saltar · toca un mueble para saltar hacia él · arrastra al lado para andar sigiloso",
-    "final": "La casa nunca estuvo vacía: estaba esperando a que alguien la volviera a llenar.<br><br>Abajo suena una llave en la cerradura."
+    "hint": "Saltar: desliza ↑ · o mantén ← → y pulsa ↑<br>Salto largo: desliza fuerte · o Shift + ↑<br>Toca un mueble para saltar justo ahí",
+    "final": "La casa nunca estuvo vacía. Estaba esperando a que alguien se la volviera a saber de memoria.<br><br>Abajo suena una llave en la cerradura."
   }
 }

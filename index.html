@@ -198,7 +198,10 @@ async function main() {
     if (e.repeat) return;
     if (e.key === 'ArrowLeft') { if (!e.shiftKey) doJump(-1, false); }
     else if (e.key === 'ArrowRight') { if (!e.shiftKey) doJump(1, false); }
-    else if (e.key === 'ArrowUp' || e.key === ' ') doJump(0, e.shiftKey);
+    // ↑ salta hacia donde ya estás mirando: mantener ← o → y pulsar ↑ da el salto
+    // dirigido, y con Shift el supersalto dirigido. Sin esto el teclado no tenía
+    // forma de hacer un supersalto en diagonal y había niveles imposibles.
+    else if (e.key === 'ArrowUp' || e.key === ' ') doJump(held.r ? 1 : held.l ? -1 : 0, e.shiftKey);
     else if (e.key === 'ArrowDown') doDrop();
     else if (e.key === 'r' || e.key === 'R') { if (levelState.mode === 'play') resetLevel(); }
   });

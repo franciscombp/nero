@@ -92,6 +92,7 @@ npx serve .
 | Supersalto | Swipe largo o rápido · dos dedos | Shift + ↑ |
 | Salto dirigido | Tap sobre un mueble al alcance | — |
 | Bajar / caída rápida | Swipe ↓ | ↓ |
+| Salto dirigido con teclado | — | mantén ← o → y pulsa ↑ (o Shift+↑ para el largo) |
 | Andar sigiloso | Arrastrar el dedo a un lado | Shift + ← / → |
 | Reiniciar | Botón ↺ | R |
 
