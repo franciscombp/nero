@@ -3,7 +3,6 @@
 // Convención: plano de juego en z=0; el mueble se extiende en profundidad alrededor.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
-import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { CONFIG } from './core.js';
 
 const W2 = CONFIG.WORLD_W, FY = CONFIG.FLOOR_Y, CY = CONFIG.CEILING_Y;
@@ -633,6 +632,12 @@ export function createRenderer3D(canvas) {
           // cinta de embalar
           g.add(put(rbox(p.w - inset - 30, 9, 6, 0xD9C9A8, 2),
                      (i % 2 ? 8 : -8), -bh + th * (i + 0.5) + th * 0.2, SURF_Z + 126 - inset));
+          // la marca de la empresa de mudanzas — la misma de la caja donde
+          // abandonaron a Nero. Él no la reconoce; el jugador sí.
+          if (i === tiers - 1) {
+            g.add(put(rbox((p.w - inset) * 0.42, 16, 2, COL.coral, 1),
+                       (i % 2 ? 8 : -8), -bh + th * (i + 0.5) - 8, SURF_Z + 128 - inset));
+          }
         }
         break;
       }
@@ -814,6 +819,8 @@ export function createRenderer3D(canvas) {
       g.add(put(rbox(t, h, d, COL.carton, 8), -w / 2 + t / 2, 0, 0));            // pared izquierda
       g.add(put(rbox(t, h, d, COL.carton, 8), w / 2 - t / 2, 0, 0));             // pared derecha
       g.add(put(rbox(w, 30, t, COL.cartonDk, 5), 0, -h / 2 + 15, d / 2 - t / 2)); // labio frontal bajo
+      // la marca de la mudanza en la pared: volverá a aparecer en el episodio 7
+      g.add(put(rbox(t + 2, 20, d * 0.4, COL.coral, 1), w / 2 - t / 2 + 1, h * 0.1, 0));
       // luz interior: una rendija al principio, un chorro de luz al abrirse
       const glow = new THREE.PointLight(0xFFE8C0, 1.4, 700, 1.1);
       glow.position.set(0, h * 0.12, 70);
@@ -846,6 +853,88 @@ export function createRenderer3D(canvas) {
     return g;
   }
 
+  // Objetos pequeños que llevan la historia. Nero no los mira dos veces;
+  // el jugador sí. Cada uno es una frase sin texto.
+  function buildStoryProp(pr) {
+    const g = new THREE.Group();
+    if (pr.kind === 'cards') {
+      // tarjetas de pésame en pie, dobladas como tiendas
+      for (let i = 0; i < 3; i++) {
+        const card = new THREE.Group();
+        const a = put(rbox(1.5, 26, 20, COL.cream, 1), 0, 13, 0); a.rotation.z = 0.28;
+        const b = put(rbox(1.5, 26, 20, 0xF3EDE2, 1), 3.5, 13, 0); b.rotation.z = -0.28;
+        card.add(a, b);
+        card.position.set(i * 26, 0, (i % 2) * 14 - 7);
+        card.rotation.y = (i - 1) * 0.3;
+        g.add(card);
+      }
+    } else if (pr.kind === 'flowers') {
+      // un ramo tumbado, secándose todavía con su lazo
+      const stems = cyl(3, 4.5, 46, 0x7E8A62, { seg: 6 });
+      stems.rotation.z = Math.PI / 2 - 0.12;
+      put(stems, 0, 6, 0);
+      g.add(stems);
+      for (let i = 0; i < 5; i++) {
+        g.add(put(sph(5 - (i % 2), [0xD9A8A0, 0xC9B6D6, 0xE3C9A2][i % 3]), 24 + (i % 3) * 7, 8 + (i % 2) * 6, (i - 2) * 5));
+      }
+      g.add(put(rbox(6, 3, 14, COL.coral, 1), -12, 7, 0));
+    } else if (pr.kind === 'coat') {
+      // un abrigo oscuro dejado caer sobre el respaldo
+      const cloth = rbox(46, 60, 16, 0x3A3733, 8);
+      put(cloth, 0, -18, 0); cloth.rotation.z = 0.06;
+      const hombros = rbox(52, 12, 20, 0x44403B, 6);
+      put(hombros, 0, 10, 0);
+      g.add(cloth, hombros);
+      g.position.y += 96;   // cuelga del respaldo, no del asiento
+    } else if (pr.kind === 'portrait') {
+      // un retrato: en pie, o boca abajo — la diferencia es toda la historia
+      if (pr.down) {
+        g.add(put(rbox(34, 3, 24, COL.woodDk, 1.5), 0, 1.5, 0));
+        g.add(put(rbox(28, 1.6, 18, COL.cream, 1), 0, 3.4, 0));
+      } else {
+        const marco = rbox(30, 38, 3, COL.woodDk, 2);
+        put(marco, 0, 19, 0); marco.rotation.x = -0.1;
+        const foto = rbox(23, 30, 1.6, 0xE9DFCE, 1);
+        put(foto, 0, 19, 2.2); foto.rotation.x = -0.1;
+        const figA = put(sph(4, 0x8A7968), -4, 24, 3.6);
+        const figB = put(sph(2.8, 0xA89880), 5, 22, 3.6);
+        g.add(marco, foto, figA, figB);
+      }
+    } else if (pr.kind === 'letters') {
+      // cartas: un fajo atado con cordel y dos sueltas
+      const fajo = new THREE.Group();
+      for (let i = 0; i < 5; i++) fajo.add(put(rbox(34, 2.4, 22, i % 2 ? 0xEFE7D8 : 0xE7DCC8, 1), (i % 2) * 2 - 1, 2 + i * 2.4, (i % 2) * 2 - 1));
+      fajo.add(put(rbox(36, 2, 5, 0xA96A50, 1), 0, 8, 0));
+      g.add(fajo);
+      const suelta = rbox(30, 1.8, 20, COL.cream, 1);
+      put(suelta, 38, 1, 6); suelta.rotation.y = 0.4;
+      g.add(suelta);
+    } else if (pr.kind === 'notes') {
+      // notas adhesivas: recordatorios escritos por alguien que empieza a olvidar
+      for (let i = 0; i < (pr.n ?? 3); i++) {
+        const nota = rbox(20, 20, 1.5, i % 2 ? 0xF2DC8E : 0xF0C987, 1);
+        put(nota, i * 27, i % 2 ? 6 : -4, 0);
+        nota.rotation.z = (i - 1) * 0.12;
+        const raya = rbox(12, 1.4, 1.7, 0x8A7A5A, 0.5);
+        put(raya, i * 27, i % 2 ? 8 : -2, 0.4);
+        g.add(nota, raya);
+      }
+    } else if (pr.kind === 'pills') {
+      g.add(put(cyl(5, 5, 16, 0xE8E2D4, { seg: 8 }), 0, 8, 0));
+      g.add(put(cyl(5.2, 5.2, 4, 0xB8705E, { seg: 8 }), 0, 18, 0));
+      g.add(put(cyl(4, 4, 12, 0xD8CCB9, { seg: 8 }), 14, 6, 6));
+      g.add(put(cyl(4.2, 4.2, 3.5, 0x7E8A62, { seg: 8 }), 14, 14, 6));
+    } else if (pr.kind === 'suitcase') {
+      g.add(put(rbox(64, 44, 22, 0x9A6E52, 5), 0, 22, 0));
+      g.add(put(rbox(66, 6, 24, 0x7C5540, 3), 0, 40, 0));
+      g.add(put(rbox(18, 6, 6, 0x5E4030, 2), 0, 47, 0));
+      g.add(put(rbox(66, 5, 24, 0x7C5540, 3), 0, 12, 0));
+    } else {
+      return null;
+    }
+    return g;
+  }
+
   function buildProps(L, state) {
     clearGroup(dynamic);
     yarnMesh = knockG = knockBrokenG = null;
@@ -856,6 +945,61 @@ export function createRenderer3D(canvas) {
     carryMeshes = []; panMeshes = [];
     counterSprite = null;
     counterLast = '';
+    liquidCache.clear();
+
+    // ---- recipientes: donde Nero puede verterse (ver buildLiquidForm) ----
+    for (const c of (state.containers ?? [])) {
+      if (c.noMesh) continue;
+      const g = new THREE.Group();
+      const w = c.w ?? 90, h = c.rim ?? 34;
+      if (c.kind === 'bowl') {
+        // bol de cerámica: cono truncado abierto con sombra interior
+        g.add(put(cyl(w / 2, w * 0.3, h, 0xEFE6D8, { seg: 12 }), 0, h / 2, 0));
+        g.add(put(disc(w / 2 - 5, 2, 0x3A342C, { seg: 12 }), 0, h - 2, 0));
+        g.add(put(disc(w / 2 + 2, 3.5, 0xD8CBB6, { seg: 12 }), 0, h - 1, 0));
+      } else if (c.kind === 'basket') {
+        // la cesta de labores: mimbre claro, dos asas
+        g.add(put(cyl(w / 2, w * 0.36, h, 0xD8BE96, { seg: 10 }), 0, h / 2, 0));
+        g.add(put(disc(w / 2 - 5, 2, 0x4A4139, { seg: 10 }), 0, h - 2, 0));
+        g.add(put(cyl(w / 2 + 1.5, w / 2 + 1.5, 5, 0xC0A478, { seg: 10 }), 0, h - 2.5, 0));
+        for (const sx3 of [-w / 2 - 4, w / 2 + 4]) {
+          const asa = cyl(2.2, 2.2, 16, 0xB08F60, { seg: 6 });
+          put(asa, sx3, h - 6, 0);
+          g.add(asa);
+        }
+      } else if (c.kind === 'box') {
+        // caja de cartón abierta, con las solapas hacia fuera
+        const t = 4, d = Math.min(w, 110);
+        g.add(put(rbox(w, t, d, 0xB08E6C, 2), 0, t / 2, 0));
+        g.add(put(rbox(w, h, t, 0xC2A183, 2), 0, h / 2, -d / 2));
+        g.add(put(rbox(w, h, t, 0xC9A886, 2), 0, h / 2, d / 2));
+        g.add(put(rbox(t, h, d, 0xBB9877, 2), -w / 2, h / 2, 0));
+        g.add(put(rbox(t, h, d, 0xBB9877, 2), w / 2, h / 2, 0));
+        const flapL = rbox(w * 0.44, t, d, 0xCBAB89, 2);
+        put(flapL, -w / 2 - w * 0.19, h + 4, 0); flapL.rotation.z = 0.9;
+        const flapR = rbox(w * 0.44, t, d, 0xCBAB89, 2);
+        put(flapR, w / 2 + w * 0.19, h + 4, 0); flapR.rotation.z = -0.9;
+        g.add(flapL, flapR);
+        // la marca de la empresa de mudanzas: la misma de la caja del prólogo
+        g.add(put(rbox(w * 0.5, 12, 1.6, COL.coral, 1), 0, h * 0.55, d / 2 + 2.5));
+      }
+      g.position.set(tX(c.x), tY(c.y), -30);
+      dynamic.add(g);
+    }
+
+    // ---- props de historia: los objetos que cuentan lo que Nero no entiende ----
+    for (const pr of (L.props ?? [])) {
+      const g = buildStoryProp(pr);
+      if (!g) continue;
+      if (pr.wall) {
+        g.position.set(tX(pr.x), tY(pr.y), WALL_Z + 16);   // pegado a la pared
+      } else {
+        const host = state.platforms[pr.host];
+        if (!host) continue;
+        g.position.set(tX(host.x + (pr.offset ?? 40)), tY(host.y), -60);
+      }
+      dynamic.add(g);
+    }
 
 
     // contrapeso: balda colgante que sube cuando cae el peso del otro lado
@@ -985,21 +1129,23 @@ export function createRenderer3D(canvas) {
     }
   }
 
-  // ---------- gato: GLB rigeado (assets/nero.glb) con blob placeholder de respaldo ----------
+  // ---------- gato: modelo 100% procedural ----------
+  // El gato se genera en código, hueso a hueso, con el mismo estilo papercraft
+  // que los muebles (facetas + grano de papel). Ser procedural es lo que le
+  // permite ser LÍQUIDO: dentro de un recipiente el esqueleto se guarda y el
+  // cuerpo se vierte en un molde con la forma del cacharro.
   const catRig = buildCat();
   scene.add(catRig.g);
   let blinkT = 0, blinkUntil = 0;
-  let catMixer = null;
-  let catAction = null;
-  let catBones = null;
+  let catBones = catRig.bones;
+  let gaitPhase = 0;
 
   // ---------- capa de poses procedurales sobre el esqueleto ----------
-  // Offsets aditivos aplicados DESPUÉS del mixer (el clip horneado pone la base,
-  // estas rotaciones esculpen la pose del estado encima).
-  // El take del GLB es un ciclo de caminata de 1s. Cada estado o bien lo reproduce
-  // (sneak) o lo congela en un frame útil (freeze) y esculpe la pose encima:
-  //   patas: eje z (positivo = barrer hacia atrás) · cola: x (positivo = levantar)
-  //   cabeza: x (positivo = agachar)
+  // Cada fotograma: (1) el rig vuelve a su pose de descanso, (2) la marcha
+  // procedural mueve las patas si el gato anda, (3) esta capa esculpe encima
+  // la pose del estado. Convención de POSES (heredada del rig anterior):
+  //   patas: positivo = barrer hacia atrás · cola: positivo = levantar
+  //   cabeza: positivo = agachar — los signos por eje viven en AXES
   // Parámetros por pose:
   //   fl/bl  flexión de patas delanteras / traseras
   //   paw    ángulo de la almohadilla (el tercer hueso de cada pata, *leg2)
@@ -1008,17 +1154,21 @@ export function createRenderer3D(canvas) {
   //   tail   altura de la cola · spread  desfase izquierda/derecha (rompe la simetría)
   //   stiff  rapidez con que se adopta la pose: aterrizar es un golpe, dormitar no
   const POSES = {
-    idle:   { fl: 0,     bl: 0,     paw: 0,     spine: 0.04,  head: 0,     tail: 0.12,  ear: 0,    spread: 0.05, stiff: 3.5,  speed: 0,    freeze: 0.4 },
-    charge: { fl: 0.35,  bl: -0.30, paw: -0.22, spine: 0.30,  head: 0.28,  tail: -0.10, ear: 0.30, spread: 0.14, stiff: 9,    speed: 0,    freeze: 0.4 },
-    air:    { fl: -0.55, bl: 0.45,  paw: 0.30,  spine: -0.26, head: -0.30, tail: 0.45,  ear: 0.40, spread: 0.20, stiff: 6,    speed: 0,    freeze: 0 },
-    land:   { fl: 0.40,  bl: -0.35, paw: -0.30, spine: 0.34,  head: 0.22,  tail: 0.08,  ear: 0.20, spread: 0.10, stiff: 18,   speed: 0,    freeze: 0.4 },
-    sneak:  { fl: 0.20,  bl: -0.15, paw: -0.10, spine: 0.22,  head: 0.15,  tail: -0.30, ear: 0.55, spread: 0,    stiff: 5,    speed: 1.35 },
-    hang:   { fl: -0.75, bl: 0.25,  paw: 0.45,  spine: -0.18, head: -0.45, tail: 0.30,  ear: 0.20, spread: 0.26, stiff: 7,    speed: 0,    freeze: 0.15 },
-    slide:  { fl: -0.50, bl: 0.35,  paw: 0.25,  spine: -0.10, head: -0.40, tail: 0.50,  ear: 0.30, spread: 0.18, stiff: 7,    speed: 0,    freeze: 0.15 }
+    idle:   { fl: 0,     bl: 0,     paw: 0,     spine: 0.04,  head: 0,     tail: 0.12,  ear: 0,    spread: 0.05, crouch: 0,  stiff: 3.5,  speed: 0 },
+    charge: { fl: 0.35,  bl: -0.30, paw: -0.22, spine: 0.30,  head: 0.28,  tail: -0.10, ear: 0.30, spread: 0.14, crouch: 10, stiff: 9,    speed: 0 },
+    air:    { fl: -0.55, bl: 0.45,  paw: 0.30,  spine: -0.26, head: -0.30, tail: 0.45,  ear: 0.40, spread: 0.20, crouch: -3, stiff: 6,    speed: 0 },
+    land:   { fl: 0.40,  bl: -0.35, paw: -0.30, spine: 0.34,  head: 0.22,  tail: 0.08,  ear: 0.20, spread: 0.10, crouch: 9,  stiff: 18,   speed: 0 },
+    sneak:  { fl: 0.20,  bl: -0.15, paw: -0.10, spine: 0.22,  head: 0.15,  tail: -0.30, ear: 0.55, spread: 0,    crouch: 7,  stiff: 5,    speed: 1.35 },
+    hang:   { fl: -0.75, bl: 0.25,  paw: 0.45,  spine: -0.18, head: -0.45, tail: 0.30,  ear: 0.20, spread: 0.26, crouch: 0,  stiff: 7,    speed: 0 },
+    slide:  { fl: -0.50, bl: 0.35,  paw: 0.25,  spine: -0.10, head: -0.40, tail: 0.50,  ear: 0.30, spread: 0.18, crouch: 0,  stiff: 7,    speed: 0 }
   };
-  const poseCur = { fl: 0, bl: 0, paw: 0, spine: 0, head: 0, tail: 0, ear: 0, spread: 0 };
-  // Ejes de flexión calibrados contra el rig real (ver diagnóstico con __poseOverride)
-  const AXES = { legs: 'z', legSign: 1, tail: 'x', tailSway: 'y', head: 'x', headYaw: 'y', ears: 'x', spine: 'z' };
+  const poseCur = { fl: 0, bl: 0, paw: 0, spine: 0, head: 0, tail: 0, ear: 0, spread: 0, crouch: 0 };
+  // Ejes y signos calibrados contra el rig procedural (el gato mira a +X, Y arriba):
+  // girar una pata en +Z la lleva hacia delante, así que "barrer atrás" es −Z;
+  // subir la cola (que sale hacia −X) también es −Z; agachar la cabeza es −Z.
+  const AXES = { legs: 'z', legSign: -1, tail: 'z', tailSign: -1, tailSway: 'y',
+                 head: 'z', headSign: -1, headYaw: 'y', ears: 'z', earSign: 1,
+                 spine: 'z', spineSign: -1 };
 
   // Estado vivo entre fotogramas: la cola no obedece, persigue.
   const tailWave = [];                       // muelle por segmento (posición y velocidad)
@@ -1035,12 +1185,30 @@ export function createRenderer3D(canvas) {
   function applyPose(cat, dt) {
     if (!catBones) return;
     const t = POSES[cat.state] ?? POSES.idle;
-    if (catMixer) {
-      catMixer.timeScale = t.speed;
-      // con el ciclo congelado, deslizar el frame hacia el punto útil del take
-      if (t.speed === 0 && catAction && t.freeze != null) {
-        catAction.time += (t.freeze - catAction.time) * Math.min(1, dt * 8);
-      }
+
+    // (1) pose de descanso: sin mixer que la reponga, se repone a mano
+    for (const { bone, rest } of catRig.restPose) bone.rotation.set(rest.x, rest.y, rest.z);
+
+    // (2) marcha procedural: si el gato se desplaza pisando algo (o va en modo
+    // sigilo), las patas reman en pares diagonales y el cuerpo cabecea un poco
+    const walking = (cat.onGround && Math.abs(cat.vx) > 12) || (t.speed ?? 0) > 0;
+    if (walking) {
+      gaitPhase += dt * (4.5 + Math.abs(cat.vx) * 0.022) * Math.max(1, t.speed ?? 1);
+      const sw = (t.speed ?? 0) > 0 ? 0.34 : 0.44;      // en sigilo pasos más cortos
+      const legPh = [0, Math.PI];                        // pares diagonales
+      catBones.legsF.forEach(({ chain }, i) => {
+        const a = Math.sin(gaitPhase + legPh[i]) * sw * AXES.legSign;
+        if (chain[0]) chain[0].rotation[AXES.legs] += a;
+        if (chain[1]) chain[1].rotation[AXES.legs] += Math.max(0, -Math.sin(gaitPhase + legPh[i])) * 0.5 * AXES.legSign;
+      });
+      catBones.legsB.forEach(({ chain }, i) => {
+        const a = Math.sin(gaitPhase + legPh[1 - i]) * sw * AXES.legSign;
+        if (chain[0]) chain[0].rotation[AXES.legs] += a;
+        if (chain[1]) chain[1].rotation[AXES.legs] += Math.max(0, -Math.sin(gaitPhase + legPh[1 - i])) * 0.4 * AXES.legSign;
+      });
+      if (catBones.hips) catBones.hips.position.y = catRig.hipsRestY - poseCur.crouch + Math.abs(Math.sin(gaitPhase)) * 1.4;
+    } else if (catBones.hips) {
+      catBones.hips.position.y = catRig.hipsRestY - poseCur.crouch;
     }
     // cada pose llega a su ritmo: el aterrizaje es un golpe seco, el reposo no
     const k = 1 - Math.exp(-(t.stiff ?? 6) * dt);
@@ -1090,17 +1258,17 @@ export function createRenderer3D(canvas) {
 
     // ---- lomo: el arco es la silueta del gato ----
     if (catBones.chest) {
-      catBones.chest.rotation[AXES.spine] += poseCur.spine - stretch * 0.30;
+      catBones.chest.rotation[AXES.spine] += (poseCur.spine - stretch * 0.30) * AXES.spineSign;
       if (cat.state === 'idle') catBones.chest.rotation.x += Math.sin(time * 2.4) * 0.02;  // respiración
     }
 
     // ---- cabeza: cabecea con la pose y gira hacia donde va (o hacia lo que le llama) ----
     if (catBones.head) {
-      catBones.head.rotation[AXES.head] += poseCur.head + stretch * 0.35;
+      catBones.head.rotation[AXES.head] += (poseCur.head + stretch * 0.35) * AXES.headSign;
       const drift = cat.state === 'air' ? Math.max(-0.5, Math.min(0.5, cat.vx * 0.0012)) : lookYaw;
       catBones.head.rotation[AXES.headYaw] += drift;
     }
-    if (catBones.headend) catBones.headend.rotation[AXES.head] += poseCur.head * 0.25;
+    if (catBones.headend) catBones.headend.rotation[AXES.head] += poseCur.head * 0.25 * AXES.headSign;
 
     // ---- cola: no obedece, persigue. Contrapesa la aceleración del gato ----
     const ax = (cat.vx - prevVX) / Math.max(dt, 1e-4);
@@ -1112,7 +1280,7 @@ export function createRenderer3D(canvas) {
       const s = tailWave[i] || (tailWave[i] = { p: 0, v: 0 });
       const lag = 1 + i * 0.55;                                   // la punta llega la última
       spring(s, whipY + poseCur.tail * (0.30 + i * 0.14), dt, 120 / lag, 14);
-      tb.rotation[AXES.tail] += s.p;
+      tb.rotation[AXES.tail] += s.p * AXES.tailSign;
       const idleSway = cat.state === 'idle' ? 0.07 + Math.min(0.06, idleAge * 0.01) : 0;
       tb.rotation[AXES.tailSway] +=
         Math.sin(time * 2.2 + i * 0.65) * (0.09 + idleSway) + whipX * (0.25 + i * 0.2);
@@ -1120,122 +1288,163 @@ export function createRenderer3D(canvas) {
 
     // ---- orejas: la pose las echa atrás; el tic las mueve de una en una ----
     catBones.ears.forEach((eb, i) => {
-      eb.rotation[AXES.ears] += poseCur.ear * 0.8
-        + (i === earSide ? Math.sin(earFlick * Math.PI) * 0.45 : 0);
+      eb.rotation[AXES.ears] += (poseCur.ear * 0.8
+        + (i === earSide ? Math.sin(earFlick * Math.PI) * 0.45 : 0)) * AXES.earSign;
     });
   }
 
+  // El gato entero, generado en código. La jerarquía de Groups ES el esqueleto:
+  //   hips → chest → head → (headend, orejas) · patas de 3 huesos · cola de 5.
+  // Mira hacia +X. Los pies tocan y=0. Estilo papercraft: esferas y cilindros
+  // de pocas caras con el mismo grano de papel que los muebles.
   function buildCat() {
+    const C = COL.cat;
     const g = new THREE.Group();
     const body = new THREE.Group();
     g.add(body);
-    const ph = new THREE.Group();   // placeholder visible hasta que cargue el GLB
-    body.add(ph);
-    const C = COL.cat;
 
-    const torso = sph(20, C); torso.scale.set(1.18, 0.92, 0.88); put(torso, -2, 19, 0);
-    const chest = sph(15, C); put(chest, 8, 33, 0);
-    const head = sph(13.5, C); put(head, 12, 46, 0);
-    const earL = shadowed(new THREE.Mesh(new THREE.ConeGeometry(6, 13, 16), M(C)));
-    put(earL, 8, 58, -6.5); earL.rotation.x = -0.2;
-    const earR = earL.clone(); earR.position.z = 6.5; earR.rotation.x = 0.2;
-    const eyeL = sph(2.9, 0xFFFFFF, { rough: 0.4 }); put(eyeL, 22.5, 47.5, -5);
-    const eyeR = eyeL.clone(); eyeR.position.z = 5;
-    const nose = sph(1.9, COL.blush); put(nose, 25, 43.5, 0);
-
-    for (const [fx, fz] of [[-12, -7.5], [-12, 7.5], [10, -7.5], [10, 7.5]]) {
-      const f = sph(4.8, C); put(f, fx, 4.5, fz); ph.add(f);
-    }
-
-    const tail = new THREE.Group();
-    tail.position.set(-21, 14, 0);
-    const tailPts = [[0, 0, 5.5], [-7, 5, 5], [-12, 11, 4.4], [-14, 18, 3.8], [-13, 25, 3.2], [-10, 31, 2.7]];
-    for (const [tx2, ty2, tr] of tailPts) {
-      const seg = sph(tr, C); put(seg, tx2, ty2, 0); tail.add(seg);
-    }
-
-    ph.add(torso, chest, head, earL, earR, eyeL, eyeR, nose, tail);
-    return { g, body, ph, eyeL, eyeR, tail };
-  }
-
-  // Carga asíncrona del modelo rigeado; al llegar reemplaza al blob.
-  new GLTFLoader().load('assets/nero.glb', (gltf) => {
-    const model = gltf.scene;
-    model.traverse(n => {
-      if (n.isMesh || n.isSkinnedMesh) {
-        n.castShadow = true;
-        n.frustumCulled = false;   // el esqueleto mueve la malla fuera de su bbox estática
-        if (n.material) {
-          n.material.color.set(COL.cat);      // Nero es un gato negro
-          n.material.emissive?.set(0x000000); // el export de Blender trae emissive blanco
-          n.material.roughness = 0.98;
-          n.material.metalness = 0;
-          // el gato también es de papel: facetas marcadas y grano de fibra
-          n.material.flatShading = true;
-          n.material.map = paperTex;
-          n.material.needsUpdate = true;
-        }
-      }
-    });
-    // Escala consistente con el escenario: se mide el CUERPO (suelo → hueso de la
-    // cabeza), no el bbox — la cola levantada lo inflaba y encogía al gato.
-    model.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-    const headBone = model.getObjectByName('head');
-    let s;
-    if (headBone) {
-      const hp = new THREE.Vector3();
-      headBone.getWorldPosition(hp);
-      const bodyH = hp.y - box.min.y;
-      s = 84 / bodyH;               // cabeza del gato adulto a ~84u (silla: asiento a 145u)
-    } else {
-      s = 128 / size.y;
-    }
-    model.scale.setScalar(s);
-    box.setFromObject(model);
-    model.position.set(
-      -(box.min.x + box.max.x) / 2,
-      -box.min.y,
-      -(box.min.z + box.max.z) / 2
-    );
-    // El juego asume "adelante" = +X local; si el modelo es más largo en Z viene mirando a ±Z
-    const wrap = new THREE.Group();
-    wrap.add(model);
-    if (size.z >= size.x) wrap.rotation.y = Math.PI / 2;
-    catRig.ph.visible = false;
-    catRig.body.add(wrap);
-
-    // Captura del esqueleto para la capa de poses procedurales
-    const bn = {};
-    model.traverse(n => { if (n.isBone) bn[n.name] = n; });
-    // Se usa el esqueleto entero: 3 falanges por pata (la última es la almohadilla),
-    // los 5 tramos de cola, el lomo, la nuca y las dos orejas por separado.
-    const chainOf = pre => [pre, pre + '0', pre + '1', pre + '2'].map(k => bn[k]).filter(Boolean);
-    catBones = {
-      chest: bn.chest,
-      head: bn.head,
-      headend: bn.headend,
-      tail: ['tail', 'tailstart', 'tail1', 'tail2', 'tail3'].map(k => bn[k]).filter(Boolean),
-      ears: [bn.earend, bn.R_earend].filter(Boolean),
-      legsF: [{ chain: chainOf('frontleg') }, { chain: chainOf('R_frontleg') }],
-      legsB: [{ chain: chainOf('backleg') }, { chain: chainOf('R_backleg') }]
+    const bone = (parent, x, y, z = 0) => {
+      const b = new THREE.Group();
+      b.position.set(x, y, z);
+      parent.add(b);
+      return b;
     };
 
-    if (gltf.animations && gltf.animations.length) {
-      catMixer = new THREE.AnimationMixer(model);
-      catAction = catMixer.clipAction(gltf.animations[0]);
-      catAction.play();
-      if (typeof window !== 'undefined') {
-        window.__nero3d.anim = { mixer: catMixer, action: catAction, duration: gltf.animations[0].duration };
-      }
+    // ---- tronco ----
+    const hips = bone(body, -12, 40);
+    const rump = sph(15, C); rump.scale.set(1.22, 1.0, 0.9); put(rump, -1, 1, 0);
+    hips.add(rump);
+
+    const chest = bone(hips, 22, 5);          // lomo: gira aquí para arquearse
+    const ribs = sph(13, C); ribs.scale.set(1.2, 1.02, 0.86); put(ribs, 3, 1, 0);
+    const neck = sph(9.5, C); put(neck, 14, 7, 0);
+    chest.add(ribs, neck);
+
+    // ---- cabeza ----
+    const head = bone(chest, 20, 13);
+    const skull = sph(11.5, C); skull.scale.set(1.02, 0.95, 0.98); put(skull, 1, 1.5, 0);
+    head.add(skull);
+    const headend = bone(head, 8, -1);        // morro: cabecea un poco más que el cráneo
+    const muzzle = sph(6, C); muzzle.scale.set(1.15, 0.8, 0.95); put(muzzle, 3, -1, 0);
+    const nose = sph(1.8, COL.blush); put(nose, 8.6, 0.2, 0);
+    headend.add(muzzle, nose);
+    const eyeL = sph(2.7, 0xFFFFFF, { rough: 0.4 }); put(eyeL, 8.2, 3.6, -4.6);
+    const eyeR = eyeL.clone(); eyeR.position.z = 4.6;
+    head.add(eyeL, eyeR);
+    const mkEar = (z) => {
+      const e = bone(head, -1, 9.5, z);
+      const cone = shadowed(new THREE.Mesh(new THREE.ConeGeometry(4.6, 11, 4), M(C)));
+      put(cone, 0, 5, 0);
+      cone.rotation.z = z < 0 ? 0.12 : -0.12;
+      const inner = shadowed(new THREE.Mesh(new THREE.ConeGeometry(2.4, 6, 4), M(COL.blush)));
+      put(inner, 0.8, 3.6, z < 0 ? 0.6 : -0.6);
+      e.add(cone, inner);
+      e.rotation.x = z < 0 ? -0.16 : 0.16;
+      return e;
+    };
+    const earL = mkEar(-6.2), earR = mkEar(6.2);
+
+    // ---- patas: 3 huesos por pata (hombro/cadera, rodilla, almohadilla) ----
+    const mkLeg = (parent, x, y, z, upperLen, lowerLen, thick) => {
+      const upper = bone(parent, x, y, z);
+      upper.add(put(cyl(thick, thick * 0.78, upperLen, C, { seg: 7 }), 0, -upperLen / 2, 0));
+      const lower = bone(upper, 0, -upperLen);
+      lower.add(put(cyl(thick * 0.74, thick * 0.6, lowerLen, C, { seg: 7 }), 0, -lowerLen / 2, 0));
+      lower.add(put(sph(thick * 0.8, C), 0, 0, 0));                 // rodilla
+      const paw = bone(lower, 0, -lowerLen);
+      paw.add(put(rbox(9, 4.6, 6.6, C, 2), 2.2, -2, 0));           // almohadilla
+      return { chain: [upper, lower, paw] };
+    };
+    const legsF = [mkLeg(chest, 9, -7, -7.2, 16, 15, 4.0), mkLeg(chest, 9, -7, 7.2, 16, 15, 4.0)];
+    const legsB = [mkLeg(hips, -3, -3, -8.2, 17, 16, 4.8), mkLeg(hips, -3, -3, 8.2, 17, 16, 4.8)];
+    // los cuartos traseros llevan su masa: el anca clásica de gato sentado
+    for (const { chain } of legsB) {
+      const haunch = sph(8.6, C); haunch.scale.set(1.15, 1.25, 0.75); put(haunch, -1, -5, 0);
+      chain[0].add(haunch);
     }
-  }, undefined, (err) => {
-    console.warn('No se pudo cargar assets/nero.glb — se mantiene el gato placeholder.', err);
-  });
+
+    // ---- cola: 5 huesos encadenados hacia atrás, en S hacia arriba ----
+    const tailBones = [];
+    let tParent = bone(hips, -15, 5);
+    const tailRest = [0.55, 0.5, 0.42, 0.34, 0.26];
+    for (let i = 0; i < 5; i++) {
+      const seg = i === 0 ? tParent : bone(tParent, -11.5, 0);
+      seg.rotation.z = -tailRest[i];                               // −Z = subir (ver AXES)
+      const r1 = 4.4 - i * 0.62, r2 = 3.9 - i * 0.62;
+      const m = cyl(Math.max(1.6, r2), Math.max(2, r1), 12.5, C, { seg: 6 });
+      m.rotation.z = Math.PI / 2;                                  // tumbado sobre −X
+      put(m, -5.75, 0, 0);
+      seg.add(m, put(sph(Math.max(2, r1), C), 0, 0, 0));
+      tailBones.push(seg);
+      tParent = seg;
+    }
+    const tip = sph(2.6, C); put(tip, -12, 0, 0); tParent.add(tip);
+
+    // pose de descanso: se repone al inicio de cada fotograma (no hay mixer)
+    const restPose = [];
+    const register = (b) => restPose.push({ bone: b, rest: b.rotation.clone() });
+    [hips, chest, head, headend, earL, earR, ...tailBones].forEach(register);
+    for (const { chain } of [...legsF, ...legsB]) chain.forEach(register);
+
+    const bones = {
+      hips, chest, head, headend,
+      tail: tailBones,
+      ears: [earL, earR],
+      legsF, legsB
+    };
+
+    // forma líquida (se moldea por recipiente en updateCat)
+    const liquid = new THREE.Group();
+    liquid.visible = false;
+    g.add(liquid);
+
+    return { g, body, bones, restPose, hipsRestY: hips.position.y, eyeL, eyeR, liquid };
+  }
+
+  // Nero vertido en un recipiente: un molde con su forma. El cuerpo desborda un
+  // poco por encima del borde, la cabeza descansa en el canto, una pata y la
+  // cola cuelgan por fuera. Se genera a medida del cacharro (w × h de la boca).
+  function buildLiquidForm(w, h) {
+    const C = COL.cat;
+    const g = new THREE.Group();
+    const iw = Math.max(40, w - 14);
+    // la masa: bulto que asoma redondeado sobre la boca del recipiente
+    const blob = sph(10, C, { seg: 12, seg2 : 8 });
+    blob.scale.set(iw / 17, Math.max(2.2, h / 16), Math.min(iw, 90) / 22);
+    put(blob, 0, h * 0.72, 0);
+    g.add(blob);
+    // la cabeza apoyada en el borde, con los ojos abiertos justo por encima
+    const headG = new THREE.Group();
+    headG.position.set(iw / 2 - 4, h + 3, 4);
+    const skull = sph(10.5, C); skull.scale.set(1.05, 0.9, 1);
+    const muzzle = sph(5.4, C); muzzle.scale.set(1.15, 0.75, 0.95); put(muzzle, 7, -3, 0);
+    const nose = sph(1.6, COL.blush); put(nose, 12, -2.6, 0);
+    const eL = sph(2.5, 0xFFFFFF, { rough: 0.4 }); put(eL, 7.4, 1.8, -4.2);
+    const eR = eL.clone(); eR.position.z = 4.2;
+    const earA = shadowed(new THREE.Mesh(new THREE.ConeGeometry(4.2, 10, 4), M(C)));
+    put(earA, -2, 10, -5); earA.rotation.x = -0.18;
+    const earB = earA.clone(); earB.position.z = 5; earB.rotation.x = 0.18;
+    headG.add(skull, muzzle, nose, eL, eR, earA, earB);
+    g.add(headG);
+    // una pata colgando por fuera del borde
+    const pawArm = cyl(3.4, 2.8, 16, C, { seg: 6 });
+    put(pawArm, iw / 2 + 3, h - 7, -8); pawArm.rotation.z = 0.3;
+    g.add(pawArm, put(rbox(8, 4.4, 6, C, 2), iw / 2 + 6, h - 15, -8));
+    // la cola derramada por el otro lado
+    let tx2 = -iw / 2 - 1, ty2 = h - 2;
+    for (let i = 0; i < 4; i++) {
+      g.add(put(sph(3.6 - i * 0.5, C), tx2, ty2, 5 - i));
+      tx2 -= 3.5; ty2 -= 6.5;
+    }
+    return g;
+  }
+
+  // caché de moldes líquidos por recipiente (id → group ya moldeado a su boca)
+  const liquidCache = new Map();
+  let liquidCur = null, liquidK = 0;
 
   function updateCat(cat, dt, baby) {
-    const { g, body, eyeL, eyeR, tail } = catRig;
+    const { g, body, eyeL, eyeR, liquid } = catRig;
     g.position.set(tX(cat.x), tY(cat.y), 0);
 
     // en el prólogo Nero es un cachorro: más pequeño (pero no diminuto)
@@ -1243,17 +1452,46 @@ export function createRenderer3D(canvas) {
     const cs = g.scale.x + (targetScale - g.scale.x) * Math.min(1, dt * 5);
     g.scale.setScalar(cs);
 
+    // ---- estado líquido: el gato deja de ser esqueleto y pasa a ser molde ----
+    const cont = cat.state === 'contain' ? cat.containRef : null;
+    if (cont) {
+      let form = liquidCache.get(cont.id);
+      if (!form) {
+        form = buildLiquidForm(cont.w ?? 90, cont.rim ?? 34);
+        liquidCache.set(cont.id, form);
+      }
+      if (liquidCur !== form) {
+        liquid.clear();
+        liquid.add(form);
+        liquidCur = form;
+        liquidK = 0;                        // arranca el "vertido"
+      }
+      liquidK = Math.min(1, liquidK + dt * 3.2);
+      // el vertido: entra estrecho y alto, se asienta ancho y bajo (con rebote)
+      const settle = 1 + Math.sin(liquidK * Math.PI) * 0.25;
+      liquid.visible = true;
+      liquid.scale.set(liquidK * (2 - settle) + 0.001, liquidK * settle + 0.001, liquidK + 0.001);
+      body.visible = false;
+      // parpadeo también en forma líquida (los ojos viven en el molde)
+      blinkT += dt;
+      if (blinkT > 3.2 + Math.sin(time) * 0.8) { blinkT = 0; blinkUntil = 0.11; }
+      blinkUntil = Math.max(0, blinkUntil - dt);
+      const rotYc = cat.facing === 1 ? -0.5 : Math.PI + 0.5;
+      g.rotation.y += (rotYc - g.rotation.y) * Math.min(1, dt * 9);
+      return;                               // sin física de pose: es un charco feliz
+    }
+    if (!body.visible) { body.visible = true; liquid.visible = false; liquidCur = null; }
+
     // pose objetivo según estado
     let sy = 1, sx = 1, rotZ = 0, oy = 0;
     if (cat.state === 'air') rotZ = Math.max(-0.45, Math.min(0.5, -cat.vy * 0.00035));
-    else if (cat.state === 'sneak') { sy = 0.62; sx = 1.22; }
+    else if (cat.state === 'sneak') { sy = 0.8, sx = 1.1; }
     else if (cat.state === 'hang') { rotZ = 0.35; oy = 6; }
     else if (cat.state === 'slide') { rotZ = 0.55; }
     else if (cat.state === 'idle') sy = 1 + Math.sin(time * 2.5) * 0.012; // respiración
 
-    // Con el esqueleto cargado el squash pasa a segundo plano: la deformación de
-    // la malla acompaña, pero quien actúa son los huesos.
-    const sq = catBones ? 1 + (cat.squash - 1) * 0.45 : cat.squash;
+    // El squash de malla acompaña al 45%: quien actúa es el esqueleto.
+    const sq = 1 + (cat.squash - 1) * 0.45;
     const k = 1 - Math.pow(0.0001, dt);
     const targetSy = sq * sy;
     const targetSx = (2 - sq) * sx;
@@ -1267,17 +1505,14 @@ export function createRenderer3D(canvas) {
     const targetRotY = cat.facing === 1 ? -0.5 : Math.PI + 0.5;
     g.rotation.y += (targetRotY - g.rotation.y) * Math.min(1, dt * 9);
 
-    // animaciones propias del placeholder (el GLB trae las suyas vía mixer)
-    if (catRig.ph.visible) {
-      tail.rotation.x = Math.sin(time * 2.2) * 0.3 + (cat.state === 'air' ? 0.4 : 0);
-      blinkT += dt;
-      if (blinkT > 3.2 + Math.sin(time) * 0.8) { blinkT = 0; blinkUntil = 0.11; }
-      blinkUntil = Math.max(0, blinkUntil - dt);
-      const es = blinkUntil > 0 ? 0.12 : 1;
-      eyeL.scale.y += (es - eyeL.scale.y) * Math.min(1, dt * 30);
-      eyeR.scale.y = eyeL.scale.y;
-    }
-    if (catMixer) catMixer.update(dt);
+    // parpadeo
+    blinkT += dt;
+    if (blinkT > 3.2 + Math.sin(time) * 0.8) { blinkT = 0; blinkUntil = 0.11; }
+    blinkUntil = Math.max(0, blinkUntil - dt);
+    const es = blinkUntil > 0 ? 0.12 : 1;
+    eyeL.scale.y += (es - eyeL.scale.y) * Math.min(1, dt * 30);
+    eyeR.scale.y = eyeL.scale.y;
+
     applyPose(cat, dt);
   }
 

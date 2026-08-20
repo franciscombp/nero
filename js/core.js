@@ -272,6 +272,26 @@ export function landedOnPan(c, obj) {
          Math.abs(c.y - pan.y) < 60;
 }
 
+// ---------- Recipientes: el gato es líquido ----------
+// Un recipiente es un sitio donde Nero puede verterse: un bol, una caja, una
+// cesta. Meterse dentro puede disparar recuerdos, o pesar (el gato como
+// contrapeso temporal — pesa mientras está dentro, deja de pesar al salir).
+export function createContainers(levelData, platforms) {
+  return (levelData.containers || []).map(d => {
+    const host = platforms[d.host];
+    return {
+      ...d,
+      x: host ? host.x + (d.offset ?? 60) : d.x,
+      y: host ? host.y : d.y,
+      occupied: false
+    };
+  });
+}
+
+export function nearContainer(cat, c) {
+  return Math.abs(cat.x - c.x) < 95 && Math.abs(cat.y - c.y) < 115;
+}
+
 // ---------- Interactivos (puzzles verticales, ver PUZZLES.md) ----------
 // Cada interactivo abierto se inyecta como plataforma real, así que la física y
 // el salto dirigido funcionan sin cambios.

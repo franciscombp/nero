@@ -2,8 +2,11 @@
 
 **Temporada 1 · «La casa que no estaba vacía»**
 
-Un gatito abandonado en una caja encuentra una casa. Aprende a vivir en ella. Y
-cuando la casa se rompe, descubre lo que de verdad significaba.
+Nero no entiende de funerales, ni de hijas que no llaman, ni de cajas con una
+marca naranja. Es un gato en una casa. **Él no se entera de lo que pasa aquí;
+el jugador sí** — la historia se reconstruye con lo que hay en las
+habitaciones, como en Firewatch o Stray, pero a la altura de las rodillas.
+Guion y capas de interpretación en [`STORY.md`](STORY.md).
 
 **Jugable:** [nero.maldonado.pro](https://nero.maldonado.pro) ✨
 
@@ -14,13 +17,13 @@ cuando la casa se rompe, descubre lo que de verdad significaba.
 | 0 | La caja | Calle | Saltos acumulados |
 | 1 | El callejón | Calle | Contrarreloj · ramas A/B |
 | 2 | Unas manos | Calle | Cinemática (rama B) |
-| 3 | El primer día | Cocina | Escalera de cajones |
+| 3 | El primer día | Cocina | Escalera de cajones · el bol |
 | 4 | El regazo | Sala | Llegar **con algo en la boca** |
 | 5 | El invierno | — | Cinemática |
-| 6 | Lo que se tira | Estudio | Derribar objetos |
+| 6 | Lo que no se tira | Estudio | Libro + contrapeso |
 | 7 | Las cajas | Sala ↺ | Solapas de cartón, en orden |
-| 8 | La tormenta | Cocina ↺ | Contrapeso |
-| 9 | El altillo | Cuarto | Todo lo aprendido |
+| 8 | La tormenta | Cocina ↺ | El gato como peso → la olla |
+| 9 | El altillo | Cuarto de Sara | Examen · llegar con el ratón |
 
 Cuatro espacios que se repiten y se transforman: la cocina del episodio 3 es la
 misma del 8, la butaca del 4 es la que está vacía en el 7. La casa se aprende y
@@ -45,16 +48,22 @@ Guion completo en [`STORY.md`](STORY.md) · diseño de puzzles en [`PUZZLES.md`]
 
 ## Cómo se mueve Nero
 
-El modelo trae un esqueleto de 27 huesos y un único ciclo de caminata horneado.
-Todo lo demás es una capa procedural que se suma **encima** del clip, hueso a
-hueso: cada estado (reposo, carga, aire, aterrizaje, sigilo, cuelgue, resbalón)
-define flexión de patas, ángulo de almohadilla, curvatura de lomo, cabeceo,
-orejas, cola y su propia **rigidez** — aterrizar es un golpe seco, dormitar no.
+El gato es **100 % procedural**: geometría y esqueleto se generan en código
+(`renderer3d.js` → `buildCat`), con el mismo papel facetado que los muebles.
+Nada de GLB: la jerarquía de Groups ES el esqueleto (lomo, cabeza, morro, dos
+orejas, 4 patas de 3 huesos, cola de 5), la marcha se calcula al vuelo y cada
+estado (reposo, carga, aire, aterrizaje, sigilo, cuelgue, resbalón) esculpe su
+pose encima con su propia **rigidez** — aterrizar es un golpe seco, dormitar no.
+
+Y como es procedural, **es líquido**: toca un bol, una cesta o una caja abierta
+y Nero se vierte dentro — el cuerpo se cambia por un molde a medida del
+recipiente, con la cabeza en el borde y la cola derramada. No es solo un gag:
+en el episodio 8 su propio peso en el balde es parte del puzzle.
 
 Los detalles que lo hacen parecer un gato y no un muñeco:
 
-- **Las almohadillas compensan.** El último hueso de cada pata (`*leg2`)
-  contrarresta la flexión para que la pata apoye plana en vez de apuntar al aire.
+- **Las almohadillas compensan.** El tercer hueso de cada pata contrarresta la
+  flexión para que la pata apoye plana en vez de apuntar al aire.
 - **Nada es simétrico.** Cada par de patas lleva un desfase izquierda/derecha, y
   los cuartos traseros desfasan al revés que los delanteros.
 - **La cola no obedece, persigue.** Cinco tramos con muelle propio, cada uno más
@@ -128,12 +137,13 @@ nero/
 │   ├── renderer3d.js   # render 2.5D en Three.js (papel, luces, poses)
 │   ├── renderer.js     # render 2D en canvas
 │   ├── input.js · ui.js · editor.js
-│   └── vendor/         # Three.js r185 y loaders, sin CDN
-├── data/
-│   ├── scenes.json     # los diez episodios: muebles, recuerdos, puzzles
-│   └── stories.json    # textos: títulos, intros, pistas, final
-└── assets/nero.glb     # el gato, riggeado
+│   └── vendor/         # Three.js r185, sin CDN
+└── data/
+    ├── scenes.json     # los diez episodios: muebles, recuerdos, puzzles y props
+    └── stories.json    # textos: portada, pista global, final
 ```
+
+El gato no tiene asset: se genera entero en `renderer3d.js` (`buildCat`).
 
 El juego se renderiza en 3D pero **se juega en 2D**: el plano de física nunca
 sale de (x, y). Por eso cambiar de motor no toca `physics.js`, y por eso el

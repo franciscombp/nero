@@ -41,7 +41,7 @@
 <script type="module">
 // Nero en el motor 3D: mismo contenido y mecánicas que el juego 2D (data/scenes.json),
 // renderizado como diorama 2.5D. La lógica de gameplay replica index.html.
-import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive, createCarryables, nearCarryable, landedOnPan } from './js/core.js';
+import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive, createCarryables, nearCarryable, landedOnPan, createContainers, nearContainer } from './js/core.js';
 import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createRenderer3D } from './js/renderer3d.js';
@@ -81,12 +81,12 @@ async function main() {
   // Cinemáticas de la historia de origen (mismas que el 2D)
   const cinematics = {
     2: {
-      text: `Nero no llegó a tiempo. Resbala, cae y se queda quieto en el barro.<br><br>Una sombra enorme lo cubre.<br>Una voz profunda dice: «¿Qué haces aquí, pequeño?»<br><br>Pero las manos son suaves, y lo levantan<br>como se levanta algo que se puede romper.`,
-      duration: 5200
+      text: `Una sombra lo cubre. Un hombre mayor, vestido de negro<br>de los pies a la cabeza, con un ramo de flores en la mano.<br><br>«¿Qué haces aquí, pequeño?»<br><br><b>Deja las flores en el barro</b> para poder recogerlo<br>con las dos manos, como se recoge algo que se puede romper.`,
+      duration: 5600
     },
     5: {
-      text: `<b>Pasan los meses.</b><br><br>Nero ya no cabe en una mano.<br>Aprende dónde da el sol a cada hora,<br>qué escalón cruje y en qué silla no debe dormir.<br><br>Aprende la casa como se aprende un idioma:<br><b>sin darse cuenta.</b>`,
-      duration: 6000
+      text: `<b>Pasan los meses.</b><br><br>Nero ya no cabe en una mano. Aprende dónde da el sol<br>a cada hora y qué escalón cruje.<br><br>En la repisa, el retrato vuelve a estar de pie.<br>Junto a su bol hay ahora un cuenco de flores pintadas<br>que nadie compraría para un gato. <b>Era de alguien.</b>`,
+      duration: 6400
     }
   };
 
@@ -119,6 +119,7 @@ async function main() {
   let jumpBuffer = null;   // pulsación en el aire → se dispara al aterrizar (game feel)
   function doJump(dir, big) {
     if (levelState.mode !== 'play') return;
+    if (cat.state === 'contain') exitContain();
     const L = curLevel();
     const wasGrounded = cat.onGround;
     if (jumpAction(cat, dir, big, getMovementMods())) {
@@ -185,6 +186,7 @@ async function main() {
     }
     const { wx, wy } = r3d.screenToWorld(e.clientX, e.clientY);
     if (levelState.mode === 'play' && tryCarry(wx, wy)) return;
+    if (levelState.mode === 'play' && tryContain(wx, wy)) return;
     if (levelState.mode === 'play' && tryInteract(wx, wy)) return;
     if (levelState.mode === 'play' && curLevel()?.goalKind !== 'jumps_counted' &&
         targetJumpAction(cat, levelState.platforms, wx, wy)) {
@@ -231,6 +233,8 @@ async function main() {
     levelState.basePlatforms = levelState.platforms.slice();
     levelState.interactives = createInteractives(L, levelState.platforms);
     levelState.carryables = createCarryables(L, levelState.platforms);
+    levelState.containers = createContainers(L, levelState.platforms);
+    cat.containRef = null;
     levelState.puzzles = L.puzzles || [];
     levelState.puzzleSolved = {};
     levelState.boxTiltAngle = 0;
@@ -345,7 +349,12 @@ async function main() {
     for (const o of list) {
       // el contrapeso se dispara solo cuando cae el peso del otro lado
       if (o.kind === 'counterweight') {
-        if (o.trigger === 'knock' && levelState.knock?.broken) o.target = 1;
+        if (o.trigger === 'knock') {
+          // la olla que cae es peso permanente; Nero dentro del balde es peso
+          // mientras se quede — al salir, la balda vuelve a bajar
+          if (levelState.knock?.broken) o.target = 1;
+          else o.target = (levelState.containers ?? []).some(c => c.panFor === o.id && c.occupied) ? 0.55 : 0;
+        }
         const prevY = o.platform.y;
         o.platform.y = o.baseY - (o.travel ?? 200) * o.open;
         const dY = o.platform.y - prevY;
@@ -412,6 +421,40 @@ async function main() {
         }
       }
     }
+  }
+
+  // ---------- Recipientes: verterse dentro, salir de un brinco ----------
+  function exitContain() {
+    const c = cat.containRef;
+    if (c) c.occupied = false;
+    cat.containRef = null;
+    cat.state = 'idle';
+    cat.onGround = true;
+    noteProgress();
+  }
+
+  function tryContain(wx, wy) {
+    const list = levelState.containers;
+    if (!list || !list.length) return false;
+    if (cat.state === 'contain') { exitContain(); return true; }   // cualquier toque: fuera
+    for (const c of list) {
+      const hit = Math.abs(wx - c.x) < Math.max(60, (c.w ?? 90) * 0.75) &&
+                  Math.abs(wy - c.y) < 95;
+      if (hit && nearContainer(cat, c)) {
+        cat.state = 'contain';
+        cat.containRef = c;
+        c.occupied = true;
+        cat.x = c.x; cat.y = c.y;
+        cat.vx = 0; cat.vy = 0;
+        cat.onGround = true;
+        for (const m of levelState.memories) {
+          if (m.trigger === 'contain' && m.cid === c.id) collect(m.id);
+        }
+        noteProgress();
+        return true;
+      }
+    }
+    return false;
   }
 
   // Coger / soltar con el mismo toque
@@ -483,7 +526,11 @@ async function main() {
         levelState.knock.vy = -80;
       }
 
-      physics.stepCat(cat, levelState.platforms, dt, levelState.mode, L, levelState.pushables);
+      if (cat.state !== 'contain') {
+        physics.stepCat(cat, levelState.platforms, dt, levelState.mode, L, levelState.pushables);
+      } else if (cat.containRef) {
+        cat.x = cat.containRef.x; cat.y = cat.containRef.y;   // vertido: va donde va el cacharro
+      }
       // salto en búfer: pulsado en el aire, ejecutado al tocar suelo
       if (jumpBuffer) {
         jumpBuffer.t -= dt;
@@ -630,6 +677,7 @@ async function main() {
   window.levels = levels;
   window.__enterPlay = enterPlay;
   window.__showAct = showAct;
+  window.__tryContain = tryContain;
 }
 
 main().catch(err => {

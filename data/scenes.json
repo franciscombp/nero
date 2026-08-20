@@ -7,7 +7,7 @@
       "bg": "#2C2C2C",
       "band": "#1A1A1A"
     },
-    "intro": "Llueve sobre el cartón. Nero no sabe cómo llegó aquí, solo que el mundo tiene cuatro paredes blandas y que la única salida está arriba.",
+    "intro": "Llueve sobre el cartón. El mundo entero es una caja con una marca naranja, y la única salida está arriba.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -43,19 +43,19 @@
       {
         "id": "e0_caja",
         "trigger": "start",
-        "x": 130,
-        "y": 470,
-        "text": "La oscuridad huele a cartón mojado.<br><b>Nadie viene. Hay que salir solo.</b>"
+        "x": 300,
+        "y": 900,
+        "text": "El cartón huele a la casa de antes: a alfombra, a sofá con permiso, a manos pequeñas.<br><b>La caja no llegó sola hasta aquí. Alguien la dejó.</b>"
       },
       {
         "id": "e0_luz",
         "trigger": "goal",
-        "x": 610,
-        "y": 290,
-        "text": "Al octavo golpe el cartón se rasga y entra el aire.<br><b>Afuera todo es enorme. Y es suyo.</b>"
+        "x": 300,
+        "y": 700,
+        "text": "Las solapas ceden y entra la calle entera de golpe: frío, ruido, luz naranja.<br><b>Nada de lo que ve le suena. Todo lo que le sonaba iba en el camión.</b>"
       }
     ],
-    "hint": "Desliza ↑ (o pulsa ↑) una y otra vez · cada golpe abre más la caja",
+    "hint": "Salta ↑ una y otra vez · cada golpe abre más la caja",
     "spawn": 850
   },
   {
@@ -66,7 +66,7 @@
       "bg": "#3A3A3A",
       "band": "#2C2C2C"
     },
-    "intro": "Una camioneta con el motor apagado, y entre ella y Nero un montón de cosas que alguien tiró. Los faros se encienden.",
+    "intro": "Al fondo del callejón hay un camión con el motor apagado. Nero conoce ese camión. No sabe de qué, pero las patas ya están corriendo.",
     "mechanics": {
       "babyKitten": true,
       "speed": 0.7,
@@ -128,9 +128,9 @@
       {
         "id": "e1_viaje",
         "trigger": "goal",
-        "x": 610,
-        "y": 300,
-        "text": "El motor ruge debajo de sus patas y el callejón se aleja.<br><b>No sabe adónde va. Va.</b>"
+        "x": 640,
+        "y": 420,
+        "text": "La caja del camión huele a su alfombra, a su sofá, a las manos pequeñas.<br><b>El motor arranca igual. Los camiones no esperan a lo que se les cayó.</b>"
       }
     ],
     "hint": "Salta en diagonal: desliza ↗ · o mantén → y pulsa ↑",
@@ -198,9 +198,9 @@
       {
         "id": "e2_manos",
         "trigger": "goal",
-        "x": 610,
-        "y": 300,
-        "text": "Unas manos enormes lo levantan como se levanta algo que se puede romper.<br><b>Alguien lo vio.</b>"
+        "x": 400,
+        "y": 500,
+        "text": "Las manos huelen a jabón y a flores aplastadas. Tiemblan un poco, como las hojas.<br><b>Hoy ya han soltado algo importante. No piensan soltar esto también.</b>"
       }
     ],
     "spawn": 120
@@ -213,7 +213,7 @@
       "bg": "#F4ECE3",
       "band": "#E8DCC9"
     },
-    "intro": "La casa es enorme y Nero cabe en una mano. Huele a comida. La comida está arriba, y desde el suelo de la cocina lo de arriba es solo un canto de madera.",
+    "intro": "La casa es enorme y huele a mucha gente que ya no está. La comida espera arriba, en la encimera, y desde el suelo lo de arriba es solo un canto de madera.",
     "hint": "Toca un cajón para abrirlo · solo se abre el que alcanzas",
     "mechanics": {
       "babyKitten": true,
@@ -306,9 +306,9 @@
       {
         "id": "e3_grande",
         "trigger": "start",
-        "x": 120,
+        "x": 300,
         "y": 900,
-        "text": "Los techos están lejísimos y el suelo es de madera fría.<br><b>Todo aquí fue hecho para alguien enorme.</b>"
+        "text": "Hay un abrigo negro sobre la silla que huele a lluvia y a iglesia.<br><b>Todo aquí fue hecho para dos personas. Solo se oye a una.</b>"
       },
       {
         "id": "e3_cajon",
@@ -316,18 +316,53 @@
         "pi": 1,
         "x": 300,
         "y": 700,
-        "text": "El cajón cede con un ruido enorme. Nero se queda quieto.<br><b>Nadie viene a regañarlo. Entonces sigue.</b>"
+        "text": "Sobre la encimera hay tarjetas dobladas en pie y un ramo bocabajo, secándose.<br><b>Nero no sabe leer. Las tarjetas dicen todas lo mismo: «lo sentimos mucho».</b>"
+      },
+      {
+        "id": "e3_bol",
+        "trigger": "contain",
+        "cid": "bol",
+        "x": 300,
+        "y": 600,
+        "text": "El bol es exactamente de su tamaño, como todo lo redondo del mundo.<br><b>Aldo lo mira desde la puerta un rato largo. Es la primera vez que sonríe en nueve días.</b>"
       },
       {
         "id": "e3_comida",
         "trigger": "goal",
-        "x": 600,
+        "x": 300,
         "y": 500,
-        "text": "Un plato con comida y, al lado, un cuenco de agua limpia.<br><b>Alguien lo puso ahí. Para él.</b>"
+        "text": "La comida es de lata y está en un plato de flores pintadas que no es un plato de gato.<br><b>Era el plato de alguien. Aldo no tenía otra cosa que ofrecerle.</b>"
       }
     ],
     "carryables": [],
-    "spawn": 900
+    "spawn": 900,
+    "props": [
+      {
+        "kind": "cards",
+        "host": 1,
+        "offset": 110
+      },
+      {
+        "kind": "flowers",
+        "host": 1,
+        "offset": 330
+      },
+      {
+        "kind": "coat",
+        "host": 3,
+        "offset": 55
+      }
+    ],
+    "containers": [
+      {
+        "id": "bol",
+        "kind": "bowl",
+        "host": 1,
+        "offset": 500,
+        "w": 74,
+        "rim": 30
+      }
+    ]
   },
   {
     "name": "El regazo",
@@ -337,7 +372,7 @@
       "bg": "#F7E8DF",
       "band": "#F1DCC0"
     },
-    "intro": "Aldo se ha dormido en la butaca con la tele encendida. Nero lleva media hora mirándolo desde debajo del mueble, decidiéndose.",
+    "intro": "Aldo se ha dormido en la butaca con la televisión encendida. Nero lleva media hora mirándolo desde debajo del mueble, decidiéndose.",
     "hint": "Sube a la repisa alta · desde el suelo no se ve lo que hay encima",
     "mechanics": {
       "babyKitten": true,
@@ -414,15 +449,23 @@
         "pi": 2,
         "x": 180,
         "y": 470,
-        "text": "La manta del sofá guarda el hueco de alguien que estuvo ahí toda la tarde.<br><b>Todavía está tibia.</b>"
+        "text": "La manta del sofá guarda el hueco de alguien que se sentaba siempre en el mismo sitio.<br><b>Aldo se sienta en la butaca. El hueco del sofá no es suyo.</b>"
       },
       {
         "id": "e4_retrato",
         "trigger": "platform",
-        "pi": 5,
+        "pi": 4,
         "x": 420,
         "y": 390,
-        "text": "En el retrato hay una niña pequeña subida a los hombros de Aldo.<br><b>La casa no siempre estuvo tan callada.</b>"
+        "text": "Sobre la cómoda hay un marco tumbado bocabajo, como un escarabajo que no puede girarse.<br><b>Hay fotos que todavía queman al mirarlas.</b>"
+      },
+      {
+        "id": "e4_cesta",
+        "trigger": "contain",
+        "cid": "cesta",
+        "x": 500,
+        "y": 420,
+        "text": "La cesta huele a lana y a unas manos que no son las de Aldo.<br><b>Dentro hay agujas, ovillos, y un patrón a medio hacer: «ratón — para el gato».</b>"
       },
       {
         "id": "e4_raton",
@@ -430,14 +473,14 @@
         "pi": 6,
         "x": 520,
         "y": 360,
-        "text": "Sobre la repisa, donde nadie mira, hay un ratón de trapo con una oreja descosida.<br><b>Lleva ahí desde antes que él.</b>"
+        "text": "En la repisa alta, donde nadie mira, hay un ratón de trapo con una oreja descosida.<br><b>Huele a la cesta de abajo. Alguien lo tejió para un gato que nunca llegó a venir.</b>"
       },
       {
         "id": "e4_regazo",
         "trigger": "goal",
         "x": 670,
         "y": 300,
-        "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta, pero su mano se cierra un poco.</b>"
+        "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta del todo. Aprieta el ratón como se aprieta la mano de alguien.</b>"
       }
     ],
     "spawn": 95,
@@ -450,7 +493,25 @@
       }
     ],
     "goalCarry": "raton",
-    "carryHint": "Nero se queda mirándolo. Le falta algo en la boca."
+    "carryHint": "Nero se queda mirándolo. Le falta algo en la boca.",
+    "props": [
+      {
+        "kind": "portrait",
+        "down": true,
+        "host": 4,
+        "offset": 70
+      }
+    ],
+    "containers": [
+      {
+        "id": "cesta",
+        "kind": "basket",
+        "x": 1090,
+        "y": 1690,
+        "w": 96,
+        "rim": 40
+      }
+    ]
   },
   {
     "name": "El invierno",
@@ -504,14 +565,14 @@
     "spawn": 900
   },
   {
-    "name": "Lo que se tira",
+    "name": "Lo que no se tira",
     "kicker": "Episodio 6",
     "time": "afternoon",
     "tint": {
       "bg": "#F3E6D8",
       "band": "#E7D5BF"
     },
-    "intro": "Aldo lleva toda la tarde leyendo y Nero lleva toda la tarde mirando la librería. Arriba del todo hay una caja de zapatos que huele a otra casa.",
+    "intro": "Aldo escribe por las noches y rompe lo que escribe. Arriba del todo de la librería hay una caja de zapatos que huele a otra casa, y a la que Aldo mira sin subirse nunca.",
     "hint": "Coge el libro con la boca, súbelo y suéltalo sobre la bandeja",
     "mechanics": {
       "wallSlide": true
@@ -578,26 +639,34 @@
     "bookShelf": 4,
     "memories": [
       {
+        "id": "e6_cartas",
+        "trigger": "platform",
+        "pi": 2,
+        "x": 300,
+        "y": 700,
+        "text": "El escritorio está lleno de papeles empezados y tachados. Todos empiezan con la misma palabra.<br><b>«Sara». A veces «Sara, hija». Nunca hay más de tres líneas.</b>"
+      },
+      {
         "id": "e6_taza",
         "trigger": "knock",
         "x": 300,
-        "y": 700,
-        "text": "La taza se estrella contra el suelo y el café se abre en el parqué.<br><b>Aldo levanta la vista. Y por primera vez, se ríe.</b>"
+        "y": 600,
+        "text": "La taza cae y no se rompe. Rueda hasta los pies de Aldo, que la recoge sin regañarle.<br><b>En la taza pone «PAPÁ». Es vieja. La lavan y la guardan, pero nadie bebe de ella.</b>"
       },
       {
         "id": "e6_retrato",
         "trigger": "platform",
         "pi": 5,
-        "x": 140,
-        "y": 560,
-        "text": "En la repisa hay un retrato que lleva mucho tiempo boca abajo.<br><b>Nero lo empuja hasta dejarlo de pie.</b>"
+        "x": 300,
+        "y": 500,
+        "text": "El retrato vuelve a estar de pie: Aldo con menos años y una niña en hombros.<br><b>La niña de la foto y la palabra de las cartas tienen la misma edad exactamente.</b>"
       },
       {
-        "id": "e6_raton",
+        "id": "e6_caja",
         "trigger": "goal",
-        "x": 640,
-        "y": 420,
-        "text": "En la caja de zapatos hay fotos viejas y un ratón de trapo sin orejas.<br><b>Huele a otra casa y a otro tiempo. Ahora es suyo.</b>"
+        "x": 300,
+        "y": 400,
+        "text": "La caja de zapatos está llena de sobres cerrados, ordenados por años, con la misma letra.<br><b>Ella sí escribió. Él nunca abrió ninguno. Esta noche, con la caja caída, empieza.</b>"
       }
     ],
     "carryables": [
@@ -624,7 +693,19 @@
         }
       }
     ],
-    "spawn": 160
+    "spawn": 160,
+    "props": [
+      {
+        "kind": "letters",
+        "host": 2,
+        "offset": 50
+      },
+      {
+        "kind": "portrait",
+        "host": 5,
+        "offset": 90
+      }
+    ]
   },
   {
     "name": "Las cajas",
@@ -634,7 +715,7 @@
       "bg": "#E9E2DA",
       "band": "#D9CFC4"
     },
-    "intro": "Los muebles no están donde deben. El sofá tapado con una sábana, la butaca vacía, y su ratón de trapo dentro de una caja con cinta.",
+    "intro": "La sala está llena de cajas con una marca naranja. El sofá tapado con una sábana. Nero no entiende lo que ve, pero el lomo se le eriza solo.",
     "hint": "Las cajas se abren por las solapas · solo la que alcanzas",
     "mechanics": {
       "wallSlide": true
@@ -714,7 +795,15 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "El sofá está tapado con una sábana y la butaca no huele a nadie.<br><b>Todo está aquí, pero en el sitio equivocado.</b>"
+        "text": "Cajas con una marca naranja. Nero la ha visto antes. No recuerda dónde.<br><b>El cuerpo sí lo recuerda: es la marca de la caja en la que lo dejaron.</b>"
+      },
+      {
+        "id": "e7_dentro",
+        "trigger": "contain",
+        "cid": "caja_abierta",
+        "x": 400,
+        "y": 700,
+        "text": "Se mete en una caja abierta a esperar lo peor. El mundo se apaga un poco, y no pasa nada.<br><b>Nadie cierra las solapas. Por primera vez, una caja es solo una caja.</b>"
       },
       {
         "id": "e7_caja",
@@ -722,14 +811,14 @@
         "pi": 3,
         "x": 140,
         "y": 700,
-        "text": "Dentro de una caja cerrada con cinta reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo.</b>"
+        "text": "Dentro de una caja cerrada con cinta reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo, como quien vela algo.</b>"
       },
       {
         "id": "e7_escalera",
         "trigger": "goal",
         "x": 640,
         "y": 420,
-        "text": "Desde el rellano se ve la puerta de la calle abierta de par en par.<br><b>Entran y salen personas que no son Aldo.</b>"
+        "text": "Desde el rellano se ve la puerta abierta: entran cajas nuevas, una planta, una bicicleta.<br><b>Las cajas no se llevan nada esta vez. Traen a alguien. Aldo ya no puede estar solo.</b>"
       }
     ],
     "spawn": 60,
@@ -761,6 +850,23 @@
         "side": 1,
         "needsBelow": "solapa_media"
       }
+    ],
+    "containers": [
+      {
+        "id": "caja_abierta",
+        "kind": "box",
+        "host": 2,
+        "offset": 250,
+        "w": 100,
+        "rim": 48
+      }
+    ],
+    "props": [
+      {
+        "kind": "suitcase",
+        "host": 0,
+        "offset": 1520
+      }
     ]
   },
   {
@@ -771,8 +877,8 @@
       "bg": "#2F3040",
       "band": "#262734"
     },
-    "intro": "Aldo no ha vuelto. Hay tormenta, no hay luz, y la casa que Nero se sabía de memoria ya no está donde la dejó.",
-    "hint": "Tira la olla del colgador · su peso levanta la balda",
+    "intro": "Tormenta y la luz cortada. Un ruido sordo abajo, como un mueble al caer. Luego nada. La ruta de siempre a la ventana alta no alcanza a oscuras.",
+    "hint": "Nero pesa, pero se necesita a sí mismo arriba · la olla puede pesar por él",
     "mechanics": {
       "wallSlide": true
     },
@@ -837,7 +943,12 @@
         "y": 1390,
         "w": 260,
         "travel": 110,
-        "trigger": "knock"
+        "trigger": "knock",
+        "pan": {
+          "x": 470,
+          "y": 1690,
+          "w": 150
+        }
       }
     ],
     "memories": [
@@ -846,24 +957,58 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "La casa suena distinto sin luz. Cada trueno la hace más grande.<br><b>El plato de la cena sigue lleno.</b>"
+        "text": "En la pared hay papeles amarillos pegados que antes no estaban. Uno junto al fogón, otro junto a la puerta.<br><b>«GAS». «LLAVES». «CENA DE NERO». Aldo se escribe la casa para no perderla.</b>"
+      },
+      {
+        "id": "e8_balde",
+        "trigger": "contain",
+        "cid": "balde",
+        "x": 400,
+        "y": 700,
+        "text": "El balde baja con su peso y la balda sube, un palmo apenas.<br><b>Nero pesa. Pero se necesita a sí mismo arriba: algo tiene que pesar por él.</b>"
       },
       {
         "id": "e8_olla",
         "trigger": "knock",
         "x": 300,
-        "y": 700,
-        "text": "La olla cae del colgador y la balda del otro lado sube de golpe.<br><b>Nero entiende el truco antes de saber que lo entendió.</b>"
+        "y": 600,
+        "text": "La olla cae dentro del balde con un trueno pequeño, y la balda sube del todo.<br><b>Abajo, en el pasillo, la voz de Uma dice un nombre dos veces. La segunda, más fuerte.</b>"
       },
       {
         "id": "e8_faros",
         "trigger": "goal",
-        "x": 140,
+        "x": 300,
         "y": 500,
-        "text": "Nero espera en la ventana contando los coches que no son.<br><b>Hasta que unos faros sí paran. Y quien baja no es Aldo.</b>"
+        "text": "Por la ventana alta: luces azules que giran sin hacer ruido, y unas puertas que se cierran con cuidado.<br><b>Los coches con prisa llevan sirena. Los que van con cuidado llevan a alguien dentro.</b>"
       }
     ],
-    "spawn": 900
+    "spawn": 900,
+    "containers": [
+      {
+        "id": "balde",
+        "x": 545,
+        "y": 1690,
+        "w": 120,
+        "rim": 42,
+        "kind": "pan",
+        "noMesh": true,
+        "panFor": "balda"
+      }
+    ],
+    "props": [
+      {
+        "kind": "notes",
+        "wall": true,
+        "x": 950,
+        "y": 1290,
+        "n": 3
+      },
+      {
+        "kind": "pills",
+        "host": 1,
+        "offset": 540
+      }
+    ]
   },
   {
     "name": "El altillo",
@@ -873,8 +1018,8 @@
       "bg": "#E7E3F0",
       "band": "#DBD6E9"
     },
-    "intro": "Uma se ha encerrado en el cuarto. Aldo se pondrá bien, pero ella todavía no se lo cree. Nero sube a decírselo como sabe.",
-    "hint": "El suelo está lleno · sube por los cajones y las repisas",
+    "intro": "Uma se ha encerrado en el cuarto que era de su madre. Del otro lado de la puerta salen ruidos pequeños, como de algo que se rompe despacio. El suelo está lleno de cosas tiradas.",
+    "hint": "Los cajones, en orden · y algo en la boca antes de subir a la cama",
     "mechanics": {
       "wallSlide": true
     },
@@ -979,24 +1124,64 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "Detrás de la puerta se oye a alguien intentando no hacer ruido al llorar.<br><b>Nero conoce ese silencio.</b>"
+        "text": "El cuarto huele a polvo removido y a Uma. Los ruidos pequeños vienen de la cama.<br><b>Estuvo fuera cuando pasó. Hay gente que llora pidiendo perdón.</b>"
       },
       {
         "id": "e9_estrellas",
         "trigger": "platform",
         "pi": 5,
-        "x": 390,
-        "y": 390,
-        "text": "El móvil de estrellas gira despacio sobre una cama que nadie usaba.<br><b>Alguien la dejó preparada por si acaso.</b>"
+        "x": 300,
+        "y": 700,
+        "text": "En la balda alta hay estrellas de plástico que ya no brillan, pegadas hace mucho.<br><b>Este fue el cuarto de una niña que se fue antes de que Nero naciera. La niña de la foto. Sara.</b>"
+      },
+      {
+        "id": "e9_caja",
+        "trigger": "contain",
+        "cid": "caja_zapatos",
+        "x": 400,
+        "y": 600,
+        "text": "La caja de zapatos está en el escritorio, abierta y vacía. Nero cabe perfectamente.<br><b>Las cartas que guardaba están junto a la cama de Uma, abiertas todas. Aldo las leyó por fin.</b>"
       },
       {
         "id": "e9_raton",
         "trigger": "goal",
-        "x": 660,
-        "y": 300,
-        "text": "Nero deja el ratón de trapo sobre la almohada y espera.<br><b>Uma se ríe con la nariz, que es como se ríe quien ha llorado.</b>"
+        "x": 300,
+        "y": 500,
+        "text": "Nero deja el ratón junto a la mano de Uma, como hizo una vez con Aldo.<br><b>Uma lo mira mucho rato. Luego lo aprieta — igual que él, exactamente igual.</b>"
       }
     ],
-    "spawn": 520
+    "spawn": 520,
+    "carryables": [
+      {
+        "id": "raton",
+        "kind": "mouse",
+        "host": 3,
+        "offset": 150
+      }
+    ],
+    "goalCarry": "raton",
+    "carryHint": "A Uma le falta algo que Nero sabe llevar.",
+    "containers": [
+      {
+        "id": "caja_zapatos",
+        "kind": "box",
+        "host": 3,
+        "offset": 40,
+        "w": 92,
+        "rim": 42
+      }
+    ],
+    "props": [
+      {
+        "kind": "letters",
+        "host": 3,
+        "offset": 300
+      },
+      {
+        "kind": "suitcase",
+        "host": 0,
+        "offset": 120
+      }
+    ]
   }
 ]

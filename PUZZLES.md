@@ -70,6 +70,12 @@ apoyarse en lo que el jugador **sabe** de la habitación:
 - **Solapas de cartón** — el mismo verbo del cajón con otra piel: una torre de
   cajas se abre de abajo arriba y se vuelve escalera. Reutilizar el verbo en un
   espacio ya conocido es lo que hace que la casa se sienta aprendida.
+- **El gato es líquido** — Nero puede verterse dentro de cualquier recipiente
+  (bol, cesta, caja abierta, balde). A veces es puro encanto con recuerdo; a
+  veces es física: **Nero pesa**. En el balde del contrapeso su peso sube la
+  balda… solo mientras él esté dentro. Y él se necesita a sí mismo arriba: la
+  primera solución que prueba el jugador (meterse) enseña por qué hace falta la
+  segunda (que la olla pese por él). Un puzzle que se explica solo fallando.
 
 La regla de seguridad se mantiene: **caer es gratis**. Un gato cae de pie, ningún
 error es irreversible, y equivocarse cuesta tiempo, nunca la partida.
@@ -252,6 +258,9 @@ tiempo, que es exactamente lo que debe costar equivocarse.
   escena.
 - **Solapas de cartón** (ep. 7) — la torre de cajas de la mudanza usa el verbo
   del cajón: se abre de abajo arriba y es el único camino al rellano.
+- **El gato es líquido** (eps. 3, 4, 7, 8, 9) — recipientes con
+  `trigger: "contain"`. El de ep. 8 (`panFor`) convierte a Nero en contrapeso
+  temporal: `target 0.55` mientras está dentro, `1` cuando cae la olla.
 
 ## Siguiente
 

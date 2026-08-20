@@ -2,7 +2,7 @@
 // que el navegador note que sw.js cambió y arranque el ciclo de actualización
 // (instala en segundo plano, se queda "en espera" y js/pwa.js avisa al
 // jugador con una barra en vez de recargar la página a medio nivel).
-const APP_VERSION = 'v12';
+const APP_VERSION = 'v13';
 const CACHE_NAME = 'nero-pwa-' + APP_VERSION;
 const ASSETS = [
   './',
