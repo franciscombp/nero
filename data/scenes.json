@@ -351,6 +351,17 @@
         "kind": "coat",
         "host": 3,
         "offset": 55
+      },
+      {
+        "kind": "teapot",
+        "host": 1,
+        "offset": 45
+      },
+      {
+        "kind": "wallclock",
+        "wall": true,
+        "x": 980,
+        "y": 1180
       }
     ],
     "containers": [
@@ -500,6 +511,21 @@
         "down": true,
         "host": 4,
         "offset": 70
+      },
+      {
+        "kind": "lamp_floor",
+        "host": 0,
+        "offset": 455
+      },
+      {
+        "kind": "bookpile",
+        "host": 1,
+        "offset": 200
+      },
+      {
+        "kind": "catbed",
+        "host": 0,
+        "offset": 30
       }
     ],
     "containers": [
@@ -703,6 +729,21 @@
       {
         "kind": "portrait",
         "host": 5,
+        "offset": 90
+      },
+      {
+        "kind": "radio",
+        "host": 3,
+        "offset": 240
+      },
+      {
+        "kind": "plantpot",
+        "host": 0,
+        "offset": 1430
+      },
+      {
+        "kind": "bookpile",
+        "host": 2,
         "offset": 90
       }
     ]
@@ -1007,6 +1048,17 @@
         "kind": "pills",
         "host": 1,
         "offset": 540
+      },
+      {
+        "kind": "wallclock",
+        "wall": true,
+        "x": 300,
+        "y": 1230
+      },
+      {
+        "kind": "teapot",
+        "host": 1,
+        "offset": 45
       }
     ]
   },
@@ -1181,6 +1233,16 @@
         "kind": "suitcase",
         "host": 0,
         "offset": 120
+      },
+      {
+        "kind": "catbed",
+        "host": 0,
+        "offset": 420
+      },
+      {
+        "kind": "stool",
+        "host": 0,
+        "offset": 1660
       }
     ]
   }

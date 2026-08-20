@@ -2,7 +2,7 @@
 // que el navegador note que sw.js cambió y arranque el ciclo de actualización
 // (instala en segundo plano, se queda "en espera" y js/pwa.js avisa al
 // jugador con una barra en vez de recargar la página a medio nivel).
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 const CACHE_NAME = 'nero-pwa-' + APP_VERSION;
 const ASSETS = [
   './',
@@ -10,6 +10,7 @@ const ASSETS = [
   './2d.html',
   './prototype3d.html',
   './editor.html',
+  './builder.html',
   './styles/main.css',
   './manifest.webmanifest',
   './js/polyfills.js',
@@ -24,6 +25,7 @@ const ASSETS = [
   './js/levelEditor.js',
   './js/assetLoader.js',
   './js/pwa.js',
+  './js/parts3d.js',
   './js/vendor/three.module.min.js',
   './js/vendor/three.core.min.js',
   './js/vendor/RoundedBoxGeometry.js',
@@ -32,6 +34,7 @@ const ASSETS = [
   './js/vendor/utils/SkeletonUtils.js',
   './assets/nero.glb',
   './data/scenes.json',
+  './data/parts.json',
   './data/stories.json',
   './data/story_origins.json',
   './icons/icon.svg',

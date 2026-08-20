@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nero · Builder de elementos 3D</title>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<script type="importmap">
+{ "imports": { "three": "./js/vendor/three.module.min.js" } }
+</script>
+<style>
+  :root {
+    --ink: #4A4139; --card: #FBF6EE; --accent: #E8967E; --bg: #F4ECE3;
+    --line: rgba(74,65,57,.18); --ok: #7E8A62; --bad: #B85C48;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 Georgia, serif; color: var(--ink); background: var(--bg);
+         display: grid; grid-template-columns: 230px 1fr 360px; grid-template-rows: 52px 1fr;
+         height: 100vh; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 16px;
+           background: var(--card); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 16px; margin: 0; }
+  header .links { margin-left: auto; font-size: 12px; }
+  header a { color: var(--accent); }
+  aside, section.panel { overflow: auto; padding: 12px; }
+  aside { border-right: 1px solid var(--line); background: var(--card); }
+  section.panel { border-left: 1px solid var(--line); background: var(--card); }
+  #view { position: relative; }
+  #view canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+  .part { padding: 7px 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+  .part:hover { background: rgba(232,150,126,.14); }
+  .part.sel { background: var(--accent); color: #fff; }
+  .part .tag { font-size: 10px; opacity: .6; }
+  button { font: inherit; font-size: 12px; border: 1px solid var(--line); background: #fff;
+           border-radius: 8px; padding: 5px 10px; cursor: pointer; margin: 2px 2px 2px 0; }
+  button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+  button.danger { color: var(--bad); }
+  .prim { border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; background: #fff; }
+  .prim.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(232,150,126,.3); }
+  .prim .row { display: flex; gap: 4px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+  .prim label { font-size: 10px; opacity: .65; width: 34px; }
+  .prim input, .prim select { font: inherit; font-size: 12px; width: 64px; padding: 2px 4px;
+                              border: 1px solid var(--line); border-radius: 5px; }
+  .prim input.wide { width: 92px; }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin: 14px 0 6px; }
+  #status { font-size: 12px; min-height: 18px; margin: 6px 0; }
+  #status.bad { color: var(--bad); } #status.ok { color: var(--ok); }
+  .ctx { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-bottom: 8px; }
+  .ctx input { width: 70px; }
+  textarea { width: 100%; height: 120px; font: 11px/1.4 monospace; border: 1px solid var(--line);
+             border-radius: 8px; padding: 6px; }
+  .hint { font-size: 11px; opacity: .65; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🐈‍⬛ Builder de elementos 3D</h1>
+  <span class="hint">mismas primitivas, mismo papel y misma luz que el juego</span>
+  <span class="links">
+    <a href="editor.html">editor de niveles</a> ·
+    <a href="index.html?draft=1">probar en el juego (borrador)</a>
+  </span>
+</header>
+
+<aside>
+  <button class="primary" id="newPart">＋ Pieza nueva</button>
+  <h3>Piezas</h3>
+  <div id="partList"></div>
+</aside>
+
+<div id="view"><canvas id="c"></canvas></div>
+
+<section class="panel">
+  <div class="ctx">
+    <b id="partName">—</b>
+    <span style="margin-left:auto">w <input id="ctxW" type="number" value="200"></span>
+    <span>h <input id="ctxH" type="number" value="120"></span>
+  </div>
+  <div id="status"></div>
+  <button id="addPrim">＋ Primitiva</button>
+  <button id="dupPrim">Duplicar</button>
+  <button class="danger" id="delPrim">Borrar</button>
+  <div id="primList" style="margin-top:8px"></div>
+
+  <h3>Pieza en JSON</h3>
+  <textarea id="jsonBox" spellcheck="false"></textarea>
+  <div>
+    <button id="applyJson">Aplicar JSON</button>
+    <button class="primary" id="saveDraft">Guardar borrador</button>
+    <button id="exportAll">Exportar parts.json</button>
+    <button class="danger" id="delPart">Eliminar pieza</button>
+  </div>
+  <p class="hint">Los números aceptan expresiones con <code>w</code>, <code>h</code>,
+  <code>SURF</code>, <code>WALL</code> y <code>PI</code>. Colores: <code>#hex</code> o
+  <code>@nombre</code> de la paleta. El borrador se guarda en el navegador y el juego
+  lo usa con <code>?draft=1</code>; «Exportar» descarga el <code>parts.json</code>
+  completo para publicarlo.</p>
+</section>
+
+<script type="module">
+import * as THREE from 'three';
+import { createPartKit, PALETTE, evalNum } from './js/parts3d.js';
+
+const kit = createPartKit();
+const GEOS = ['rbox', 'pbox', 'cyl', 'sph', 'disc', 'cone'];
+// argumentos que pide cada geometría (además de color y opciones)
+const ARG_NAMES = {
+  rbox: ['w', 'h', 'd', 'radio'], pbox: ['w', 'h', 'd'], cyl: ['rArr', 'rAb', 'alto'],
+  sph: ['r'], disc: ['r', 'alto'], cone: ['r', 'alto']
+};
+
+// ---------- estado ----------
+let published = {};                                   // data/parts.json
+let drafts = JSON.parse(localStorage.getItem('nero-draft-parts') || '{}');
+let cur = null;                                       // nombre de la pieza activa
+let selPrim = -1;
+
+const allParts = () => ({ ...published, ...drafts });
+const curSpec = () => drafts[cur] ?? published[cur];
+
+// ---------- escena de previsualización (la misma luz cálida del juego) ----------
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xEDE0D2);
+const camera = new THREE.PerspectiveCamera(40, 1, 10, 4000);
+scene.add(new THREE.AmbientLight(0xFFFFFF, 0.45));
+const hemi = new THREE.HemisphereLight(0xFFF2DC, 0xB8A488, 0.62);
+const dir = new THREE.DirectionalLight(0xFFE9C4, 1.3);
+dir.position.set(300, 500, 400);
+dir.castShadow = true;
+dir.shadow.mapSize.set(1024, 1024);
+Object.assign(dir.shadow.camera, { left: -400, right: 400, top: 500, bottom: -200 });
+scene.add(hemi, dir);
+const ground = new THREE.Mesh(new THREE.CylinderGeometry(320, 320, 14, 28), kit.M(PALETTE.wood));
+ground.position.y = -7;
+ground.receiveShadow = true;
+scene.add(ground);
+const holder = new THREE.Group();
+scene.add(holder);
+
+let yaw = 0.6, pitch = 0.35, dist = 520;
+function placeCamera() {
+  const cy = 90 + Math.sin(pitch) * dist;
+  camera.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, cy, Math.cos(yaw) * Math.cos(pitch) * dist);
+  camera.lookAt(0, 80, 0);
+}
+let dragging = false, px = 0, py = 0;
+canvas.addEventListener('pointerdown', e => { dragging = true; px = e.clientX; py = e.clientY; });
+window.addEventListener('pointerup', () => dragging = false);
+window.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  yaw += (e.clientX - px) * 0.008; pitch = Math.max(-0.2, Math.min(1.2, pitch + (e.clientY - py) * 0.006));
+  px = e.clientX; py = e.clientY;
+});
+canvas.addEventListener('wheel', e => { dist = Math.max(160, Math.min(1400, dist + e.deltaY * 0.6)); e.preventDefault(); }, { passive: false });
+
+function resize() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / r.height;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+
+function frame() {
+  placeCamera();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+// ---------- reconstrucción de la pieza ----------
+const status = document.getElementById('status');
+function rebuild() {
+  kit.clearGroup(holder);
+  const spec = curSpec();
+  if (!spec) return;
+  const w = +document.getElementById('ctxW').value || 200;
+  const h = +document.getElementById('ctxH').value || 120;
+  try {
+    const g = kit.buildPart(spec, { w, h, SURF: 0, WALL: -160, palette: PALETTE });
+    holder.add(g);
+    status.textContent = `✓ ${spec.prims?.length ?? 0} primitivas`;
+    status.className = 'ok';
+  } catch (err) {
+    status.textContent = '✗ ' + err.message;
+    status.className = 'bad';
+  }
+  document.getElementById('jsonBox').value = JSON.stringify(spec, null, 1);
+}
+
+// ---------- lista de piezas ----------
+function renderPartList() {
+  const box = document.getElementById('partList');
+  box.innerHTML = '';
+  for (const name of Object.keys(allParts()).sort()) {
+    const div = document.createElement('div');
+    div.className = 'part' + (name === cur ? ' sel' : '');
+    div.innerHTML = `<span>${name}</span><span class="tag">${drafts[name] ? 'borrador' : 'publicada'}</span>`;
+    div.onclick = () => { cur = name; selPrim = -1; renderAll(); };
+    box.appendChild(div);
+  }
+  document.getElementById('partName').textContent = cur ?? '—';
+}
+
+// ---------- editor de primitivas ----------
+function primRow(pr, i) {
+  const div = document.createElement('div');
+  div.className = 'prim' + (i === selPrim ? ' sel' : '');
+  div.onclick = () => { if (selPrim !== i) { selPrim = i; renderPrims(); } };
+  const argNames = ARG_NAMES[pr.geo] ?? [];
+  const args = (pr.a ?? []).map((v, j) =>
+    `<input class="arg" data-j="${j}" value="${v}" title="${argNames[j] ?? ''}">`).join('');
+  div.innerHTML = `
+    <div class="row">
+      <select class="geo">${GEOS.map(g => `<option${g === pr.geo ? ' selected' : ''}>${g}</option>`).join('')}</select>
+      <input class="col wide" value="${pr.c ?? '@wood'}" title="color">
+    </div>
+    <div class="row"><label>args</label>${args}</div>
+    <div class="row"><label>pos</label>${[0,1,2].map(j =>
+      `<input class="pos" data-j="${j}" value="${(pr.pos ?? [0,0,0])[j]}">`).join('')}</div>
+    <div class="row"><label>rot</label>${[0,1,2].map(j =>
+      `<input class="rot" data-j="${j}" value="${(pr.rot ?? [0,0,0])[j]}">`).join('')}</div>`;
+  const sync = () => {
+    pr.geo = div.querySelector('.geo').value;
+    pr.c = div.querySelector('.col').value;
+    pr.a = [...div.querySelectorAll('.arg')].map(inp => num(inp.value));
+    pr.pos = [...div.querySelectorAll('.pos')].map(inp => num(inp.value));
+    pr.rot = [...div.querySelectorAll('.rot')].map(inp => num(inp.value));
+    markDraft(); rebuild();
+  };
+  div.querySelectorAll('input,select').forEach(el => el.addEventListener('change', sync));
+  return div;
+}
+const num = v => { const n = Number(v); return Number.isFinite(n) && String(n) === String(v).trim() ? n : v; };
+
+function renderPrims() {
+  const box = document.getElementById('primList');
+  box.innerHTML = '';
+  const spec = curSpec();
+  if (!spec) return;
+  (spec.prims ?? []).forEach((pr, i) => box.appendChild(primRow(pr, i)));
+}
+
+function renderAll() { renderPartList(); renderPrims(); rebuild(); }
+
+// la pieza editada pasa a ser borrador (copia editable sobre la publicada)
+function markDraft() {
+  if (!drafts[cur]) drafts[cur] = JSON.parse(JSON.stringify(published[cur] ?? { prims: [] }));
+}
+
+// ---------- acciones ----------
+document.getElementById('newPart').onclick = () => {
+  const name = prompt('Nombre de la pieza (minúsculas, sin espacios):', 'pieza_nueva');
+  if (!name) return;
+  drafts[name] = { about: '', prims: [{ geo: 'rbox', a: [60, 40, 40, 6], c: '@wood', pos: [0, 20, 0] }] };
+  cur = name; selPrim = 0; renderAll();
+};
+document.getElementById('addPrim').onclick = () => {
+  if (!cur) return;
+  markDraft();
+  drafts[cur].prims.push({ geo: 'rbox', a: [40, 30, 30, 5], c: '@coral', pos: [0, 15, 0] });
+  selPrim = drafts[cur].prims.length - 1;
+  renderAll();
+};
+document.getElementById('dupPrim').onclick = () => {
+  if (!cur || selPrim < 0) return;
+  markDraft();
+  const list = drafts[cur].prims;
+  list.splice(selPrim + 1, 0, JSON.parse(JSON.stringify(list[selPrim])));
+  selPrim++; renderAll();
+};
+document.getElementById('delPrim').onclick = () => {
+  if (!cur || selPrim < 0) return;
+  markDraft();
+  drafts[cur].prims.splice(selPrim, 1);
+  selPrim = -1; renderAll();
+};
+document.getElementById('applyJson').onclick = () => {
+  try {
+    const spec = JSON.parse(document.getElementById('jsonBox').value);
+    drafts[cur] = spec; renderAll();
+  } catch (err) { status.textContent = '✗ JSON no válido: ' + err.message; status.className = 'bad'; }
+};
+document.getElementById('saveDraft').onclick = () => {
+  localStorage.setItem('nero-draft-parts', JSON.stringify(drafts));
+  status.textContent = '✓ borrador guardado — pruébalo con index.html?draft=1';
+  status.className = 'ok';
+};
+document.getElementById('exportAll').onclick = () => {
+  const merged = { ...published, ...drafts };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(merged, null, 2)], { type: 'application/json' }));
+  a.download = 'parts.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('delPart').onclick = () => {
+  if (!cur) return;
+  if (published[cur] && !drafts[cur]) { alert('Es una pieza publicada: edítala (pasa a borrador) o bórrala del parts.json exportado.'); return; }
+  delete drafts[cur];
+  localStorage.setItem('nero-draft-parts', JSON.stringify(drafts));
+  cur = Object.keys(allParts())[0] ?? null;
+  renderAll();
+};
+document.getElementById('ctxW').addEventListener('input', rebuild);
+document.getElementById('ctxH').addEventListener('input', rebuild);
+
+// ---------- arranque ----------
+fetch('data/parts.json').then(r => r.ok ? r.json() : {}).then(p => {
+  published = p;
+  cur = Object.keys(allParts()).sort()[0] ?? null;
+  renderAll();
+  resize();
+  frame();
+});
+window.__builder = { get drafts() { return drafts; }, get cur() { return cur; }, rebuild };
+</script>
+</body>
+</html>

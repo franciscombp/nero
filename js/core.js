@@ -310,6 +310,14 @@ export function createInteractives(levelData, platforms) {
         y: topY, w: out, h: 12, kind: 'drawer', ref: obj
       };
     }
+    if (d.kind === 'lever') {
+      // palanca: se acciona de un toque y fija el estado de OTROS interactivos
+      // (targets: [{id, open}]). Sirve para abrir a distancia lo que las patas
+      // no alcanzan — el vocabulario "acciona aquí, pasa allá" de Machinarium.
+      obj.x = host ? host.x + (d.offset ?? 40) : d.x;
+      obj.y = host ? host.y : d.y;
+      obj.on = false;
+    }
     if (d.kind === 'counterweight') {
       // La balda está SIEMPRE presente como plataforma; lo que cambia es su
       // altura cuando el contrapeso del otro lado cae.

@@ -46,6 +46,7 @@ import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
 import { createRenderer3D } from './js/renderer3d.js';
 import { doJump as jumpAction, tryTargetJump as targetJumpAction, doDrop as dropAction, applySneak } from './js/actions.js';
+import { registerParts } from './js/parts3d.js';
 import { initPWA } from './js/pwa.js';
 
 initPWA();
@@ -57,12 +58,17 @@ async function main() {
   const useDraft = new URLSearchParams(location.search).has('draft');
   const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
   const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
-  const [levelsRes, storiesRes] = await Promise.all([
+  const draftParts = useDraft ? localStorage.getItem('nero-draft-parts') : null;
+  const [levelsRes, storiesRes, partsRes] = await Promise.all([
     fetch('data/scenes.json'),
-    fetch('data/stories.json')
+    fetch('data/stories.json'),
+    fetch('data/parts.json')
   ]);
   const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
   const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
+  // piezas 3D declarativas: primero las publicadas, encima el borrador del builder
+  registerParts(partsRes.ok ? await partsRes.json() : {});
+  if (draftParts) registerParts(JSON.parse(draftParts));
 
   const physics = createPhysics(CONFIG);
   const ui = createUI();
@@ -487,6 +493,21 @@ async function main() {
   function tryInteract(wx, wy) {
     const list = levelState.interactives;
     if (!list || !list.length) return false;
+    // palancas: un toque cerca las acciona y mueven lo que tengan enlazado
+    for (const o of list) {
+      if (o.kind !== 'lever') continue;
+      const hit = Math.abs(wx - o.x) < 60 && Math.abs(wy - o.y) < 90;
+      const near = Math.abs(cat.x - o.x) < 110 && Math.abs(cat.y - o.y) < 130;
+      if (hit && near) {
+        o.on = !o.on;
+        for (const t of (o.targets ?? [])) {
+          const other = list.find(i => i.id === t.id);
+          if (other) other.target = o.on ? (t.open ?? 1) : (t.off ?? 0);
+        }
+        noteProgress();
+        return true;
+      }
+    }
     for (const o of list) {
       const p = o.platform;
       if (!p || o.kind !== 'drawer') continue;

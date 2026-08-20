@@ -83,7 +83,11 @@ huesos.
 |---|---|
 | `index.html` | **El juego** (Three.js, cámara a la altura del gato, estética de papel) |
 | `2d.html` | La versión 2D clásica en canvas, sobre los mismos datos |
-| `editor.html` | Editor de niveles e historia con validador de alcance |
+| `editor.html` | **Builder de niveles e historia**: muebles, recuerdos, puzzles (cajones, contrapesos, palancas), recipientes, objetos de boca y props — con validador de alcance |
+| `builder.html` | **Builder de elementos 3D**: compón piezas con primitivas de papel (mismo material y luz que el juego), pruébalas con `?draft=1` y expórtalas a `data/parts.json` |
+
+Los tres comparten datos: una pieza del builder es un tipo de plataforma o un
+prop en el editor, y el juego la dibuja sin tocar código.
 
 ## Cómo jugar
 
@@ -134,12 +138,14 @@ nero/
 │   ├── core.js         # constantes, estado, disparadores, interactivos
 │   ├── physics.js      # física del gato (2D pura: x, y)
 │   ├── actions.js      # gramática de salto compartida por ambos motores
-│   ├── renderer3d.js   # render 2.5D en Three.js (papel, luces, poses)
+│   ├── renderer3d.js   # render 2.5D en Three.js (luces, poses, escenas)
+│   ├── parts3d.js      # kit de construcción: papel, primitivas e intérprete de piezas
 │   ├── renderer.js     # render 2D en canvas
 │   ├── input.js · ui.js · editor.js
 │   └── vendor/         # Three.js r185, sin CDN
 └── data/
     ├── scenes.json     # los diez episodios: muebles, recuerdos, puzzles y props
+    ├── parts.json      # piezas 3D declarativas (salen del builder)
     └── stories.json    # textos: portada, pista global, final
 ```
 
@@ -150,7 +156,7 @@ sale de (x, y). Por eso cambiar de motor no toca `physics.js`, y por eso el
 editor puede validar alcance con aritmética de parábolas.
 
 Añadir contenido es editar `data/scenes.json` (o usar `editor.html`); añadir un
-tipo de mueble es un caso nuevo en `renderer3d.js`.
+tipo de mueble o prop es una pieza nueva en `builder.html` — sin código.
 
 Escala: **336 unidades ≈ 1 metro**. Los muebles están a alturas reales (silla
 45 cm, encimera 90 cm, techo 2,55 m) porque de eso depende que los saltos se

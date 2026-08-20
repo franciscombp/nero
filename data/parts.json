@@ -1,0 +1,78 @@
+{
+  "lamp_floor": {
+    "about": "lámpara de pie: charco de luz cálida para las esquinas",
+    "prims": [
+      { "geo": "disc", "a": [26, 6], "c": "@woodDk", "pos": [0, 3, 0] },
+      { "geo": "cyl", "a": [3.5, 4.5, 150], "c": "@woodDk", "o": { "seg": 8 }, "pos": [0, 80, 0] },
+      { "geo": "cone", "a": [34, 30], "c": "@cream", "o": { "seg": 10 }, "pos": [0, 168, 0], "rot": [0, 0, 0] },
+      { "geo": "sph", "a": [9], "c": "#FFE9C0", "o": { "emissive": 16770496, "ei": 1.6, "seg": 8 }, "pos": [0, 152, 0] }
+    ]
+  },
+  "plantpot": {
+    "about": "maceta con planta de hojas anchas",
+    "prims": [
+      { "geo": "cyl", "a": [24, 18, 36], "c": "#B8705E", "o": { "seg": 9 }, "pos": [0, 18, 0] },
+      { "geo": "disc", "a": [21, 4], "c": "#5C4A38", "pos": [0, 35, 0] },
+      { "geo": "cyl", "a": [1.6, 2, 46], "c": "#7E8A62", "o": { "seg": 6 }, "pos": [0, 58, 0] },
+      { "geo": "sph", "a": [13], "c": "@sage", "pos": [-10, 78, -4], "scale": [1.2, 0.55, 0.8], "rot": [0, 0, 0.5] },
+      { "geo": "sph", "a": [13], "c": "@sage", "pos": [11, 82, 3], "scale": [1.25, 0.5, 0.8], "rot": [0, 0, -0.45] },
+      { "geo": "sph", "a": [11], "c": "#9DB18E", "pos": [0, 92, 0], "scale": [0.9, 0.5, 0.8] }
+    ]
+  },
+  "stool": {
+    "about": "taburete bajo de madera",
+    "prims": [
+      { "geo": "disc", "a": [30, 10], "c": "@wood", "pos": [0, 55, 0] },
+      { "geo": "cyl", "a": [3.5, 4, 52], "c": "@woodDk", "o": { "seg": 7 }, "pos": [-18, 26, -12], "rot": [0.08, 0, 0.12] },
+      { "geo": "cyl", "a": [3.5, 4, 52], "c": "@woodDk", "o": { "seg": 7 }, "pos": [18, 26, -12], "rot": [0.08, 0, -0.12] },
+      { "geo": "cyl", "a": [3.5, 4, 52], "c": "@woodDk", "o": { "seg": 7 }, "pos": [0, 26, 16], "rot": [-0.12, 0, 0] }
+    ]
+  },
+  "bookpile": {
+    "about": "pila de tres libros con uno girado",
+    "prims": [
+      { "geo": "rbox", "a": [46, 10, 34, 2], "c": "@coral", "pos": [0, 5, 0] },
+      { "geo": "rbox", "a": [42, 9, 30, 2], "c": "@sage", "pos": [2, 14.5, 1], "rot": [0, 0.35, 0] },
+      { "geo": "rbox", "a": [38, 8, 28, 2], "c": "@butter", "pos": [-2, 23, -1], "rot": [0, -0.2, 0] }
+    ]
+  },
+  "wallclock": {
+    "about": "reloj de pared parado — nadie le ha dado cuerda",
+    "prims": [
+      { "geo": "disc", "a": [30, 6], "c": "@cream", "o": { "seg": 14 }, "pos": [0, 0, 0], "rot": ["PI/2", 0, 0] },
+      { "geo": "disc", "a": [33, 3], "c": "@woodDk", "o": { "seg": 14 }, "pos": [0, 0, -2], "rot": ["PI/2", 0, 0] },
+      { "geo": "pbox", "a": [2.4, 16, 1.6], "c": "@ink", "pos": [0, 6, 4], "rot": [0, 0, 0.5] },
+      { "geo": "pbox", "a": [2.2, 11, 1.6], "c": "@ink", "pos": [3, 3, 4], "rot": [0, 0, -1.1] }
+    ]
+  },
+  "radio": {
+    "about": "radio vieja de válvulas, de las que se quedan encendidas",
+    "prims": [
+      { "geo": "rbox", "a": [64, 38, 30, 8], "c": "#8A6A50", "pos": [0, 19, 0] },
+      { "geo": "rbox", "a": [30, 22, 3, 3], "c": "#D9C9A8", "pos": [-10, 20, 15] },
+      { "geo": "disc", "a": [7, 4], "c": "@butter", "o": { "seg": 10 }, "pos": [18, 20, 15], "rot": ["PI/2", 0, 0] },
+      { "geo": "cyl", "a": [1, 1, 26, 6], "c": "@ink", "o": { "seg": 5 }, "pos": [26, 48, 0], "rot": [0, 0, -0.3] }
+    ]
+  },
+  "catbed": {
+    "about": "la camita de Nero: un donut de tela con cojín",
+    "prims": [
+      { "geo": "disc", "a": [42, 12], "c": "@blush", "o": { "seg": 12 }, "pos": [0, 6, 0] },
+      { "geo": "disc", "a": [32, 8], "c": "@cream", "o": { "seg": 12 }, "pos": [0, 12, 0] },
+      { "geo": "sph", "a": [10], "c": "@blush", "pos": [-30, 12, 0], "scale": [1, 0.7, 1] },
+      { "geo": "sph", "a": [10], "c": "@blush", "pos": [30, 12, 0], "scale": [1, 0.7, 1] },
+      { "geo": "sph", "a": [10], "c": "@blush", "pos": [0, 12, 26], "scale": [1, 0.7, 1] },
+      { "geo": "sph", "a": [10], "c": "@blush", "pos": [0, 12, -26], "scale": [1, 0.7, 1] }
+    ]
+  },
+  "teapot": {
+    "about": "tetera de cerámica — siempre había té para dos",
+    "prims": [
+      { "geo": "sph", "a": [20], "c": "@sky", "o": { "seg": 10 }, "pos": [0, 20, 0], "scale": [1.1, 0.95, 1] },
+      { "geo": "cyl", "a": [3, 5, 22], "c": "@sky", "o": { "seg": 7 }, "pos": [24, 26, 0], "rot": [0, 0, -0.8] },
+      { "geo": "cyl", "a": [2.2, 2.2, 30], "c": "@sky", "o": { "seg": 7 }, "pos": [-24, 24, 0], "rot": [0, 0, 0.9] },
+      { "geo": "disc", "a": [9, 4], "c": "@sky", "o": { "seg": 8 }, "pos": [0, 40, 0] },
+      { "geo": "sph", "a": [3.4], "c": "@woodDk", "pos": [0, 44, 0] }
+    ]
+  }
+}

@@ -2,8 +2,8 @@
 // mientras el gameplay sigue viviendo en el plano 2D (physics.js intacto).
 // Convención: plano de juego en z=0; el mueble se extiende en profundidad alrededor.
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { CONFIG } from './core.js';
+import { createPartKit, getPart, PALETTE } from './parts3d.js';
 
 const W2 = CONFIG.WORLD_W, FY = CONFIG.FLOOR_Y, CY = CONFIG.CEILING_Y;
 const X0 = W2 / 2;
@@ -12,12 +12,10 @@ const tY = y => FY - y;          // mundo 2D (y hacia abajo) → 3D (y hacia arr
 const WALL_Z = -430;             // cara de la pared del fondo
 const SURF_D = 300, SURF_Z = -185; // los muebles quedan tras el plano de juego (z<0)
 
+// la paleta vive en parts3d.js (compartida con el builder); aquí solo los
+// matices que no son de pieza sino de escena
 const COL = {
-  ink: 0x4A4139, cat: 0x26221D,
-  coral: 0xE8967E, butter: 0xF0C987, sand: 0xEBD3B0, blush: 0xF3C5B4,
-  sage: 0xB7C7AA, lilac: 0xCBBFD9, sky: 0xBFD3DB,
-  wood: 0xC7A17B, woodDk: 0xA9835F, cream: 0xFBF6EE,
-  drawer: 0xE2C79E,
+  ...PALETTE,
   carton: 0x8B6F47, cartonDk: 0x5C4A2C,   // caja de cartón del prólogo
   crate: 0x8F8A82, crateDk: 0x6E6A63      // cajas grises del callejón (dawn)
 };
@@ -95,93 +93,11 @@ export function createRenderer3D(canvas) {
   let sceneTime = 'morning';
   const sway = [];                     // { obj, amp, speed, phase }
 
-  // ---------- textura de papel (fibra + grano), generada una vez ----------
-  // Es el ingrediente que convierte los volúmenes en cartulina: se multiplica
-  // sobre el color base, así que sirve para toda la paleta.
-  const paperTex = (() => {
-    const S = 512;
-    const cvs = document.createElement('canvas');
-    cvs.width = cvs.height = S;
-    const c2 = cvs.getContext('2d');
-    c2.fillStyle = '#ffffff';
-    c2.fillRect(0, 0, S, S);
-    // manchas suaves: irregularidad del pulpado
-    for (let i = 0; i < 340; i++) {
-      const r = 12 + Math.random() * 60;
-      const a = 0.012 + Math.random() * 0.03;
-      c2.fillStyle = Math.random() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
-      c2.beginPath();
-      c2.arc(Math.random() * S, Math.random() * S, r, 0, Math.PI * 2);
-      c2.fill();
-    }
-    // fibras cortas entrecruzadas
-    c2.lineWidth = 1;
-    for (let i = 0; i < 2600; i++) {
-      const x = Math.random() * S, y = Math.random() * S;
-      const ang = Math.random() * Math.PI;
-      const len = 3 + Math.random() * 12;
-      c2.strokeStyle = Math.random() < 0.5
-        ? `rgba(0,0,0,${0.02 + Math.random() * 0.05})`
-        : `rgba(255,255,255,${0.03 + Math.random() * 0.06})`;
-      c2.beginPath();
-      c2.moveTo(x, y);
-      c2.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
-      c2.stroke();
-    }
-    const t = new THREE.CanvasTexture(cvs);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(3, 3);
-    t.anisotropy = 4;
-    return t;
-  })();
-
-  // ---------- helpers de construcción ----------
-  const mats = new Map();
-  function M(color, o = {}) {
-    const key = `${color}|${o.emissive ?? ''}|${o.ei ?? ''}|${o.opacity ?? ''}|${o.smooth ? 's' : 'f'}`;
-    if (!o.noCache && mats.has(key)) return mats.get(key);
-    const m = new THREE.MeshStandardMaterial({
-      color,
-      map: o.noPaper ? null : paperTex,
-      bumpMap: o.noPaper ? null : paperTex,
-      bumpScale: 0.9,
-      // caras planas = pliegues marcados: la lectura de "papel doblado"
-      flatShading: !o.smooth,
-      roughness: o.rough ?? 0.95,
-      metalness: 0,
-      ...(o.emissive != null ? { emissive: o.emissive, emissiveIntensity: o.ei ?? 0.8 } : {}),
-      ...(o.opacity != null ? { transparent: true, opacity: o.opacity } : {})
-    });
-    if (!o.noCache) mats.set(key, m);
-    return m;
-  }
-  function shadowed(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; return mesh; }
-  // Caja "de cartulina": el bisel de un solo segmento deja un canto plano que
-  // capta la luz como el borde de una hoja doblada.
-  function rbox(w, h, d, color, r = 8, o = {}) {
-    const rad = Math.min(r * 0.5 + 2, w / 2.4, h / 2.4, d / 2.4);
-    return shadowed(new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 1, rad), M(color, o)));
-  }
-  function pbox(w, h, d, color, o = {}) {
-    return shadowed(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(color, o)));
-  }
-  // cilindros y esferas con pocos lados: facetas visibles, nada de plástico liso
-  function cyl(rT, rB, h, color, o = {}) {
-    return shadowed(new THREE.Mesh(new THREE.CylinderGeometry(rT, rB, h, o.seg ?? 8), M(color, o)));
-  }
-  function sph(r, color, o = {}) {
-    return shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, o.seg ?? 9, o.seg2 ?? 6), M(color, o)));
-  }
-  function disc(r, h, color, o = {}) {
-    return cyl(r, r, h, color, { seg: 20, ...o });
-  }
-  function put(mesh, x, y, z) { mesh.position.set(x, y, z); return mesh; }
-  function clearGroup(g) {
-    while (g.children.length) {
-      const c = g.children.pop();
-      c.traverse(n => { if (n.geometry) n.geometry.dispose(); });
-    }
-  }
+  // ---------- construcción: kit compartido con el builder (js/parts3d.js) ----------
+  // La textura de papel, los materiales y las primitivas facetadas viven en
+  // parts3d.js para que el builder de elementos dibuje EXACTAMENTE igual.
+  const kit = createPartKit();
+  const { paperTex, M, shadowed, rbox, pbox, cyl, sph, disc, put, clearGroup, buildPart } = kit;
 
   // halo luminoso para bombillas (sprite aditivo con gradiente radial)
   let glowTex = null;
@@ -438,6 +354,14 @@ export function createRenderer3D(canvas) {
     g.position.set(tX(p.x + p.w / 2), tY(p.y), 0);
     const drop = tY(p.y);       // altura de la superficie sobre el suelo
     const night = L.time === 'night';
+
+    // piezas declarativas (data/parts.json o borrador del builder): tienen
+    // prioridad, así el builder puede redefinir un mueble sin tocar código
+    const spec = getPart(p.kind);
+    if (spec) {
+      g.add(buildPart(spec, { w: p.w, h: p.h ?? 0, SURF: SURF_Z, WALL: WALL_Z, palette: COL }));
+      return g;
+    }
 
     switch (p.kind) {
       case 'floor': {
@@ -779,7 +703,7 @@ export function createRenderer3D(canvas) {
   let pushMeshes = [];
   let drawerMeshes = [];
   let cwMeshes = [];
-  let carryMeshes = [], panMeshes = [];
+  let carryMeshes = [], panMeshes = [], leverMeshes = [];
   let counterSprite = null, counterLast = '';
 
   // Contador de saltos flotante (textura de canvas sobre un sprite)
@@ -856,6 +780,8 @@ export function createRenderer3D(canvas) {
   // Objetos pequeños que llevan la historia. Nero no los mira dos veces;
   // el jugador sí. Cada uno es una frase sin texto.
   function buildStoryProp(pr) {
+    const spec = getPart(pr.kind);
+    if (spec) return buildPart(spec, { w: pr.w ?? 60, h: pr.h ?? 40, SURF: SURF_Z, WALL: WALL_Z, palette: COL });
     const g = new THREE.Group();
     if (pr.kind === 'cards') {
       // tarjetas de pésame en pie, dobladas como tiendas
@@ -1050,6 +976,24 @@ export function createRenderer3D(canvas) {
         g.add(put(rbox(40, 34, 40, COL.sand, 5), 0, 0, 0));
       }
       carryMeshes.push(g);
+      dynamic.add(g);
+    }
+
+    // palancas: base atornillada + brazo con pomo que bascula al accionarse
+    leverMeshes = [];
+    for (const o of (state.interactives ?? [])) {
+      if (o.kind !== 'lever') { leverMeshes.push(null); continue; }
+      const g = new THREE.Group();
+      g.add(put(rbox(26, 10, 22, COL.woodDk, 3), 0, 5, 0));
+      const arm = new THREE.Group();
+      arm.position.set(0, 10, 0);
+      arm.add(put(cyl(2.6, 3.2, 40, 0x8A8375, { seg: 7 }), 0, 20, 0));
+      arm.add(put(sph(6.5, COL.coral), 0, 42, 0));
+      arm.rotation.z = 0.55;
+      g.add(arm);
+      g.position.set(tX(o.x), tY(o.y), -40);
+      g.userData.arm = arm;
+      leverMeshes.push(g);
       dynamic.add(g);
     }
 
@@ -1663,6 +1607,14 @@ export function createRenderer3D(canvas) {
       g.visible = !c.consumed;
       g.position.set(tX(c.x), tY(c.y) + (c.held ? 0 : 12), c.held ? 60 : SURF_Z + 40);
       g.rotation.z = c.falling ? time * 5 : 0;
+    });
+
+    // palancas: el brazo bascula de un lado al otro
+    (state.interactives ?? []).forEach((o, i) => {
+      const g = leverMeshes[i];
+      if (!g || o.kind !== 'lever') return;
+      const target = o.on ? -0.55 : 0.55;
+      g.userData.arm.rotation.z += (target - g.userData.arm.rotation.z) * Math.min(1, 0.18);
     });
 
     // cajones: deslizan lateralmente según su apertura

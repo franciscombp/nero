@@ -34,9 +34,18 @@ const panel = document.getElementById('panel');
 const paletteEl = document.getElementById('palette');
 const tabsEl = document.getElementById('sceneTabs');
 const banner = document.getElementById('banner');
+let partKinds = [];
 
 // ---------- carga / persistencia ----------
 async function load() {
+  // piezas del builder: se ofrecen como tipos de plataforma (el juego las
+  // dibuja desde data/parts.json, con prioridad sobre los muebles de código)
+  try {
+    const pj = await fetch('data/parts.json').then(r => r.ok ? r.json() : {});
+    const pd = JSON.parse(localStorage.getItem('nero-draft-parts') || '{}');
+    partKinds = Object.keys({ ...pj, ...pd }).sort();
+  } catch (e) { /* sin piezas: el editor funciona igual */ }
+
   const draftS = localStorage.getItem('nero-draft-scenes');
   if (draftS) {
     scenes = JSON.parse(draftS);
@@ -480,10 +489,11 @@ function renderPanel() {
       <div class="row">
         <div><label>Id</label><input type="text" data-bind="mem.${i}.id" value="${esc(m.id)}"></div>
         <div><label>Disparador</label><select data-bind="mem.${i}.trigger">
-          ${opt('platform', 'Pisar plataforma', m.trigger)}${opt('knock', 'Derribar objeto', m.trigger)}${opt('goal', 'Llegar a la meta', m.trigger)}${opt('start', 'Al empezar', m.trigger)}
+          ${opt('platform', 'Pisar plataforma', m.trigger)}${opt('knock', 'Derribar objeto', m.trigger)}${opt('goal', 'Llegar a la meta', m.trigger)}${opt('start', 'Al empezar', m.trigger)}${opt('contain', 'Meterse en recipiente', m.trigger)}
         </select></div>
       </div>
       ${m.trigger === 'platform' ? `<label>Plataforma</label><select data-bind="mem.${i}.pi">${platformOptions(m.pi)}</select>` : ''}
+      ${m.trigger === 'contain' ? `<label>Id del recipiente (cid)</label><input type="text" data-bind="mem.${i}.cid" value="${esc(m.cid ?? '')}">` : ''}
       <label>Texto (admite &lt;b&gt; y &lt;br&gt;)</label><textarea data-bind="mem.${i}.text">${esc(m.text)}</textarea>
       <button class="del" data-act="delMem" data-arg="${i}">× Borrar recuerdo</button>
     </div>`).join('');
@@ -500,7 +510,7 @@ function renderPanel() {
       <div><label>ancho</label><input type="number" data-bind="plat.w" value="${p.w}"></div>
       <div><label>alto (colisión)</label><input type="number" data-bind="plat.h" value="${p.h}"></div>
     </div>
-    <label>Tipo</label><select data-bind="plat.kind">${Object.keys(KINDS).map(k => opt(k, KINDS[k].name, p.kind)).join('')}${p.kind === 'floor' ? opt('floor', 'Suelo', 'floor') : ''}</select>
+    <label>Tipo</label><select data-bind="plat.kind">${Object.keys(KINDS).map(k => opt(k, KINDS[k].name, p.kind)).join('')}${partKinds.map(k => opt(k, k + ' (builder)', p.kind)).join('')}${p.kind === 'floor' ? opt('floor', 'Suelo', 'floor') : ''}</select>
     ${p.kind !== 'floor' ? '<button class="del" data-act="delPlat">× Borrar plataforma (Supr)</button>' : ''}`;
   })() : '<h3>Plataforma</h3><div style="opacity:.6;font-size:12px">Haz clic en una plataforma del lienzo para editarla. Arrastra para mover, asa derecha para redimensionar, rueda para zoom.</div>';
 
@@ -525,11 +535,33 @@ function renderPanel() {
     <label>Repisa con libros 📚</label><select data-bind="scene.bookShelf">${opt('', '— ninguna —', s.bookShelf ?? '')}${platformOptions(s.bookShelf)}</select>
     <h3>Objeto derribable</h3>
     ${knockHtml}
+    <h3>Mecánicas del puzzle</h3>
+    <div class="row">
+      <div><label>Meta exige llevar (id)</label><input type="text" data-bind="scene.goalCarry" value="${esc(s.goalCarry ?? '')}" placeholder="— nada —"></div>
+    </div>
+    <label>Pista si llega sin ello</label><input type="text" data-bind="scene.carryHint" value="${esc(s.carryHint ?? '')}">
+    ${jsonSection(s, 'interactives', 'Interactivos — cajones, contrapesos y palancas',
+      '[{"id":"cajon","kind":"drawer","host":1,"slot":0,"out":130},\n {"id":"balda","kind":"counterweight","x":900,"y":1200,"w":260,"travel":120,"trigger":"knock","pan":{"x":400,"y":1690,"w":150}},\n {"id":"palanca","kind":"lever","host":2,"offset":60,"targets":[{"id":"cajon","open":1}]}]')}
+    ${jsonSection(s, 'containers', 'Recipientes — donde el gato es líquido',
+      '[{"id":"bol","kind":"bowl","host":1,"offset":500,"w":74,"rim":30},\n {"id":"balde","x":545,"y":1690,"w":120,"rim":42,"kind":"pan","noMesh":true,"panFor":"balda"}]')}
+    ${jsonSection(s, 'carryables', 'Objetos que lleva en la boca',
+      '[{"id":"raton","kind":"mouse","host":3,"offset":150}]')}
+    ${jsonSection(s, 'props', 'Props de historia — piezas del builder o del código',
+      '[{"kind":"lamp_floor","host":0,"offset":455},\n {"kind":"wallclock","wall":true,"x":980,"y":1180}]')}
     <h3>Recuerdos (${s.memories.length})</h3>
     ${memsHtml}
     <button class="btn ghost" data-act="addMem">＋ Añadir recuerdo</button>
     <h3>Escena completa</h3>
     <button class="del" data-act="delScene">× Borrar esta escena</button>`;
+}
+
+// sub-editor JSON para las listas de mecánicas: potente sin llenar el panel de campos
+function jsonSection(s, key, title, placeholder) {
+  const val = s[key] ? JSON.stringify(s[key], null, 1) : '';
+  return `<details${val ? ' open' : ''}><summary style="cursor:pointer;font-size:12px;margin:6px 0">${title} ${val ? `(${s[key].length})` : ''}</summary>
+    <textarea data-json="${key}" spellcheck="false" placeholder='${placeholder}' style="height:110px;font-family:monospace;font-size:11px">${esc(val)}</textarea>
+    <div class="jsonerr" data-for="${key}" style="color:#B85C48;font-size:11px"></div>
+  </details>`;
 }
 
 function esc(str) {
@@ -548,6 +580,25 @@ function syncPanelFields() {
 }
 
 // ---------- data binding del panel ----------
+panel.addEventListener('change', e => {
+  const key = e.target.dataset.json;
+  if (!key) return;
+  const err = panel.querySelector(`.jsonerr[data-for="${key}"]`);
+  const txt = e.target.value.trim();
+  try {
+    if (!txt) delete scenes[cur][key];
+    else {
+      const v = JSON.parse(txt);
+      if (!Array.isArray(v)) throw new Error('debe ser una lista [...]');
+      scenes[cur][key] = v;
+    }
+    if (err) err.textContent = '';
+    saveDraft(); draw();
+  } catch (ex) {
+    if (err) err.textContent = '✗ ' + ex.message;
+  }
+});
+
 panel.addEventListener('input', e => {
   const b = e.target.dataset.bind;
   if (!b) return;

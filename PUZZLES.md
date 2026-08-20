@@ -63,6 +63,10 @@ apoyarse en lo que el jugador **sabe** de la habitación:
   soltarla es gratis: la altura se convierte en moneda. La gramática es «haz que
   X caiga sobre Y», imposible en una sala plana porque no habría nada que caiga.
 - **Contrapeso** — recibe el peso que le tiras y sube otra cosa.
+- **Palanca** — se acciona de un toque y fija el estado de OTROS interactivos
+  (`targets: [{id, open}]`): abre a distancia lo que las patas no alcanzan.
+  El vocabulario «acciona aquí, pasa allá» de Machinarium, componible desde el
+  editor sin escribir código.
 - **Llegar con algo** — a veces la meta no es un sitio, es un sitio *más* una
   cosa. Y la cosa está donde no se ve: sobre una repisa que desde el suelo es
   solo un canto. Obliga a explorar antes de rematar, y de paso convierte el
