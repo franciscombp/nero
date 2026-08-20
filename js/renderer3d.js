@@ -1097,16 +1097,36 @@ export function createRenderer3D(canvas) {
   //   head   cabeceo · ear  orejas (+ hacia atrás, gato alerta o asustado)
   //   tail   altura de la cola · spread  desfase izquierda/derecha (rompe la simetría)
   //   stiff  rapidez con que se adopta la pose: aterrizar es un golpe, dormitar no
+  // Referencia de actuación: cómo cuelga, cae y se sienta un gato real.
+  //   · Colgado: el cuerpo VERTICAL, las manos enganchadas al borde por encima
+  //     de la cabeza, la cabeza asomando hacia la repisa, las patas traseras
+  //     pataleando contra el mueble a ráfagas, la cola caída haciendo péndulo.
+  //   · Cayendo: el reflejo de enderezamiento — la cabeza se nivela ANTES que
+  //     el cuerpo (headLevel contrarresta la rotación del tronco), y al caer
+  //     las cuatro patas se extienden hacia abajo preparando el aterrizaje.
+  //   · Sentado: la secuencia ociosa de verdad: parado → estirón → sentarse
+  //     (ancas plegadas, pecho alto, manos rectas, cola recogida).
+  // Campos nuevos: rot (rotación del tronco, + = morro arriba) ·
+  // scramble (patalear trasero) · headLevel (0-1, nivelación de la cabeza).
   const POSES = {
-    idle:   { fl: 0,     bl: 0,     paw: 0,     spine: 0.04,  head: 0,     tail: 0.12,  ear: 0,    spread: 0.05, crouch: 0,  stiff: 3.5,  speed: 0 },
-    charge: { fl: 0.35,  bl: -0.30, paw: -0.22, spine: 0.30,  head: 0.28,  tail: -0.10, ear: 0.30, spread: 0.14, crouch: 10, stiff: 9,    speed: 0 },
-    air:    { fl: -0.55, bl: 0.45,  paw: 0.30,  spine: -0.26, head: -0.30, tail: 0.45,  ear: 0.40, spread: 0.20, crouch: -3, stiff: 6,    speed: 0 },
-    land:   { fl: 0.40,  bl: -0.35, paw: -0.30, spine: 0.34,  head: 0.22,  tail: 0.08,  ear: 0.20, spread: 0.10, crouch: 9,  stiff: 18,   speed: 0 },
-    sneak:  { fl: 0.20,  bl: -0.15, paw: -0.10, spine: 0.22,  head: 0.15,  tail: -0.30, ear: 0.55, spread: 0,    crouch: 7,  stiff: 5,    speed: 1.35 },
-    hang:   { fl: -0.75, bl: 0.25,  paw: 0.45,  spine: -0.18, head: -0.45, tail: 0.30,  ear: 0.20, spread: 0.26, crouch: 0,  stiff: 7,    speed: 0 },
-    slide:  { fl: -0.50, bl: 0.35,  paw: 0.25,  spine: -0.10, head: -0.40, tail: 0.50,  ear: 0.30, spread: 0.18, crouch: 0,  stiff: 7,    speed: 0 }
+    idle:   { fl: 0,     bl: 0,     paw: 0,     spine: 0.04,  head: 0,     tail: 0.12,  ear: 0,    spread: 0.05, crouch: 0,  rot: 0,     stiff: 3.5,  speed: 0 },
+    sit:    { fl: 0.34,  bl: 1.35,  paw: 0.10,  spine: -0.26, head: -0.12, tail: -0.78, ear: 0,    spread: 0.05, crouch: 22, rot: 0.26,  stiff: 2.8,  speed: 0 },
+    charge: { fl: 0.35,  bl: -0.30, paw: -0.22, spine: 0.30,  head: 0.28,  tail: -0.10, ear: 0.30, spread: 0.14, crouch: 10, rot: -0.10, stiff: 9,    speed: 0 },
+    air:    { fl: -0.55, bl: 0.45,  paw: 0.30,  spine: -0.26, head: -0.30, tail: 0.45,  ear: 0.40, spread: 0.20, crouch: -3, rot: 0,     stiff: 6,    speed: 0, headLevel: 0.55 },
+    fall:   { fl: 0.28,  bl: -0.22, paw: -0.38, spine: 0.10,  head: 0.14,  tail: 0.62,  ear: 0.30, spread: 0.16, crouch: -2, rot: 0,     stiff: 7,    speed: 0, headLevel: 0.75 },
+    land:   { fl: 0.40,  bl: -0.35, paw: -0.30, spine: 0.34,  head: 0.22,  tail: 0.08,  ear: 0.20, spread: 0.10, crouch: 9,  rot: 0,     stiff: 18,   speed: 0 },
+    sneak:  { fl: 0.20,  bl: -0.15, paw: -0.10, spine: 0.22,  head: 0.15,  tail: -0.30, ear: 0.55, spread: 0,    crouch: 7,  rot: -0.06, stiff: 5,    speed: 1.35 },
+    hang:   { fl: -1.55, bl: 0.72,  paw: 0.95,  spine: -0.30, head: -0.72, tail: -0.55, ear: 0.35, spread: 0.30, crouch: 0,  rot: 1.05,  stiff: 8,    speed: 0, scramble: 1, headLevel: 0.65 },
+    slide:  { fl: -1.10, bl: 0.55,  paw: 0.60,  spine: -0.16, head: -0.55, tail: -0.35, ear: 0.40, spread: 0.24, crouch: 0,  rot: 0.85,  stiff: 7,    speed: 0, scramble: 0.6, headLevel: 0.5 }
   };
   const poseCur = { fl: 0, bl: 0, paw: 0, spine: 0, head: 0, tail: 0, ear: 0, spread: 0, crouch: 0 };
+
+  // qué pose actúa ahora: 'idle' se divide en parado/sentado, 'air' en subir/caer
+  function poseKeyFor(cat) {
+    if (cat.state === 'idle' && idleAge > 7) return 'sit';
+    if (cat.state === 'air' && cat.vy > 260) return 'fall';
+    return POSES[cat.state] ? cat.state : 'idle';
+  }
   // Ejes y signos calibrados contra el rig procedural (el gato mira a +X, Y arriba):
   // girar una pata en +Z la lleva hacia delante, así que "barrer atrás" es −Z;
   // subir la cola (que sale hacia −X) también es −Z; agachar la cabeza es −Z.
@@ -1116,7 +1136,8 @@ export function createRenderer3D(canvas) {
 
   // Estado vivo entre fotogramas: la cola no obedece, persigue.
   const tailWave = [];                       // muelle por segmento (posición y velocidad)
-  let earFlick = 0, earFlickT = 1.5, earSide = 0, stretchT = 0;
+  let earFlick = 0, earFlickT = 1.5, earSide = 0, stretchT = 0, stretched = false;
+  let scrambleT = 0, scrambleBurst = 0, gripT = 0;
   let lookYaw = 0, lookGoal = 0, lookT = 0;  // hacia dónde mira cuando no pasa nada
   let idleAge = 0, prevVX = 0, prevVY = 0;
 
@@ -1126,9 +1147,11 @@ export function createRenderer3D(canvas) {
     s.p += s.v * dt;
   }
 
+  let lastPoseKey = 'idle';
   function applyPose(cat, dt) {
     if (!catBones) return;
-    const t = POSES[cat.state] ?? POSES.idle;
+    lastPoseKey = poseKeyFor(cat);
+    const t = POSES[lastPoseKey];
 
     // (1) pose de descanso: sin mixer que la reponga, se repone a mano
     for (const { bone, rest } of catRig.restPose) bone.rotation.set(rest.x, rest.y, rest.z);
@@ -1170,10 +1193,11 @@ export function createRenderer3D(canvas) {
     if (cat.state !== 'idle') lookGoal = 0;
     lookYaw += (lookGoal - lookYaw) * Math.min(1, dt * 3);
 
-    // estiramiento completo: si lleva mucho parado, arquea el lomo, estira las
-    // manos y baja la cabeza — el gesto más reconocible de un gato
+    // estiramiento completo: un solo estirón antes de sentarse — la secuencia
+    // ociosa real de un gato: parado → estirón → sentado (poseKeyFor)
+    if (cat.state !== 'idle') stretched = false;
     if (stretchT > 0) stretchT -= dt;
-    else if (idleAge > 8 && cat.state === 'idle') { stretchT = 2.2; idleAge = 0; }
+    else if (idleAge > 4.5 && !stretched && cat.state === 'idle') { stretchT = 2.2; stretched = true; }
     const stretch = stretchT > 0 ? Math.sin((1 - stretchT / 2.2) * Math.PI) : 0;
 
     earFlickT -= dt;
@@ -1200,6 +1224,29 @@ export function createRenderer3D(canvas) {
     applyLeg(catBones.legsF, poseCur.fl - stretch * 0.55, 1);
     applyLeg(catBones.legsB, poseCur.bl + stretch * 0.10, -1);   // los cuartos traseros desfasan al revés
 
+    // ---- colgado: patalear a ráfagas y reacomodar el agarre ----
+    // Un gato colgado no patalea sin parar: hace ráfagas de medio segundo
+    // cuando decide intentarlo, y entre medias se queda muy quieto pensando.
+    if (t.scramble) {
+      scrambleT -= dt;
+      if (scrambleT <= 0) { scrambleBurst = 0.55; scrambleT = 1.1 + Math.random() * 1.6; }
+      scrambleBurst = Math.max(0, scrambleBurst - dt);
+      if (scrambleBurst > 0) {
+        const f = Math.sin(time * 26);
+        catBones.legsB.forEach(({ chain }, i) => {
+          const a = (i === 0 ? f : -f) * 0.34 * t.scramble * AXES.legSign;
+          if (chain[0]) chain[0].rotation[AXES.legs] += a;
+          if (chain[1]) chain[1].rotation[AXES.legs] += Math.abs(a) * 0.8;
+        });
+      }
+      // las manos reajustan el enganche de una en una, de tarde en tarde
+      gripT -= dt;
+      if (gripT <= 0) gripT = 2 + Math.random() * 2.5;
+      const grip = gripT < 0.3 ? Math.sin((0.3 - gripT) / 0.3 * Math.PI) : 0;
+      const hand = catBones.legsF[Math.floor(time) % 2];
+      if (hand?.chain[2]) hand.chain[2].rotation[AXES.legs] += grip * 0.5;
+    }
+
     // ---- lomo: el arco es la silueta del gato ----
     if (catBones.chest) {
       catBones.chest.rotation[AXES.spine] += (poseCur.spine - stretch * 0.30) * AXES.spineSign;
@@ -1211,6 +1258,10 @@ export function createRenderer3D(canvas) {
       catBones.head.rotation[AXES.head] += (poseCur.head + stretch * 0.35) * AXES.headSign;
       const drift = cat.state === 'air' ? Math.max(-0.5, Math.min(0.5, cat.vx * 0.0012)) : lookYaw;
       catBones.head.rotation[AXES.headYaw] += drift;
+      // reflejo de enderezamiento: la cabeza se nivela aunque el tronco gire —
+      // lo primero que un ojo humano reconoce como "gato de verdad"
+      const lvl = t.headLevel ?? 0;
+      if (lvl) catBones.head.rotation.z -= catRig.body.rotation.z * lvl;
     }
     if (catBones.headend) catBones.headend.rotation[AXES.head] += poseCur.head * 0.25 * AXES.headSign;
 
@@ -1426,12 +1477,13 @@ export function createRenderer3D(canvas) {
     }
     if (!body.visible) { body.visible = true; liquid.visible = false; liquidCur = null; }
 
-    // pose objetivo según estado
-    let sy = 1, sx = 1, rotZ = 0, oy = 0;
-    if (cat.state === 'air') rotZ = Math.max(-0.45, Math.min(0.5, -cat.vy * 0.00035));
-    else if (cat.state === 'sneak') { sy = 0.8, sx = 1.1; }
-    else if (cat.state === 'hang') { rotZ = 0.35; oy = 6; }
-    else if (cat.state === 'slide') { rotZ = 0.55; }
+    // rotación del tronco: la marca cada pose (colgado = vertical de verdad),
+    // y en el aire la marca la velocidad — subir estira, caer nivela
+    const tp = POSES[poseKeyFor(cat)];
+    let sy = 1, sx = 1, rotZ = tp.rot ?? 0, oy = 0, ox = 0;
+    if (cat.state === 'air') rotZ += Math.max(-0.45, Math.min(0.5, -cat.vy * 0.00035));
+    else if (cat.state === 'sneak') { sy = 0.8; sx = 1.1; }
+    else if (cat.state === 'hang') { oy = 4; ox = 18; }   // pegado al canto, manos en el borde
     else if (cat.state === 'idle') sy = 1 + Math.sin(time * 2.5) * 0.012; // respiración
 
     // El squash de malla acompaña al 45%: quien actúa es el esqueleto.
@@ -1444,6 +1496,7 @@ export function createRenderer3D(canvas) {
     body.scale.z += ((2 - sq) - body.scale.z) * k;
     body.rotation.z += (rotZ - body.rotation.z) * k;
     body.position.y += (oy - body.position.y) * k;
+    body.position.x += (ox - body.position.x) * k;
 
     // giro suave al cambiar de dirección (pasa mirando a cámara)
     const targetRotY = cat.facing === 1 ? -0.5 : Math.PI + 0.5;
@@ -1628,6 +1681,12 @@ export function createRenderer3D(canvas) {
       g.position.set(tX(inX + (outX - inX) * o.open), tY(pl.y), SURF_Z + 30);
     });
 
+    // marcadores dev: flotan y giran para distinguirse de todo lo demás
+    for (const g of devGroup.children) {
+      g.position.y = g.userData.baseY + Math.sin(time * 2.6 + g.userData.i) * 7;
+      g.children[0].rotation.y = time * 1.8;
+    }
+
     // balanceo suave (móvil de estrellas, planta)
     for (const s of sway) {
       s.obj.rotation.z = Math.sin(time * s.speed + s.phase) * s.amp;
@@ -1683,7 +1742,49 @@ export function createRenderer3D(canvas) {
     catRig.g.visible = v;
   }
 
-  if (typeof window !== 'undefined') window.__nero3d = { scene, camera, catRig: () => catRig, AXES, POSES };
+  if (typeof window !== 'undefined') window.__nero3d = { scene, camera, catRig: () => catRig, AXES, POSES, dbg: () => ({ idleAge, lastPoseKey, poseCur: { ...poseCur } }), forceIdle: v => { idleAge = v; } };
 
-  return { resize, loadScene, update, render, screenToWorld, setCatVisible };
+  // ---------- marcadores del modo dev ----------
+  // Rombos flotantes sobre pistas, metas y objetos: navegación de niveles sin
+  // tener que recordar dónde estaba cada cosa. Solo existen si el dev los pide.
+  const devGroup = new THREE.Group();
+  scene.add(devGroup);
+  function devLabel(text, color) {
+    const cvs = document.createElement('canvas');
+    cvs.width = 256; cvs.height = 64;
+    const c2 = cvs.getContext('2d');
+    c2.font = 'bold 26px monospace';
+    c2.textAlign = 'center';
+    c2.fillStyle = 'rgba(20,16,12,.72)';
+    const wTxt = Math.min(248, c2.measureText(text).width + 18);
+    c2.beginPath(); c2.roundRect(128 - wTxt / 2, 8, wTxt, 42, 10); c2.fill();
+    c2.fillStyle = '#' + new THREE.Color(color).getHexString();
+    c2.fillText(text, 128, 38);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(cvs), transparent: true, depthTest: false
+    }));
+    spr.scale.set(130, 32, 1);
+    return spr;
+  }
+  function setDevMarkers(list) {
+    clearGroup(devGroup);
+    (list ?? []).forEach((m, i) => {
+      const g = new THREE.Group();
+      const oct = new THREE.Mesh(new THREE.OctahedronGeometry(m.big ? 15 : 9),
+        new THREE.MeshBasicMaterial({ color: m.color ?? 0xF0C987, transparent: true, opacity: 0.9, depthTest: false }));
+      oct.renderOrder = 99;
+      g.add(oct);
+      if (m.label) {
+        const spr = devLabel(m.label, m.color ?? 0xF0C987);
+        spr.position.y = 30;
+        spr.renderOrder = 99;
+        g.add(spr);
+      }
+      g.position.set(tX(m.x), tY(m.y) + 44, 60);
+      g.userData = { baseY: g.position.y, i };
+      devGroup.add(g);
+    });
+  }
+
+  return { resize, loadScene, update, render, screenToWorld, setCatVisible, setDevMarkers };
 }

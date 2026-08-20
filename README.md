@@ -71,8 +71,16 @@ Los detalles que lo hacen parecer un gato y no un muñeco:
   saltar y contrapesa al girar.
 - **Mira a donde va.** En el aire la cabeza gira hacia el vuelo; en el suelo, si
   lleva rato parado, echa vistazos alrededor.
-- **Tics.** Sacudidas de oreja de una en una, respiración en el lomo, y a los
-  ocho segundos quieto, el estiramiento completo.
+- **Tics y secuencia ociosa.** Sacudidas de oreja de una en una, respiración en
+  el lomo, y la secuencia real de un gato parado: de pie → estirón → **sentado**
+  (ancas plantadas, pecho alto, cola recogida).
+- **Colgado de verdad.** Cuerpo vertical pegado al canto, las manos enganchadas
+  al borde por encima de la cabeza, pataleo trasero **a ráfagas** (no continuo:
+  intenta, piensa, reintenta) y reacomodo del agarre de una mano cada pocos
+  segundos.
+- **Reflejo de enderezamiento.** La cabeza se nivela aunque el tronco gire — en
+  el aire y colgado, la cabeza busca la horizontal antes que el cuerpo, y al
+  caer rápido las cuatro patas se extienden preparando el aterrizaje.
 
 El squash & stretch de la malla sigue ahí, pero al 45 %: quien actúa son los
 huesos.
@@ -172,6 +180,14 @@ npx serve .
 
 # Abrir en http://localhost:3000
 ```
+
+### Modo dev
+
+Añade `?dev=1` a la URL del juego: aparece un panel con navegación de episodios
+(‹ ›, o teclas `[` `]`), botón de **pista**, teletransporte a la **meta** (`g`,
+resuelve el `goalCarry` solo) y coordenadas en vivo. Sobre la escena flotan
+rombos etiquetados: la meta, cada recuerdo sin encontrar (donde de verdad se
+dispara), objetos de boca, bandejas de contrapeso y palancas.
 
 ### Para desarrollar
 

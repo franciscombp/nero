@@ -56,6 +56,7 @@ async function main() {
 
   // Datos: los mismos del juego 2D — con soporte de borrador del editor (?draft=1)
   const useDraft = new URLSearchParams(location.search).has('draft');
+  const devOn = new URLSearchParams(location.search).has('dev');
   const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
   const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
   const draftParts = useDraft ? localStorage.getItem('nero-draft-parts') : null;
@@ -255,6 +256,7 @@ async function main() {
       cat.x = box.x + box.w / 2;
     }
     ui.updateHUD(idx, levels, levelState.memories, levelState.found, levelState.puzzles, levelState.puzzleSolved);
+    devMarkers();
     ui.setHintText(L.hint ?? story?.ui?.hint ?? '');
     ui.hideHint();
     ui.hideMemory();          // que no quede colgado el subtítulo del episodio anterior
@@ -528,6 +530,7 @@ async function main() {
     const m = levelState.memories.find(m => m.id === id);
     if (m) ui.showMemory(m.text);
     ui.updatePaws(levelState.memories, levelState.found);
+    devMarkers();
   }
 
   // ---------- Loop ----------
@@ -690,6 +693,82 @@ async function main() {
   startLevel(0);
   showTitle();
   requestAnimationFrame(frame);
+
+  // ---------- Modo dev (?dev=1): navegar niveles y VER dónde está cada cosa ----------
+  // Rombos flotantes sobre recuerdos sin encontrar, la meta, objetos de boca,
+  // recipientes y palancas; botones/teclas para saltar de episodio.
+  function devMarkers() {
+    if (!devOn) return;
+    const L = curLevel();
+    const list = [];
+    // la meta del episodio
+    const goal = levelState.platforms.find(p => p.kind === L.goalKind);
+    if (goal) list.push({ x: goal.x + goal.w / 2, y: goal.y, label: 'META' + (L.goalCarry ? ' +' + L.goalCarry : ''), color: 0xE8967E, big: true });
+    // recuerdos aún no encontrados, cada uno donde se dispara
+    for (const m of levelState.memories) {
+      if (levelState.found[m.id]) continue;
+      let x = null, y = null;
+      if (m.trigger === 'platform' && levelState.platforms[m.pi]) {
+        const p = levelState.platforms[m.pi];
+        x = p.x + p.w / 2; y = p.y;
+      } else if (m.trigger === 'knock' && levelState.knock) {
+        x = levelState.knock.x; y = levelState.knock.y;
+      } else if (m.trigger === 'contain') {
+        const c = (levelState.containers ?? []).find(c => c.id === m.cid);
+        if (c) { x = c.x; y = c.y; }
+      }
+      if (x != null) list.push({ x, y, label: m.id, color: 0xF0C987 });
+    }
+    for (const c of (levelState.carryables ?? [])) {
+      if (!c.consumed) list.push({ x: c.x, y: c.y, label: '☍ ' + c.id, color: 0xB7C7AA });
+    }
+    for (const o of (levelState.interactives ?? [])) {
+      if (o.kind === 'lever') list.push({ x: o.x, y: o.y, label: '⌁ palanca', color: 0xCBBFD9 });
+      if (o.kind === 'counterweight' && o.pan) list.push({ x: o.pan.x + o.pan.w / 2, y: o.pan.y, label: '⚖ bandeja', color: 0xBFD3DB });
+    }
+    r3d.setDevMarkers(list);
+  }
+  function devGoto(idx) {
+    if (!devOn) return;
+    levelState.level = ((idx % levels.length) + levels.length) % levels.length;
+    ui.stopLevelTimer();
+    showAct();
+  }
+  if (devOn) {
+    const bar = document.createElement('div');
+    bar.id = 'dev';
+    bar.innerHTML = `
+      <div style="background:rgba(24,20,28,.85);border-radius:10px;padding:6px 8px;display:flex;gap:5px;align-items:center">
+        <button id="devPrev">‹</button>
+        <b id="devEp" style="color:#F0C987;font-size:12px;min-width:34px;text-align:center"></b>
+        <button id="devNext">›</button>
+        <button id="devHint">pista</button>
+        <button id="devGoal">→meta</button>
+        <span id="devPos" style="color:rgba(255,250,242,.55);font-size:10px;font-family:monospace;min-width:74px"></span>
+      </div>`;
+    document.body.appendChild(bar);
+    document.getElementById('devPrev').onclick = () => devGoto(levelState.level - 1);
+    document.getElementById('devNext').onclick = () => devGoto(levelState.level + 1);
+    document.getElementById('devHint').onclick = () => ui.showHint(ui.getHintText() || '(sin pista)');
+    document.getElementById('devGoal').onclick = () => {
+      const L = curLevel();
+      const g = levelState.platforms.find(p => p.kind === L.goalKind);
+      if (!g) return;
+      if (L.goalCarry) { const c = (levelState.carryables ?? []).find(x => x.id === L.goalCarry); if (c) c.held = true; }
+      cat.x = g.x + g.w / 2; cat.y = g.y - 8; cat.vy = 50; cat.vx = 0;
+      cat.onGround = false; cat.state = 'air';
+    };
+    window.addEventListener('keydown', e => {
+      if (e.key === ']') devGoto(levelState.level + 1);
+      else if (e.key === '[') devGoto(levelState.level - 1);
+      else if (e.key === 'h') document.getElementById('devHint').click();
+      else if (e.key === 'g') document.getElementById('devGoal').click();
+    });
+    setInterval(() => {
+      document.getElementById('devEp').textContent = 'EP' + levelState.level;
+      document.getElementById('devPos').textContent = `${Math.round(cat.x)},${Math.round(cat.y)} ${cat.state}`;
+    }, 250);
+  }
 
   // Globals para testing/debug
   window.CONFIG = CONFIG;
