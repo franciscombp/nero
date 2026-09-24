@@ -157,6 +157,17 @@ html, body {
 }
 #subtitle.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 #subtitle b { color: var(--soft); font-weight: 600; }
+/* la edad del rastro: pequeña, arriba, en versalitas — es dato del jugador,
+   no de Nero, así que no compite con la frase */
+#subtitle .age {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(240, 201, 135, 0.72);
+  margin-bottom: 7px;
+}
 
 /* ==================== Pista contextual ====================
    Solo aparece si el jugador lleva rato sin avanzar. */

@@ -839,7 +839,7 @@ export function createRenderer3D(canvas) {
   let pushMeshes = [];
   let drawerMeshes = [];
   let cwMeshes = [];
-  let carryMeshes = [], panMeshes = [], leverMeshes = [];
+  let carryMeshes = [], panMeshes = [], leverMeshes = [], machineMeshes = [];
   let counterSprite = null, counterLast = '';
 
   // Contador de saltos flotante (textura de canvas sobre un sprite)
@@ -1125,6 +1125,29 @@ export function createRenderer3D(canvas) {
         g.add(put(rbox(40, 34, 40, COL.sand, 5), 0, 0, 0));
       }
       carryMeshes.push(g);
+      dynamic.add(g);
+    }
+
+    // el contestador: caja baja con altavoz, teclas y un piloto que parpadea
+    // mientras queden mensajes sin oír — el único punto rojo de la casa
+    machineMeshes = [];
+    for (const o of (state.interactives ?? [])) {
+      if (o.kind !== 'machine') { machineMeshes.push(null); continue; }
+      const g = new THREE.Group();
+      g.add(put(rbox(84, 26, 62, 0x59544C, 5), 0, 13, 0));
+      g.add(put(rbox(70, 6, 46, 0x47433C, 3), 0, 27, 0));
+      for (let i = 0; i < 6; i++) {
+        g.add(put(rbox(5, 3, 30, 0x3A3732, 1), -26 + i * 10, 29, -6));   // rejilla
+      }
+      for (let i = 0; i < 3; i++) {
+        g.add(put(rbox(9, 5, 9, 0x8A8375, 2), 12 + i * 12, 29, 16));     // teclas
+      }
+      const led = sph(4.2, 0xE8967E, { emissive: 0xE8967E, ei: 2.2, noCache: true });
+      put(led, -30, 30, 16);
+      g.add(led);
+      g.position.set(tX(o.x), tY(o.y), -50);
+      g.userData.led = led;
+      machineMeshes.push(g);
       dynamic.add(g);
     }
 
@@ -1809,6 +1832,16 @@ export function createRenderer3D(canvas) {
       g.visible = !c.consumed;
       g.position.set(tX(c.x), tY(c.y) + (c.held ? 0 : 12), c.held ? 60 : SURF_Z + 40);
       g.rotation.z = c.falling ? time * 5 : 0;
+    });
+
+    // el piloto del contestador: parpadea mientras queden mensajes por oír,
+    // y se queda fijo mientras suena uno
+    (state.interactives ?? []).forEach((o, i) => {
+      const g = machineMeshes[i];
+      if (!g || o.kind !== 'machine') return;
+      const pending = (o.messages ?? []).length - (o.msgIdx ?? 0);
+      const on = o.playing > 0 ? 1 : (pending > 0 ? (Math.sin(time * 4.2) > 0 ? 1 : 0.06) : 0.06);
+      g.userData.led.material.emissiveIntensity = 0.3 + on * 2.4;
     });
 
     // palancas: el brazo bascula de un lado al otro

@@ -372,6 +372,7 @@ async function main() {
           cat.y += dY;
         }
       }
+      if (o.kind === 'machine' && o.playing > 0) o.playing = Math.max(0, o.playing - dt);
       if (Math.abs(o.target - o.open) > 0.001) {
         o.open += (o.target - o.open) * Math.min(1, dt * 6);
         if (Math.abs(o.target - o.open) < 0.01) o.open = o.target;
@@ -495,6 +496,23 @@ async function main() {
   function tryInteract(wx, wy) {
     const list = levelState.interactives;
     if (!list || !list.length) return false;
+    // el contestador: cada toque suelta el siguiente mensaje
+    for (const o of list) {
+      if (o.kind !== 'machine') continue;
+      const hit = Math.abs(wx - o.x) < 70 && Math.abs(wy - o.y) < 90;
+      const near = Math.abs(cat.x - o.x) < 120 && Math.abs(cat.y - o.y) < 130;
+      if (!hit || !near) continue;
+      const msgs = o.messages ?? [];
+      if (!msgs.length) return true;
+      const msg = msgs[Math.min(o.msgIdx, msgs.length - 1)];
+      o.msgIdx = Math.min(o.msgIdx + 1, msgs.length);
+      o.playing = 2.2;
+      ui.showMemory(msg.text, 6400, msg.age);
+      if (msg.collect) collect(msg.collect);
+      noteProgress();
+      return true;
+    }
+
     // palancas: un toque cerca las acciona y mueven lo que tengan enlazado
     for (const o of list) {
       if (o.kind !== 'lever') continue;
@@ -528,7 +546,7 @@ async function main() {
     levelState.found[id] = true;
     levelState.totalFound++;
     const m = levelState.memories.find(m => m.id === id);
-    if (m) ui.showMemory(m.text);
+    if (m) ui.showMemory(m.text, 5600, m.age);
     ui.updatePaws(levelState.memories, levelState.found);
     devMarkers();
   }
@@ -716,6 +734,9 @@ async function main() {
       } else if (m.trigger === 'contain') {
         const c = (levelState.containers ?? []).find(c => c.id === m.cid);
         if (c) { x = c.x; y = c.y; }
+      } else if (m.trigger === 'machine') {
+        const o = (levelState.interactives ?? []).find(o => o.kind === 'machine');
+        if (o) { x = o.x; y = o.y; }
       }
       if (x != null) list.push({ x, y, label: m.id, color: 0xF0C987 });
     }
@@ -724,6 +745,10 @@ async function main() {
     }
     for (const o of (levelState.interactives ?? [])) {
       if (o.kind === 'lever') list.push({ x: o.x, y: o.y, label: '⌁ palanca', color: 0xCBBFD9 });
+      if (o.kind === 'machine') {
+        const left = (o.messages ?? []).length - (o.msgIdx ?? 0);
+        list.push({ x: o.x, y: o.y, label: '☏ ' + left + ' mensajes', color: 0xE8967E });
+      }
       if (o.kind === 'counterweight' && o.pan) list.push({ x: o.pan.x + o.pan.w / 2, y: o.pan.y, label: '⚖ bandeja', color: 0xBFD3DB });
     }
     r3d.setDevMarkers(list);
@@ -778,6 +803,7 @@ async function main() {
   window.__enterPlay = enterPlay;
   window.__showAct = showAct;
   window.__tryContain = tryContain;
+  window.__tryInteract = tryInteract;
 }
 
 main().catch(err => {

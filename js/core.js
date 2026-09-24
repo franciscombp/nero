@@ -310,6 +310,15 @@ export function createInteractives(levelData, platforms) {
         y: topY, w: out, h: 12, kind: 'drawer', ref: obj
       };
     }
+    if (d.kind === 'machine') {
+      // El contestador: lo único de la casa que HABLA, y nadie lo escucha.
+      // Cada toque reproduce el siguiente mensaje. Nero solo sabe que la caja
+      // tiene dentro una voz que no vive aquí.
+      obj.x = host ? host.x + (d.offset ?? 40) : d.x;
+      obj.y = host ? host.y : d.y;
+      obj.msgIdx = 0;
+      obj.playing = 0;
+    }
     if (d.kind === 'lever') {
       // palanca: se acciona de un toque y fija el estado de OTROS interactivos
       // (targets: [{id, open}]). Sirve para abrir a distancia lo que las patas

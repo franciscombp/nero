@@ -2,11 +2,20 @@
 
 **Temporada 1 · «La casa que no estaba vacía»**
 
-Nero no entiende de funerales, ni de hijas que no llaman, ni de cajas con una
-marca naranja. Es un gato en una casa. **Él no se entera de lo que pasa aquí;
-el jugador sí** — la historia se reconstruye con lo que hay en las
-habitaciones, como en Firewatch o Stray, pero a la altura de las rodillas.
-Guion y capas de interpretación en [`STORY.md`](STORY.md).
+**Un gato no recuerda cuándo. Recuerda dónde.**
+
+Nero no tiene memoria de acontecimientos: tiene olfato. No sabe *cuándo* pasó
+algo, sabe que en este sitio hay algo que alguien dejó. Por eso lo que se
+recoge en el juego no son recuerdos —eso es un concepto humano— sino
+**rastros**, y cada uno lleva una etiqueta de edad que el gato no puede saber
+y el jugador sí: `RASTRO DE HOY`, `DE HACE MESES`, `DE ANTES DE NERO`.
+
+El jugador no reconstruye la historia por orden de episodios, sino por capas
+de antigüedad. Un mismo mueble guarda varios rastros apilados: el sofá tiene
+el hueco de hace meses con forma de persona **y** el brazo deshilachado donde
+otro gato afiló las uñas años antes de que Nero naciera. Nadie lo explica.
+
+Propuesta narrativa completa en [`STORY.md`](STORY.md).
 
 **Jugable:** [nero.maldonado.pro](https://nero.maldonado.pro) ✨
 
@@ -28,6 +37,11 @@ Guion y capas de interpretación en [`STORY.md`](STORY.md).
 Cuatro espacios que se repiten y se transforman: la cocina del episodio 3 es la
 misma del 8, la butaca del 4 es la que está vacía en el 7. La casa se aprende y
 luego se desconoce.
+
+Y atravesándolo todo, **el contestador**: una caja con teclas que Nero pisa y
+que habla. Es el único objeto de la casa que emite una voz, y la casa lleva
+años sin escucharla. Su piloto rojo parpadea mientras queden mensajes sin oír
+— el único punto rojo de una casa de tonos cálidos.
 
 ## Se juega con los ojos de un gato
 

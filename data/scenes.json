@@ -45,14 +45,16 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "El cartón huele a la casa de antes: a alfombra, a sofá con permiso, a manos pequeñas.<br><b>La caja no llegó sola hasta aquí. Alguien la dejó.</b>"
+        "age": "hoy",
+        "text": "El cartón huele a alfombra, a sofá con permiso, a manos pequeñas.<br><b>Es el olor de su casa. Va por dentro de la caja, no por fuera.</b>"
       },
       {
         "id": "e0_luz",
         "trigger": "goal",
         "x": 300,
         "y": 700,
-        "text": "Las solapas ceden y entra la calle entera de golpe: frío, ruido, luz naranja.<br><b>Nada de lo que ve le suena. Todo lo que le sonaba iba en el camión.</b>"
+        "age": "hoy",
+        "text": "Las solapas ceden y entra la calle de golpe: frío, gasoil, luz naranja.<br><b>Fuera no huele a nadie. Han tenido cuidado de que no huela a nadie.</b>"
       }
     ],
     "hint": "Salta ↑ una y otra vez · cada golpe abre más la caja",
@@ -130,7 +132,8 @@
         "trigger": "goal",
         "x": 640,
         "y": 420,
-        "text": "La caja del camión huele a su alfombra, a su sofá, a las manos pequeñas.<br><b>El motor arranca igual. Los camiones no esperan a lo que se les cayó.</b>"
+        "age": "hoy",
+        "text": "La caja del camión huele a su alfombra y a las manos pequeñas.<br><b>El olor está subiendo. Los camiones se llevan el olor y dejan el sitio.</b>"
       }
     ],
     "hint": "Salta en diagonal: desliza ↗ · o mantén → y pulsa ↑",
@@ -200,7 +203,8 @@
         "trigger": "goal",
         "x": 400,
         "y": 500,
-        "text": "Las manos huelen a jabón y a flores aplastadas. Tiemblan un poco, como las hojas.<br><b>Hoy ya han soltado algo importante. No piensan soltar esto también.</b>"
+        "age": "hoy",
+        "text": "Jabón, flores aplastadas y tierra removida. Las manos tiemblan como las hojas.<br><b>Vienen de dejar a alguien en un sitio con tierra. Hoy ya han soltado algo.</b>"
       }
     ],
     "spawn": 120
@@ -300,6 +304,23 @@
         "slot": 0,
         "out": 130,
         "needsBelow": "cajon_medio"
+      },
+      {
+        "id": "contestador",
+        "kind": "machine",
+        "host": 4,
+        "offset": 60,
+        "messages": [
+          {
+            "age": "dias",
+            "collect": "e3_voz",
+            "text": "La caja de las teclas se enciende y habla sola. Una voz de hombre, cansada, dice una fecha y una hora.<br><b>«…la ceremonia será el jueves a las once.» Es de hace nueve días.</b>"
+          },
+          {
+            "age": "dias",
+            "text": "Otra voz, de mujer, muy corta. Se corta antes de acabar.<br><b>«Papá, soy yo. Me he enterado por la vecina. No sé si quieres que…» Ocho segundos.</b>"
+          }
+        ]
       }
     ],
     "memories": [
@@ -308,7 +329,8 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "Hay un abrigo negro sobre la silla que huele a lluvia y a iglesia.<br><b>Todo aquí fue hecho para dos personas. Solo se oye a una.</b>"
+        "age": "dias",
+        "text": "Un abrigo negro sobre la silla huele a lluvia, a incienso y a mucha gente junta.<br><b>Nadie lo ha colgado. Lleva ahí desde que volvió.</b>"
       },
       {
         "id": "e3_cajon",
@@ -316,7 +338,17 @@
         "pi": 1,
         "x": 300,
         "y": 700,
-        "text": "Sobre la encimera hay tarjetas dobladas en pie y un ramo bocabajo, secándose.<br><b>Nero no sabe leer. Las tarjetas dicen todas lo mismo: «lo sentimos mucho».</b>"
+        "age": "dias",
+        "text": "Tarjetas de pie sobre la encimera y un ramo secándose bocabajo.<br><b>Nero no sabe leer. Todas las tarjetas dicen lo mismo.</b>"
+      },
+      {
+        "id": "e3_dos",
+        "trigger": "platform",
+        "pi": 1,
+        "x": 300,
+        "y": 690,
+        "age": "viejo",
+        "text": "En la madera de la encimera hay dos marcas gastadas, una al lado de la otra.<br><b>Dos tazas, cada mañana, durante cuarenta años. Ninguna se ha movido esta semana.</b>"
       },
       {
         "id": "e3_bol",
@@ -324,14 +356,24 @@
         "cid": "bol",
         "x": 300,
         "y": 600,
-        "text": "El bol es exactamente de su tamaño, como todo lo redondo del mundo.<br><b>Aldo lo mira desde la puerta un rato largo. Es la primera vez que sonríe en nueve días.</b>"
+        "age": "hoy",
+        "text": "El bol es exactamente de su tamaño, como todo lo redondo del mundo.<br><b>Aldo lo mira desde la puerta un rato largo. Es la primera vez en nueve días que se le mueve la cara.</b>"
       },
       {
         "id": "e3_comida",
         "trigger": "goal",
         "x": 300,
         "y": 500,
-        "text": "La comida es de lata y está en un plato de flores pintadas que no es un plato de gato.<br><b>Era el plato de alguien. Aldo no tenía otra cosa que ofrecerle.</b>"
+        "age": "viejo",
+        "text": "La comida es de lata, en un plato de flores pintadas que no es un plato de gato.<br><b>El plato huele a alguien. A la misma que el ramo, la manta y la cesta.</b>"
+      },
+      {
+        "id": "e3_voz",
+        "trigger": "machine",
+        "x": 300,
+        "y": 650,
+        "age": "dias",
+        "text": "La caja de las teclas huele a polvo caliente y parpadea en rojo.<br><b>Es lo único de la casa que habla. Nadie la escucha.</b>"
       }
     ],
     "carryables": [],
@@ -460,7 +502,17 @@
         "pi": 2,
         "x": 180,
         "y": 470,
-        "text": "La manta del sofá guarda el hueco de alguien que se sentaba siempre en el mismo sitio.<br><b>Aldo se sienta en la butaca. El hueco del sofá no es suyo.</b>"
+        "age": "meses",
+        "text": "La manta del sofá guarda un hueco con forma de persona. Todavía huele.<br><b>Aldo se sienta en la butaca, enfrente. El hueco del sofá no es suyo.</b>"
+      },
+      {
+        "id": "e4_garras",
+        "trigger": "platform",
+        "pi": 2,
+        "x": 180,
+        "y": 460,
+        "age": "viejo",
+        "text": "El brazo del sofá está deshilachado en un sitio concreto, a la altura justa.<br><b>Alguien afiló aquí las uñas mucho antes que él. Hubo otro gato en esta casa.</b>"
       },
       {
         "id": "e4_retrato",
@@ -468,7 +520,8 @@
         "pi": 4,
         "x": 420,
         "y": 390,
-        "text": "Sobre la cómoda hay un marco tumbado bocabajo, como un escarabajo que no puede girarse.<br><b>Hay fotos que todavía queman al mirarlas.</b>"
+        "age": "dias",
+        "text": "Un marco tumbado bocabajo sobre la cómoda, como un escarabajo que no puede girarse.<br><b>El polvo de alrededor dibuja el rectángulo de cuando estaba de pie.</b>"
       },
       {
         "id": "e4_cesta",
@@ -476,7 +529,8 @@
         "cid": "cesta",
         "x": 500,
         "y": 420,
-        "text": "La cesta huele a lana y a unas manos que no son las de Aldo.<br><b>Dentro hay agujas, ovillos, y un patrón a medio hacer: «ratón — para el gato».</b>"
+        "age": "meses",
+        "text": "La cesta huele a lana y a unas manos que no son las de Aldo.<br><b>Agujas, ovillos y un patrón a medias: «ratón — para el gato». Sin terminar.</b>"
       },
       {
         "id": "e4_raton",
@@ -484,14 +538,16 @@
         "pi": 6,
         "x": 520,
         "y": 360,
-        "text": "En la repisa alta, donde nadie mira, hay un ratón de trapo con una oreja descosida.<br><b>Huele a la cesta de abajo. Alguien lo tejió para un gato que nunca llegó a venir.</b>"
+        "age": "anios",
+        "text": "En la repisa alta, donde nadie mira, un ratón de trapo con una oreja descosida.<br><b>Huele a la cesta de abajo y a nada más. Nunca lo ha tocado ningún gato.</b>"
       },
       {
         "id": "e4_regazo",
         "trigger": "goal",
         "x": 670,
         "y": 300,
-        "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta del todo. Aprieta el ratón como se aprieta la mano de alguien.</b>"
+        "age": "hoy",
+        "text": "Nero deja el ratón sobre el pecho de Aldo y se enrosca al lado.<br><b>Aldo no se despierta del todo. Aprieta el ratón como se aprieta una mano.</b>"
       }
     ],
     "spawn": 95,
@@ -670,14 +726,16 @@
         "pi": 2,
         "x": 300,
         "y": 700,
-        "text": "El escritorio está lleno de papeles empezados y tachados. Todos empiezan con la misma palabra.<br><b>«Sara». A veces «Sara, hija». Nunca hay más de tres líneas.</b>"
+        "age": "hoy",
+        "text": "El escritorio está sembrado de papeles empezados y tachados. Todos arrancan con la misma palabra.<br><b>«Sara». A veces «Sara, hija». Nunca pasan de tres líneas.</b>"
       },
       {
         "id": "e6_taza",
         "trigger": "knock",
         "x": 300,
         "y": 600,
-        "text": "La taza cae y no se rompe. Rueda hasta los pies de Aldo, que la recoge sin regañarle.<br><b>En la taza pone «PAPÁ». Es vieja. La lavan y la guardan, pero nadie bebe de ella.</b>"
+        "age": "anios",
+        "text": "La taza cae y no se rompe. Rueda hasta los pies de Aldo, que la recoge sin regañarle.<br><b>Pone «PAPÁ». Está lavada y guardada. Nadie bebe de ella.</b>"
       },
       {
         "id": "e6_retrato",
@@ -685,14 +743,16 @@
         "pi": 5,
         "x": 300,
         "y": 500,
-        "text": "El retrato vuelve a estar de pie: Aldo con menos años y una niña en hombros.<br><b>La niña de la foto y la palabra de las cartas tienen la misma edad exactamente.</b>"
+        "age": "anios",
+        "text": "El retrato vuelve a estar de pie: Aldo con menos años y una niña en hombros.<br><b>La niña de la foto y la palabra tachada de las cartas tienen la misma edad.</b>"
       },
       {
         "id": "e6_caja",
         "trigger": "goal",
         "x": 300,
         "y": 400,
-        "text": "La caja de zapatos está llena de sobres cerrados, ordenados por años, con la misma letra.<br><b>Ella sí escribió. Él nunca abrió ninguno. Esta noche, con la caja caída, empieza.</b>"
+        "age": "anios",
+        "text": "La caja de zapatos está llena de sobres cerrados, ordenados por años, con la misma letra.<br><b>Ella sí escribió. Él no abrió ninguno. Esta noche, con la caja en el suelo, abre el primero.</b>"
       }
     ],
     "carryables": [
@@ -717,6 +777,22 @@
           "y": 1350,
           "w": 170
         }
+      },
+      {
+        "id": "contestador",
+        "kind": "machine",
+        "host": 2,
+        "offset": 330,
+        "messages": [
+          {
+            "age": "meses",
+            "text": "La misma voz de mujer, más firme que la otra vez.<br><b>«Sé que no vas a llamar. Te escribo igual. Las cartas no se pueden colgar.»</b>"
+          },
+          {
+            "age": "meses",
+            "text": "Un pitido y medio mensaje: alguien grabó encima antes de que terminara.<br><b>«…yo tampoco te lo perdoné a ti, pero ella ya no…» Y se corta.</b>"
+          }
+        ]
       }
     ],
     "spawn": 160,
@@ -836,7 +912,8 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "Cajas con una marca naranja. Nero la ha visto antes. No recuerda dónde.<br><b>El cuerpo sí lo recuerda: es la marca de la caja en la que lo dejaron.</b>"
+        "age": "hoy",
+        "text": "Cajas con una marca naranja. El lomo se le eriza antes de saber por qué.<br><b>Es la marca de la caja en la que lo dejaron. El cuerpo se acuerda aunque él no.</b>"
       },
       {
         "id": "e7_dentro",
@@ -844,6 +921,7 @@
         "cid": "caja_abierta",
         "x": 400,
         "y": 700,
+        "age": "hoy",
         "text": "Se mete en una caja abierta a esperar lo peor. El mundo se apaga un poco, y no pasa nada.<br><b>Nadie cierra las solapas. Por primera vez, una caja es solo una caja.</b>"
       },
       {
@@ -852,14 +930,16 @@
         "pi": 3,
         "x": 140,
         "y": 700,
-        "text": "Dentro de una caja cerrada con cinta reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo, como quien vela algo.</b>"
+        "age": "hoy",
+        "text": "Dentro de una caja precintada reconoce su ratón de trapo.<br><b>No puede abrirla. Se queda encima un rato largo, como quien vela algo.</b>"
       },
       {
         "id": "e7_escalera",
         "trigger": "goal",
         "x": 640,
         "y": 420,
-        "text": "Desde el rellano se ve la puerta abierta: entran cajas nuevas, una planta, una bicicleta.<br><b>Las cajas no se llevan nada esta vez. Traen a alguien. Aldo ya no puede estar solo.</b>"
+        "age": "hoy",
+        "text": "Por la puerta abierta entran cajas nuevas, una planta, una bicicleta.<br><b>Estas cajas no se llevan nada. Traen a alguien.</b>"
       }
     ],
     "spawn": 60,
@@ -990,6 +1070,23 @@
           "y": 1690,
           "w": 150
         }
+      },
+      {
+        "id": "contestador",
+        "kind": "machine",
+        "host": 3,
+        "offset": 60,
+        "messages": [
+          {
+            "age": "hoy",
+            "collect": "e8_voz",
+            "text": "La caja salta sola en la oscuridad y se pone a hablar. Es la voz de mujer, y esta vez no se corta.<br><b>«Papá, soy Sara. Uma me ha dicho que estás peor. Voy para allá. Llego mañana.»</b>"
+          },
+          {
+            "age": "hoy",
+            "text": "La misma voz, despacio, al final del mensaje.<br><b>«No hace falta que me abras. Todavía tengo la llave.»</b>"
+          }
+        ]
       }
     ],
     "memories": [
@@ -998,7 +1095,16 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
-        "text": "En la pared hay papeles amarillos pegados que antes no estaban. Uno junto al fogón, otro junto a la puerta.<br><b>«GAS». «LLAVES». «CENA DE NERO». Aldo se escribe la casa para no perderla.</b>"
+        "age": "meses",
+        "text": "Papeles amarillos pegados a la pared que antes no estaban. Uno junto al fogón, otro junto a la puerta.<br><b>«GAS». «LLAVES». «CENA DE NERO». Aldo se escribe la casa para no perderla.</b>"
+      },
+      {
+        "id": "e8_voz",
+        "trigger": "machine",
+        "x": 300,
+        "y": 650,
+        "age": "hoy",
+        "text": "La caja de las teclas se enciende sola en mitad de la tormenta.<br><b>Salta cuando nadie contesta. Esta noche no contesta nadie.</b>"
       },
       {
         "id": "e8_balde",
@@ -1006,6 +1112,7 @@
         "cid": "balde",
         "x": 400,
         "y": 700,
+        "age": "hoy",
         "text": "El balde baja con su peso y la balda sube, un palmo apenas.<br><b>Nero pesa. Pero se necesita a sí mismo arriba: algo tiene que pesar por él.</b>"
       },
       {
@@ -1013,14 +1120,16 @@
         "trigger": "knock",
         "x": 300,
         "y": 600,
-        "text": "La olla cae dentro del balde con un trueno pequeño, y la balda sube del todo.<br><b>Abajo, en el pasillo, la voz de Uma dice un nombre dos veces. La segunda, más fuerte.</b>"
+        "age": "hoy",
+        "text": "La olla cae dentro del balde con un trueno pequeño y la balda sube del todo.<br><b>Abajo, en el pasillo, la voz de Uma dice un nombre dos veces. La segunda, más fuerte.</b>"
       },
       {
         "id": "e8_faros",
         "trigger": "goal",
         "x": 300,
         "y": 500,
-        "text": "Por la ventana alta: luces azules que giran sin hacer ruido, y unas puertas que se cierran con cuidado.<br><b>Los coches con prisa llevan sirena. Los que van con cuidado llevan a alguien dentro.</b>"
+        "age": "hoy",
+        "text": "Por la ventana alta: luces azules girando sin ruido, y unas puertas que se cierran con cuidado.<br><b>Los coches con prisa llevan sirena. Los que van con cuidado llevan a alguien dentro.</b>"
       }
     ],
     "spawn": 900,
@@ -1168,6 +1277,22 @@
         "slot": 0,
         "out": 130,
         "needsBelow": "cajon_medio"
+      },
+      {
+        "id": "contestador",
+        "kind": "machine",
+        "host": 3,
+        "offset": 250,
+        "messages": [
+          {
+            "age": "anios",
+            "text": "Uma ha traído la caja de las teclas al cuarto y las oye todas seguidas, de la más vieja a la última.<br><b>Hay mensajes de hace años. Aldo los guardó todos sin contestar ninguno.</b>"
+          },
+          {
+            "age": "viejo",
+            "text": "El más antiguo es de una voz de niña, riéndose, que dice que ya sabe montar sin ruedines.<br><b>Cuarenta segundos. Es el único que está gastado de tanto ponerlo.</b>"
+          }
+        ]
       }
     ],
     "memories": [
@@ -1176,6 +1301,7 @@
         "trigger": "start",
         "x": 300,
         "y": 900,
+        "age": "hoy",
         "text": "El cuarto huele a polvo removido y a Uma. Los ruidos pequeños vienen de la cama.<br><b>Estuvo fuera cuando pasó. Hay gente que llora pidiendo perdón.</b>"
       },
       {
@@ -1184,7 +1310,17 @@
         "pi": 5,
         "x": 300,
         "y": 700,
-        "text": "En la balda alta hay estrellas de plástico que ya no brillan, pegadas hace mucho.<br><b>Este fue el cuarto de una niña que se fue antes de que Nero naciera. La niña de la foto. Sara.</b>"
+        "age": "viejo",
+        "text": "En la balda alta hay estrellas de plástico que ya no brillan, pegadas hace mucho.<br><b>Este fue el cuarto de una niña. La de la foto. La de la palabra tachada.</b>"
+      },
+      {
+        "id": "e9_marcas",
+        "trigger": "platform",
+        "pi": 1,
+        "x": 300,
+        "y": 680,
+        "age": "viejo",
+        "text": "En el canto del marco de la puerta hay rayas a lápiz, una encima de otra, con fechas.<br><b>La última está a la altura del pecho de Aldo, y luego ya no hay más rayas.</b>"
       },
       {
         "id": "e9_caja",
@@ -1192,14 +1328,16 @@
         "cid": "caja_zapatos",
         "x": 400,
         "y": 600,
-        "text": "La caja de zapatos está en el escritorio, abierta y vacía. Nero cabe perfectamente.<br><b>Las cartas que guardaba están junto a la cama de Uma, abiertas todas. Aldo las leyó por fin.</b>"
+        "age": "hoy",
+        "text": "La caja de zapatos está en el escritorio, abierta y vacía. Nero cabe perfectamente.<br><b>Las cartas están junto a la cama de Uma, abiertas todas. Aldo las leyó por fin.</b>"
       },
       {
         "id": "e9_raton",
         "trigger": "goal",
         "x": 300,
         "y": 500,
-        "text": "Nero deja el ratón junto a la mano de Uma, como hizo una vez con Aldo.<br><b>Uma lo mira mucho rato. Luego lo aprieta — igual que él, exactamente igual.</b>"
+        "age": "hoy",
+        "text": "Nero deja el ratón junto a la mano de Uma y le frota la cara contra los nudillos, una vez, despacio.<br><b>Es la primera vez en toda su vida que deja un rastro en vez de encontrarlo. Ahora Uma huele a él.</b>"
       }
     ],
     "spawn": 520,

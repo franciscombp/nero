@@ -3,161 +3,221 @@
 
 ---
 
-## La regla que ordena todo
+## La propuesta: un gato no recuerda cuándo, recuerda dónde
 
-**Nero percibe. El jugador interpreta.**
+La versión anterior de esta historia usaba a Nero como testigo de una tragedia
+humana: el gato miraba, y el jugador leía por encima de su hombro. Funcionaba,
+pero el gato sobraba. Cualquier cámara habría servido.
 
-El gato no sabe qué es un funeral, ni una hija que no llama, ni una ambulancia.
-Ve un abrigo que huele a lluvia, un marco bocabajo, luces azules que giran sin
-ruido. Cada recuerdo del juego tiene dos frases: la primera es lo que Nero
-percibe (olores, temperaturas, huecos en los muebles); la segunda —en negrita—
-es la rendija por la que el jugador ve lo que de verdad está pasando.
+Esta versión cambia el eje. **La forma de conocer de un gato ES la estructura
+del relato.** Un gato no tiene memoria de acontecimientos: tiene olfato. No
+sabe *cuándo* pasó algo; sabe que en este sitio hay algo que alguien dejó. Su
+mundo no es una línea de tiempo, es un mapa de rastros.
 
-Nada se cuenta entero. El jugador reconstruye la historia con lo que hay en las
-habitaciones: eso que en Firewatch hacen las notas y en Stray los apartamentos
-vacíos, aquí lo hacen los muebles de una sola casa a lo largo de un año.
+De ahí salen las cuatro decisiones de esta temporada.
 
-**El pretexto es siempre el gato jugando.** Cada episodio tiene una meta de
-gato (comida, un regazo, una ventana) y un puzzle de gato (cajones, contrapesos,
-cosas que caen). La tragedia y la reparación ocurren de fondo, a la altura de
-las rodillas de los humanos, que es donde vive un gato.
+---
+
+### 1 · Los coleccionables son RASTROS, y tienen edad
+
+Ya no se llaman recuerdos —eso es un concepto humano que Nero no tiene—. Son
+**rastros**: lo que queda de alguien en un sitio. Cada uno lleva una etiqueta
+de edad que el gato no puede saber y el jugador sí:
+
+> `RASTRO DE HOY` · `DE HACE UNOS DÍAS` · `DE HACE MESES` · `DE HACE AÑOS` ·
+> `DE ANTES DE NERO`
+
+El jugador no reconstruye la historia por orden de episodios: la reconstruye
+por **capas de antigüedad**. Y como los rastros no caducan, un solo mueble
+puede guardar varios a la vez, apilados:
+
+**El sofá del episodio 4** tiene dos. Uno de hace meses: el hueco con forma de
+persona en la manta, que todavía huele. Otro de antes de que Nero naciera: el
+brazo deshilachado a la altura justa, donde otro gato afiló las uñas durante
+años. Nero solo huele. El jugador acaba de enterarse de que Elena tuvo un gato,
+de que ese gato ya no está, y de por qué Aldo dijo que no a otro durante tanto
+tiempo. **Sin una sola línea de exposición, en un brazo de sofá.**
+
+Igual la encimera del episodio 3: dos marcas gastadas en la madera, una al lado
+de la otra, de cuarenta años de dos tazas cada mañana. Y las rayas a lápiz del
+marco de la puerta en el episodio 9, que suben, suben, y de pronto se acaban.
+
+---
+
+### 2 · El contestador: lo único que habla, y nadie lo escucha
+
+Una caja con teclas, en la mesa del recibidor. Nero la pisa y la caja habla.
+Es el único objeto de la casa que emite una voz, y la casa lleva años sin
+escucharla.
+
+Es la columna vertebral de la temporada, y funciona porque **el jugador oye
+palabras donde el gato solo oye una voz que no vive aquí**:
+
+| Episodio | Lo que suena | Lo que el jugador entiende |
+|---|---|---|
+| 3 | «…la ceremonia será el jueves a las once» + una mujer que se corta a los ocho segundos | El funeral fue hace nueve días. La hija se enteró por la vecina |
+| 6 | «Sé que no vas a llamar. Te escribo igual» / medio mensaje grabado encima | Ella insiste desde hace años. Él graba encima para no oírlo |
+| 8 | En plena tormenta, a oscuras: «Voy para allá. Llego mañana» | Llega tarde. Esa misma noche se lo llevan |
+| 9 | Uma las oye todas seguidas. La más vieja: una niña riéndose porque ya monta sin ruedines | Ese mensaje está gastado de tanto ponerlo. Él las guardó TODAS |
+
+El piloto rojo parpadea mientras queden mensajes sin oír. Es el único punto
+rojo de una casa de tonos cálidos: el jugador lo busca sin que nadie se lo
+pida.
+
+---
+
+### 3 · Las versiones no cuadran
+
+Aldo escribe cartas que empiezan «Sara, hija» y no pasan de tres líneas. Sara
+deja mensajes. Y **los dos se culpan de cosas distintas**: él, de algo que
+hizo; ella, de algo que no hizo. El mensaje medio borrado del episodio 6 —
+«…yo tampoco te lo perdoné a ti, pero ella ya no…» — se corta justo donde
+estaría la respuesta.
+
+No hay una escena que lo aclare. No la habrá. El jugador que ata cabos se queda
+con una versión propia, y esa es la única que existe. Lo contrario —una
+revelación limpia al final— sería más cómodo y bastante menos verdad.
+
+---
+
+### 4 · El final invierte el verbo
+
+Toda la temporada consiste en **encontrar** rastros de gente que ya no está.
+Once episodios leyendo lo que otros dejaron.
+
+En la última escena, Nero le lleva el ratón de trapo a Uma y le frota la cara
+contra los nudillos. Es lo que hacen los gatos para marcar lo que es suyo.
+
+> *Es la primera vez en toda su vida que **deja** un rastro en vez de
+> encontrarlo. Ahora Uma huele a él.*
+
+El verbo se da la vuelta. Nero deja de leer la casa y empieza a formar parte de
+lo que la casa recuerda. Y la llave que suena abajo en la última línea —«nadie
+más tiene llave»— cierra el otro hilo sin nombrarlo.
 
 ---
 
 ## Lo que de verdad pasa (la capa que el jugador arma)
 
-**Antes del juego.** Aldo y Elena vivieron cuarenta años en esta casa. Su hija
-Sara se fue tras una pelea que nadie nombra —las cartas de la caja de zapatos
-sugieren que fue por cómo cuidar a Elena al final: Sara escribía, Aldo nunca
-abrió los sobres. Elena quería un gato; Aldo siempre dijo que no. Elena tejió
-un ratón de trapo «para el gato que nunca vino» y no llegó a terminar el
-segundo. Elena muere unos días antes del episodio 3.
+**Antes del juego.** Aldo y Elena, cuarenta años en esta casa. Tuvieron un gato
+que murió; Elena quería otro y Aldo siempre dijo que no. Ella empezó a tejerle
+un ratón de trapo de todos modos y no llegó a terminar la oreja. Su hija Sara
+se fue tras algo que ninguno de los dos cuenta igual. Elena muere nueve días
+antes del episodio 3.
 
-**El prólogo (eps. 0–2).** En otra parte de la ciudad, una familia se muda y
-abandona a su gatito en una caja de la empresa de mudanzas (la marca naranja).
-Nero persigue el camión de SU familia y no llega. Lo recoge un hombre mayor
-vestido de negro que vuelve del entierro de su mujer, con un ramo en la mano.
-**Deja las flores en el barro para poder recogerlo con las dos manos.** Dos
-abandonados se encuentran; ninguno de los dos lo sabe.
+**El prólogo (eps. 0-2).** Una familia se muda y abandona a su gatito en una
+caja de la empresa de mudanzas —la marca naranja—. Nero persigue el camión de
+SU familia y no llega. Lo recoge un hombre mayor de negro que vuelve de un
+entierro con un ramo en la mano: **deja las flores en el barro para poder
+cogerlo con las dos manos.** Dos abandonados se encuentran. Ninguno lo sabe.
 
-**La casa (eps. 3–6).** La cocina llena de tarjetas de pésame y un ramo
-secándose. Aldo le pone la comida en el plato de flores de Elena porque no
-tiene otra cosa —o porque sí—. Nero encuentra el ratón de trapo en la repisa
-alta y se lo lleva a Aldo dormido: Aldo lo aprieta como se aprieta una mano.
-Pasan los meses; el retrato vuelve a estar de pie. En el estudio, Aldo empieza
-cartas a Sara y las rompe. En lo alto de la librería, la caja de zapatos con
-todas las cartas que Sara SÍ mandó, cerradas. El puzzle del contrapeso tira la
-caja: esa noche, Aldo empieza a leer.
+**La casa (eps. 3-6).** El duelo medido en objetos: el abrigo sin colgar, el
+marco bocabajo con su rectángulo de polvo alrededor, la comida servida en el
+plato de flores de Elena. Nero encuentra el ratón en la repisa alta —huele a la
+cesta de labores y a nada más: nunca lo tocó ningún gato— y se lo lleva a Aldo
+dormido. Meses después, el retrato vuelve a estar de pie. Y en lo alto de la
+librería, una caja de zapatos con todas las cartas que Sara sí mandó, cerradas.
 
-**La grieta (eps. 7–8).** Cajas con la marca naranja llenan la sala y a Nero se
-le eriza el lomo sin saber por qué —el jugador sí sabe—. Pero esta vez las
-cajas no se llevan nada: traen a Uma, la nieta, que viene a vivir con él porque
-Aldo ya no puede estar solo. Las notas amarillas en la pared («GAS», «LLAVES»,
-«CENA DE NERO») cuentan lo que Aldo no dice. La noche de la tormenta hay un
-golpe sordo abajo y luego nada: Nero llega a la ventana alta a fuerza de
-contrapeso y ve luces azules que giran sin sirena. **Los coches que van con
-cuidado llevan a alguien dentro.**
+**La grieta (eps. 7-8).** Cajas con la marca naranja llenan la sala y a Nero se
+le eriza el lomo sin saber por qué. Esta vez las cajas traen a alguien: Uma, la
+nieta. Las notas amarillas en la pared —«GAS», «LLAVES», «CENA DE NERO»—
+cuentan lo que Aldo no dice. La noche de la tormenta el contestador salta solo
+en la oscuridad, y nadie lo oye. Luego, por la ventana alta, luces azules que
+giran sin sirena.
 
 **La reparación (ep. 9 y final).** Uma se encierra en el cuarto que fue de su
-madre —las estrellas de plástico pegadas al techo lo dicen sin decirlo—,
-creyendo que fue culpa suya por no estar. Nero hace lo único que sabe hacer:
-le lleva el ratón de trapo, como hizo con Aldo. Y abajo suena una llave en la
-cerradura. **Nadie más tiene llave.** Sara nunca la devolvió; Aldo nunca cambió
-la cerradura. La puerta llevaba años abierta en ese sentido exacto.
+madre —las estrellas de plástico del techo lo dicen sin decirlo— creyendo que
+fue culpa suya por no estar. Nero hace lo único que sabe: le lleva el ratón. Y
+abajo suena una llave.
 
 Si Aldo vuelve del hospital no se dice. La temporada no cierra esa puerta:
-cierra la otra, la de la familia que vuelve a caber en la casa.
+cierra la otra.
 
 ---
 
 ## Personajes
 
-**Nero** — gato negro, abandonado por una familia que se mudó sin él. Su miedo
-a las cajas es el único trauma visible del juego, y se cura solo: metiéndose en
-una que nadie cierra. No entiende nada de lo que pasa. Lo arregla todo.
+**Nero** — abandonado por una familia que se mudó sin él. Su miedo a las cajas
+es el único trauma visible del juego y se cura solo: metiéndose en una que
+nadie cierra. No entiende nada de lo que pasa. Lo arregla todo.
 
 **Aldo** — viudo reciente. No adopta a Nero: lo deja quedarse, que es distinto
-y más difícil. Su duelo se mide en objetos: el abrigo sin colgar, el marco
-bocabajo, la taza de «PAPÁ» que se lava y no se usa. Empieza a olvidar cosas y
-se escribe la casa en notas amarillas.
+y más difícil. Empieza a olvidar cosas y se escribe la casa en notas amarillas.
 
 **Elena** — la ausente. No aparece ni un fotograma y está en todas partes: el
-hueco de la manta del sofá, el plato de flores, la cesta de labores, el ratón
-de trapo con la oreja descosida. Quería un gato. Su gato llegó nueve días tarde.
+hueco de la manta, las dos marcas de la encimera, el brazo del sofá arañado por
+un gato anterior, el plato de flores, la cesta, el ratón sin terminar.
 
-**Sara** — la hija. Solo existe como palabra tachada («Querida Sara»), como
-letra en sobres cerrados, como niña con estrellas de plástico en el techo, y
-como llave que suena en la cerradura en la última línea.
+**Sara** — la hija. Existe como palabra tachada, como voz en una caja que nadie
+escucha, como niña con estrellas en el techo, y como llave en la cerradura.
 
-**Uma** — la nieta, ~veinte años. Visitaba en secreto. Se muda para cuidar a
-Aldo y la noche que sale, pasa lo que pasa. Su culpa no se dice: se oye a
-través de una puerta, «como algo que se rompe despacio».
+**Uma** — la nieta. Se muda para cuidar a Aldo, y la noche que sale, pasa lo
+que pasa. Su culpa no se dice: se oye a través de una puerta.
 
 ---
 
-## Los hilos (para que el jugador ate cabos)
+## Los hilos
 
 | Hilo | Se planta | Reaparece | Se cierra |
 |---|---|---|---|
-| **La marca naranja** | EP0: la caja del abandono | EP7: las cajas de la mudanza de Uma | EP7: nadie cierra las solapas |
-| **El ratón de trapo** | EP4: repisa alta, «para el gato que nunca vino» | EP7: empaquetado con cinta | EP9: en la mano de Uma |
-| **Las cartas** | EP6: borradores tachados «Sara» | EP6: la caja de zapatos llena de sobres cerrados | EP9: abiertas junto a la cama de Uma |
-| **El plato/cuenco de flores** | EP3: la comida en un plato que no es de gato | EP5: el cuenco de agua pintado | — (Elena, siempre presente) |
-| **El retrato** | EP4: bocabajo sobre la cómoda | EP5/6: de pie otra vez | EP9: la niña de la foto = Sara = el cuarto de las estrellas |
-| **La llave** | (invisible toda la temporada) | — | Final: «nadie más tiene llave» |
+| **La marca naranja** | EP0: la caja del abandono | EP7: las cajas que traen a Uma | EP7: nadie cierra las solapas |
+| **El ratón de trapo** | EP4: repisa alta, sin terminar | EP7: precintado en una caja | EP9: en la mano de Uma |
+| **El contestador** | EP3: parpadea y nadie lo oye | EP6, EP8 | EP9: Uma las oye todas |
+| **El gato anterior** | EP4: el brazo del sofá arañado | — | (explica el «no» de Aldo) |
+| **Las dos tazas** | EP3: dos marcas en la encimera | EP6: la taza de «PAPÁ» | — |
+| **Las rayas del marco** | EP9: suben y se acaban de golpe | — | (el día que Sara se fue) |
+| **La llave** | (nunca se planta) | — | Final: «nadie más tiene llave» |
 
 ---
 
 ## Episodios
 
-| # | Título | Espacio | Puzzle | Lo que pasa de fondo |
+| # | Título | Espacio | Puzzle | Rastros que importan |
 |---|---|---|---|---|
-| 0 | La caja | Calle, lluvia | Saltos acumulados abren las solapas | Una familia se mudó sin su gato |
-| 1 | El callejón | Calle | Contrarreloj en diagonal · ramas A/B | El camión es el de SU mudanza |
-| 2 | Unas manos | Calle | Cinemática | Aldo vuelve del entierro; suelta las flores |
-| 3 | El primer día | Cocina | Escalera de cajones · el bol (líquido) | La casa nueve días después del funeral |
-| 4 | El regazo | Sala | Llegar CON el ratón · la cesta (líquido) | El ratón lo tejió Elena; el marco, bocabajo |
-| 5 | El invierno | — | Cinemática | El retrato de pie; el cuenco de Elena, para Nero |
-| 6 | Lo que no se tira | Estudio | Libro + contrapeso tira la caja de zapatos | Aldo lee por fin las cartas de Sara |
-| 7 | Las cajas | Sala ↺ | Solapas de cartón en orden · la caja abierta (líquido) | Uma se muda CON él; el pánico de Nero |
-| 8 | La tormenta | Cocina ↺ | El gato como peso (no basta) → la olla | El golpe abajo; la ambulancia sin sirena |
-| 9 | El altillo | Cuarto de Sara | Examen de cajones · llegar CON el ratón | La culpa de Uma; las cartas abiertas; la llave |
-
-Cuatro espacios que se repiten y se transforman. La cocina del 3 es la del 8
-(con notas en la pared y pastillas donde estaban las tarjetas). La sala del 4
-es la del 7 (la cesta de Elena ya no está; hay una maleta). El progreso del
-duelo se mide en qué cambió de sitio.
+| 0 | La caja | Calle | Saltos acumulados | El olor va dentro de la caja, no fuera |
+| 1 | El callejón | Calle | Contrarreloj · ramas A/B | El camión se lleva el olor |
+| 2 | Unas manos | Calle | Cinemática | Jabón, flores aplastadas, tierra removida |
+| 3 | El primer día | Cocina | Cajones · el bol · **contestador** | Dos marcas de cuarenta años |
+| 4 | El regazo | Sala | Llegar CON el ratón · la cesta | El sofá con dos rastros de distinta edad |
+| 5 | El invierno | — | Cinemática | El retrato vuelve a estar de pie |
+| 6 | Lo que no se tira | Estudio | Contrapeso · **contestador** | Las cartas que él nunca abrió |
+| 7 | Las cajas | Sala ↺ | Solapas · la caja abierta | La marca naranja, otra vez |
+| 8 | La tormenta | Cocina ↺ | El gato como peso · **contestador** | «Todavía tengo la llave» |
+| 9 | El altillo | Cuarto de Sara | Cajones · llegar con el ratón · **contestador** | Las rayas del marco · el rastro que Nero DEJA |
 
 ---
 
 ## Reglas de escritura
 
 1. **Nero no piensa en palabras.** Percibe: olores, huecos, temperaturas,
-   costumbres rotas. «Huele a mucha gente que ya no está» sí; «Aldo está
+   desgastes, costumbres rotas. «Huele a mucha gente junta» sí; «Aldo está
    triste» no.
-2. **La negrita es del jugador.** La segunda frase de cada recuerdo dice lo que
-   el gato no puede saber. Nunca lo explica del todo: «las tarjetas dicen todas
-   lo mismo» y no «Elena ha muerto».
-3. **Nada de nombres en boca de nadie salvo los imprescindibles.** Sara existe
-   primero como palabra tachada. Elena no se nombra nunca — es «alguien», «de
-   alguien», «unas manos que no son las de Aldo».
-4. **Los objetos hacen el trabajo.** Si una emoción no cabe en un objeto que
-   Nero pueda oler, pisar o tirar, no va en el juego.
-5. **Ningún final se cierra del todo.** La ambulancia no dice hospital. La
-   llave no dice Sara. El jugador que ató los hilos lo sabe; el que no, siente
-   igual que algo volvió a su sitio.
+2. **La negrita es del jugador.** La segunda frase de cada rastro dice lo que el
+   gato no puede saber, y nunca lo explica del todo: «todas las tarjetas dicen
+   lo mismo», no «Elena ha muerto».
+3. **La edad hace el trabajo de la cronología.** Ninguna línea dice «hace
+   cuarenta años». Lo dice la etiqueta, y el jugador ordena.
+4. **El desgaste cuenta mejor que el objeto.** Un brazo de sofá deshilachado, un
+   rectángulo de polvo, unas rayas a lápiz que se acaban. Lo que se usó mucho y
+   lo que se dejó de usar.
+5. **Nadie se llama por su nombre salvo cuando duele.** Elena no se nombra
+   nunca: es «alguien», «la misma que el ramo». Sara aparece primero como
+   palabra tachada.
+6. **Ningún final se cierra del todo.** La ambulancia no dice hospital. La llave
+   no dice Sara.
 
 ---
 
 ## Notas de producción
 
-- Los textos viven en `data/scenes.json` (intro, hint, memories) y
-  `data/stories.json` (portada, final). Las dos cinemáticas (eps. 2 y 5) están
-  en `index.html`.
+- Los rastros viven en `data/scenes.json` (`memories[].age` marca la etiqueta:
+  `hoy`, `dias`, `meses`, `anios`, `viejo`). Varios rastros en la misma
+  plataforma se encolan y salen uno tras otro (`js/ui.js`).
+- El contestador es un interactivo `kind: "machine"` con una lista `messages`;
+  cada toque reproduce el siguiente y puede entregar un rastro (`collect`). Su
+  malla y el parpadeo del piloto están en `renderer3d.js`.
+- El texto que el jugador provoca (rastros, mensajes) **interrumpe** al texto
+  ambiental de la intro: prioridad 1 frente a 0.
 - Los objetos narrativos (`props`) se declaran por escena y se dibujan en
-  `renderer3d.js` → `buildStoryProp`: tarjetas, flores, abrigo, retrato
-  (bocabajo o de pie), cartas, notas de pared, pastillas, maleta.
-- Los recipientes (`containers`) disparan recuerdos con `trigger: "contain"` y
-  son parte de los puzzles (EP8: el gato como contrapeso temporal).
-- La marca naranja se pinta sola en toda caja (`boxstack`, la caja del prólogo
-  y los recipientes tipo `box`): un rectángulo coral, siempre el mismo.
+  `buildStoryProp`: tarjetas, flores, abrigo, retrato, cartas, notas, pastillas,
+  maleta.

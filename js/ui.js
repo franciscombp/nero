@@ -52,19 +52,53 @@ export function createUI() {
       // el título grande se retira y deja una etiqueta mínima en la esquina
       labelTimer = setTimeout(() => elements.epLabel?.classList.add('show'), 500);
     }, 2400);
-    if (intro) setTimeout(() => showMemory(intro, 6200), 900);
+    if (intro) setTimeout(() => showMemory(intro, 6200, null, 0), 900);
   }
 
   // ---------- Subtítulo narrativo ----------
-  function showMemory(html, ms = 5000) {
+  // Un RASTRO no es un recuerdo: es lo que queda de alguien en un sitio. Lo
+  // único que Nero no sabe es cuándo se dejó — pero el jugador sí, y de eso
+  // va la temporada. La edad se marca arriba, pequeña, como una etiqueta.
+  const AGE_LABEL = {
+    hoy: 'rastro de hoy',
+    dias: 'rastro de hace unos días',
+    meses: 'rastro de hace meses',
+    anios: 'rastro de hace años',
+    viejo: 'rastro de antes de Nero'
+  };
+  // Un mismo mueble puede guardar varios rastros de edades distintas: se
+  // encolan y salen uno detrás de otro en vez de pisarse. Esa pila ES la
+  // historia — el sofá con el hueco de hoy y las uñas de hace años.
+  // Prioridad 0 = texto ambiental (la intro del episodio). Prioridad 1 = algo
+  // que el jugador acaba de provocar. Lo segundo interrumpe a lo primero: si
+  // tocas el contestador, la voz suena AHORA, no cuando acabe la intro.
+  let subQueue = [];
+  function showMemory(html, ms = 5000, age, prio = 1) {
     if (!elements.subtitle) return;
-    elements.subtitle.innerHTML = html;
+    if (prio > 0 && subQueue.length && subQueue[0].prio === 0) {
+      clearTimeout(subTimer);
+      subQueue = subQueue.filter(it => it.prio > 0);
+    }
+    subQueue.push({ html, ms, age, prio });
+    if (subQueue.length === 1) playNextMemory();
+  }
+  function playNextMemory() {
+    const item = subQueue[0];
+    if (!item) return;
+    const tag = item.age && AGE_LABEL[item.age]
+      ? `<i class="age">${AGE_LABEL[item.age]}</i>` : '';
+    elements.subtitle.innerHTML = tag + item.html;
     elements.subtitle.classList.add('show');
     clearTimeout(subTimer);
-    subTimer = setTimeout(() => elements.subtitle.classList.remove('show'), ms);
+    subTimer = setTimeout(() => {
+      elements.subtitle.classList.remove('show');
+      subQueue.shift();
+      if (subQueue.length) setTimeout(playNextMemory, 620);
+    }, item.ms);
   }
   function hideMemory() {
     clearTimeout(subTimer);
+    subQueue = [];
     elements.subtitle?.classList.remove('show');
   }
 
