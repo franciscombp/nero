@@ -360,8 +360,8 @@
       {
         "kind": "wallclock",
         "wall": true,
-        "x": 980,
-        "y": 1180
+        "x": 430,
+        "y": 1250
       }
     ],
     "containers": [
@@ -1052,8 +1052,8 @@
       {
         "kind": "wallclock",
         "wall": true,
-        "x": 300,
-        "y": 1230
+        "x": 430,
+        "y": 1250
       },
       {
         "kind": "teapot",

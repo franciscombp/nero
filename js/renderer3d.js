@@ -59,7 +59,10 @@ export function createRenderer3D(canvas) {
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 20, 9000);
   const CAM_DIST = 900;                          // distancia al plano de juego
   const EYE = 62;                                // ojos de Nero sobre sus patas
-  const ORTHO_HALF_H = 470;                      // medio alto del encuadre, en unidades de mundo
+  const ORTHO_HALF_H = 350;                      // medio alto del encuadre, en unidades de mundo
+  // Límites del encuadre: el suelo se ve de canto abajo, el techo cierra arriba.
+  const FRAME_BOTTOM = -140;                     // canto de losa bajo las patas
+  const FRAME_TOP = 60;                          // margen sobre la viga (se suma a tY(CY))
   let camAnchor = 0, camAnchorGoal = 0;          // altura de la superficie pisada
   let halfViewW = 400, viewH = ORTHO_HALF_H * 2, viewW = 800;
   const lookTarget = new THREE.Vector3(0, EYE, 0);
@@ -184,6 +187,13 @@ export function createRenderer3D(canvas) {
   }
 
   // ---------- habitación ----------
+  // tono de silueta según la posición: unos edificios más cerca, otros más
+  // lejos — sin esto el skyline es una única mancha plana
+  function seededDark(x) {
+    const t = Math.abs(Math.round(x / 300)) % 3;
+    return [0x41414D, 0x4B4B58, 0x555565][t];
+  }
+
   function buildRoom(L) {
     clearGroup(room);
     dust = null;                 // clearGroup lo desechó: se reconstruye abajo
@@ -198,16 +208,17 @@ export function createRenderer3D(canvas) {
     const band = new THREE.Color(L.tint?.band ?? '#EDE0D2');
 
     // suelo: una isla con canto visible, flotando sobre el fondo profundo
-    const floor = rbox(W2 + 90, 70, 840, domestic ? COL.wood : COL.crateDk, 14);
-    put(floor, 0, -35, 0);
+    const floor = rbox(W2 + 520, 210, 840, domestic ? COL.wood : COL.crateDk, 14);
+    put(floor, 0, -105, 0);
     room.add(floor);
-    const fascia = rbox(W2 + 94, 22, 844, domestic ? COL.woodDk : 0x4E4A44, 8);
-    put(fascia, 0, -62, 0);
+    // rodapié: la línea oscura que separa el piso del canto y le da grosor
+    const fascia = rbox(W2 + 524, 22, 844, domestic ? COL.woodDk : 0x4E4A44, 8);
+    put(fascia, 0, -30, 0);
     room.add(fascia);
     if (domestic) {
       // tablones del piso
       for (let zz = -350; zz <= 350; zz += 100) {
-        const seam = pbox(W2 + 60, 1.6, 3, COL.woodDk);
+        const seam = pbox(W2 + 520, 1.6, 3, COL.woodDk);
         seam.receiveShadow = false;
         put(seam, 0, 0.8, zz);
         room.add(seam);
@@ -217,14 +228,31 @@ export function createRenderer3D(canvas) {
     // paredes
     if (domestic) {
       // paredes acotadas a la habitación (el fondo profundo asoma alrededor)
-      const back = pbox(W2 + 60, wallH, 26, bg.getHex(), { noCache: true });
+      const back = pbox(W2 + 520, wallH, 26, bg.getHex(), { noCache: true });
       back.material.color.copy(bg);
       back.receiveShadow = false;
       put(back, 0, wallH / 2 - 40, WALL_Z - 13);
-      const bandMesh = pbox(W2 + 60, 480, 8, band.getHex(), { noCache: true });
+      const bandMesh = pbox(W2 + 520, 340, 8, band.getHex(), { noCache: true });
       bandMesh.material.color.copy(band);
       bandMesh.receiveShadow = false;
-      put(bandMesh, 0, 240, WALL_Z - 2);
+      put(bandMesh, 0, 170, WALL_Z - 2);
+      // riel de silla: la línea horizontal que parte la pared en dos y quita
+      // de encima la sensación de "mancha de color plana"
+      const chairRail = rbox(W2 + 520, 9, 16, COL.woodDk, 2);
+      chairRail.receiveShadow = false;
+      put(chairRail, 0, 340, WALL_Z + 14);
+      room.add(chairRail);
+      // papel pintado de la parte alta: rayas verticales muy suaves
+      for (let sx3 = -(W2 / 2 + 240); sx3 <= W2 / 2 + 240; sx3 += 96) {
+        const stripe = pbox(16, wallH - 400, 4, band.getHex(), { noCache: true });
+        stripe.material.color.copy(band);
+        stripe.material.opacity = 0.3;
+        stripe.material.transparent = true;
+        stripe.receiveShadow = false;
+        stripe.castShadow = false;
+        put(stripe, sx3, 360 + (wallH - 400) / 2, WALL_Z + 6);
+        room.add(stripe);
+      }
       const sideL = pbox(34, wallH, 780, band.getHex(), { noCache: true });
       sideL.material.color.copy(band);
       sideL.receiveShadow = false;
@@ -234,9 +262,9 @@ export function createRenderer3D(canvas) {
       room.add(back, bandMesh, sideL, sideR);
 
       // techo fino + viga de acento
-      const ceil = rbox(W2 + 60, 22, 780, COL.woodDk, 5);
+      const ceil = rbox(W2 + 520, 22, 780, COL.woodDk, 5);
       put(ceil, 0, tY(CY) + 11, -20);
-      const beam = rbox(W2 + 60, 10, 790, accent, 4);
+      const beam = rbox(W2 + 520, 10, 790, accent, 4);
       put(beam, 0, tY(CY) - 5, -20);
       room.add(ceil, beam);
 
@@ -245,21 +273,97 @@ export function createRenderer3D(canvas) {
       for (const [px2, len] of pendants) {
         room.add(buildPendant(px2, len, night));
       }
+
+      // ---- vestido de la pared alta ----
+      // La franja sobre los muebles se veía como una mancha beige vacía en
+      // media pantalla. Aquí van las cosas que cuelgan de una pared real. Nada
+      // de esto es plataforma, y se coloca SOLO donde no hay mueble: se buscan
+      // huecos libres en x para no incrustar un cuadro dentro de una repisa.
+      const wallY = tY(CY);
+      const rail = rbox(W2 + 520, 13, 20, COL.woodDk, 3);
+      put(rail, 0, wallY - 54, WALL_Z + 18);
+      rail.receiveShadow = false;
+      const skirt = rbox(W2 + 520, 34, 20, accent, 4);
+      put(skirt, 0, 17, WALL_Z + 18);
+      room.add(rail, skirt);
+
+      // franja decorable: cada cuadro se cuelga JUSTO ENCIMA de lo que haya
+      // debajo en esa vertical (mueble, repisa o nada), así nunca queda
+      // incrustado en un mueble ni fuera de encuadre.
+      const tops = (L.platforms ?? [])
+        .filter(p => p.kind !== 'floor')
+        .map(p => [tX(p.x) - 40, tX(p.x + p.w) + 40, tY(p.y)]);
+      const clearAt = (x, halfW) => {
+        let top = 0;
+        for (const [a, b, t] of tops) {
+          if (x + halfW > a && x - halfW < b) top = Math.max(top, t);
+        }
+        return top;
+      };
+
+      const hung = [
+        [-W2 * 0.40, 96, 124, COL.sand],
+        [-W2 * 0.13, 72, 92, COL.blush],
+        [W2 * 0.16, 116, 84, COL.lilac],
+        [W2 * 0.41, 64, 84, COL.sky]
+      ];
+      for (const [hx, hw, hh, col] of hung) {
+        const base = clearAt(hx, hw / 2 + 20) + 95 + hh / 2;
+        if (base + hh / 2 > wallY - 80) continue;      // no cabe bajo la moldura
+        const frame = new THREE.Group();
+        frame.add(put(rbox(hw, hh, 12, COL.woodDk, 4), 0, 0, 0));
+        frame.add(put(rbox(hw - 16, hh - 16, 6, col, 3), 0, 0, 7));
+        frame.add(put(rbox(hw - 34, hh * 0.3, 4, COL.cream, 2, { opacity: 0.5 }), 0, -hh * 0.2, 10));
+        frame.position.set(hx, base, WALL_Z + 22);
+        frame.rotation.z = (Math.random() - 0.5) * 0.04;
+        room.add(frame);
+      }
+
+      // repisa decorativa con tarros, alta y sobre lo que haya debajo
+      for (const lx of [-W2 * 0.28, W2 * 0.30, -W2 * 0.46, W2 * 0.46]) {
+        const base = clearAt(lx, 175) + 190;
+        if (base > wallY - 150) continue;
+        const ledge = new THREE.Group();
+        ledge.add(put(rbox(300, 14, 90, COL.wood, 5), 0, 0, 0));
+        ledge.add(put(rbox(16, 26, 70, COL.woodDk, 3), -118, -18, 0));
+        ledge.add(put(rbox(16, 26, 70, COL.woodDk, 3), 118, -18, 0));
+        const jarCols = [COL.sage, COL.butter, COL.blush];
+        for (let i = 0; i < 3; i++) {
+          const jh = 40 + i * 9;
+          ledge.add(put(cyl(15, 16, jh, jarCols[i], { seg: 10 }), -80 + i * 76, 7 + jh / 2, 0));
+          ledge.add(put(cyl(16, 16, 7, COL.woodDk, { seg: 10 }), -80 + i * 76, 7 + jh, 0));
+        }
+        ledge.position.set(lx, base, WALL_Z + 60);
+        room.add(ledge);
+        break;
+      }
     }
 
     if (!domestic) {
       // ---- ambientación del callejón al amanecer ----
-      // siluetas de edificios con alguna ventana encendida
-      for (const [bx, bw2, bh2] of [[-330, 260, 980], [0, 310, 1260], [330, 240, 860]]) {
-        const bld = pbox(bw2, bh2, 16, 0x4B4B58, { noCache: true });
+      // Siluetas de edificios con alguna ventana encendida, repartidas por TODO
+      // el ancho del mundo: antes solo cubrían el centro y la mitad izquierda
+      // del callejón era un cielo vacío sin nada que mirar.
+      const skyline = [];
+      for (let bx = -(W2 / 2 + 280); bx <= W2 / 2 + 280; bx += 300) {
+        const seed = Math.abs(Math.round(bx / 300));
+        skyline.push([bx + (seed % 3) * 22, 230 + (seed % 4) * 34, 700 + (seed % 5) * 190]);
+      }
+      for (const [bx, bw2, bh2] of skyline) {
+        const bld = pbox(bw2, bh2, 16, seededDark(bx), { noCache: true });
         bld.receiveShadow = false;
-        put(bld, bx, bh2 / 2 - 40, WALL_Z + 2);
+        put(bld, bx, bh2 / 2 - 40, WALL_Z + 2 + (Math.abs(bx) % 40));
         room.add(bld);
-        for (let wi = 0; wi < 5; wi++) {
-          if ((wi * 7 + bx) % 3 === 0) continue;   // no todas encendidas
+        // remate del tejado: una cornisa que rompe la silueta plana
+        const cap = pbox(bw2 + 16, 14, 14, 0x3F3F4A, { noCache: true });
+        cap.receiveShadow = false;
+        put(cap, bx, bh2 - 40, WALL_Z + 8);
+        room.add(cap);
+        for (let wi = 0; wi < 6; wi++) {
+          if ((wi * 7 + Math.round(bx / 13)) % 3 === 0) continue;   // no todas encendidas
           const win = pbox(18, 24, 4, COL.butter, { emissive: 0xF0C987, ei: 1.0, noCache: true });
           win.receiveShadow = false;
-          put(win, bx - bw2 / 2 + 40 + (wi % 2) * (bw2 - 80), 160 + wi * (bh2 / 6), WALL_Z + 12);
+          put(win, bx - bw2 / 2 + 40 + (wi % 2) * (bw2 - 80), 150 + wi * (bh2 / 7), WALL_Z + 12);
           room.add(win);
         }
       }
@@ -490,11 +594,29 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'counter': {
+        // Mueble bajo de cocina de verdad: zócalo retranqueado, frentes de
+        // puerta con junta, tiradores y encimera con canto. Antes era un
+        // bloque verde liso del ancho de la pared: la mancha plana más grande
+        // de todo el juego.
         const bodyH = drop - 10;
-        g.add(put(rbox(p.w, bodyH, 300, COL.sage, 10), 0, -10 - bodyH / 2, SURF_Z));
-        g.add(put(rbox(p.w + 16, 12, 316, COL.cream, 5), 0, -6, SURF_Z));
-        g.add(put(rbox(64, bodyH * 0.5, 6, COL.cream, 4, { opacity: 0.4 }), -22, -16 - bodyH * 0.4, SURF_Z + 152));
-        g.add(put(sph(4.5, COL.woodDk), 20, -16 - bodyH * 0.4, SURF_Z + 154));
+        const plinth = 22;
+        g.add(put(rbox(p.w - 26, plinth, 280, 0x6E6B5E, 3), 0, -drop + plinth / 2, SURF_Z));
+        const cabH = bodyH - plinth;
+        g.add(put(rbox(p.w, cabH, 300, COL.sage, 8), 0, -10 - cabH / 2, SURF_Z));
+        // frentes: tantos como quepan a ~155u, con junta de 8u entre ellos
+        const n = Math.max(2, Math.round(p.w / 155));
+        const fw = (p.w - 14) / n - 8;
+        for (let i = 0; i < n; i++) {
+          const fx = -p.w / 2 + 7 + i * ((p.w - 14) / n) + fw / 2 + 4;
+          // cajón superior + puerta bajo él
+          g.add(put(rbox(fw, 46, 8, 0x9FB093, 4), fx, -26, SURF_Z + 150));
+          g.add(put(rbox(fw, cabH - 76, 8, 0xA6B79A, 4), fx, -10 - 26 - (cabH - 76) / 2 - 24, SURF_Z + 150));
+          g.add(put(rbox(fw * 0.42, 6, 6, COL.cream, 2), fx, -30, SURF_Z + 156));
+          g.add(put(sph(4, COL.woodDk), fx + fw * 0.3, -10 - 64, SURF_Z + 156));
+        }
+        // encimera: tabla clara con canto marcado
+        g.add(put(rbox(p.w + 16, 13, 316, COL.cream, 5), 0, -6, SURF_Z));
+        g.add(put(rbox(p.w + 18, 5, 320, 0xD9CDB8, 2), 0, -13, SURF_Z));
         break;
       }
       case 'sofa': {
@@ -566,11 +688,25 @@ export function createRenderer3D(canvas) {
         break;
       }
       case 'block': {
-        // Estorbo del suelo: cubo de basura, caja, mochila. No se puede cruzar
-        // por abajo — hay que ir por encima de los muebles.
+        // Estorbo del suelo: un cubo de basura con pedal y tapa. No se puede
+        // cruzar por abajo — hay que ir por encima de los muebles. Antes era
+        // un monolito gris liso que parecía un fallo de render.
         const bh = Math.max(p.h, 40);
-        g.add(put(rbox(p.w, bh, 200, 0x7C7468, 8), 0, -bh / 2, SURF_Z + 30));
-        g.add(put(rbox(p.w + 14, 16, 214, 0x655E54, 5), 0, 2, SURF_Z + 30));
+        const r = Math.min(p.w, 150) / 2;
+        g.add(put(cyl(r, r * 0.86, bh, 0x8A8377, { seg: 14 }), 0, -bh / 2, SURF_Z + 30));
+        // aros metálicos y nervios verticales
+        for (const fy of [-bh * 0.28, -bh * 0.66]) {
+          g.add(put(cyl(r + 2.5, r + 2.5, 7, 0x6E675C, { seg: 14 }), 0, fy, SURF_Z + 30));
+        }
+        for (let i = 0; i < 5; i++) {
+          const a = -0.9 + i * 0.45;
+          g.add(put(rbox(5, bh * 0.82, 5, 0x767063, 2),
+                     Math.sin(a) * r * 0.96, -bh / 2, SURF_Z + 30 + Math.cos(a) * r * 0.9));
+        }
+        // tapa con pestaña y pedal
+        g.add(put(cyl(r + 6, r + 2, 14, 0x5F594F, { seg: 14 }), 0, 5, SURF_Z + 30));
+        g.add(put(rbox(26, 7, 12, 0x4E4942, 3), r * 0.5, 9, SURF_Z + 30 + r * 0.7));
+        g.add(put(rbox(r * 1.1, 8, 22, 0x4E4942, 3), 0, -bh + 6, SURF_Z + 30 + r * 0.8));
         break;
       }
       case 'landing': {
@@ -805,12 +941,25 @@ export function createRenderer3D(canvas) {
       }
       g.add(put(rbox(6, 3, 14, COL.coral, 1), -12, 7, 0));
     } else if (pr.kind === 'coat') {
-      // un abrigo oscuro dejado caer sobre el respaldo
-      const cloth = rbox(46, 60, 16, 0x3A3733, 8);
-      put(cloth, 0, -18, 0); cloth.rotation.z = 0.06;
-      const hombros = rbox(52, 12, 20, 0x44403B, 6);
-      put(hombros, 0, 10, 0);
-      g.add(cloth, hombros);
+      // Un abrigo oscuro colgado del respaldo: hombros, faldón que cae con
+      // pliegues y una manga. Antes era un rectángulo negro flotando sobre la
+      // silla, que parecía un fallo de render más que una prenda.
+      const C = 0x3A3733;
+      g.add(put(rbox(54, 14, 26, 0x46423C, 6), 0, 12, 0));            // hombros sobre el respaldo
+      g.add(put(rbox(15, 20, 24, 0x46423C, 5), -20, 20, 0));          // cuello
+      g.add(put(rbox(15, 20, 24, 0x46423C, 5), 20, 20, 0));
+      for (let i = 0; i < 3; i++) {                                    // faldón en tres pliegues
+        const pw = 17 - i * 1.2, ph = 46 + i * 7;
+        const px3 = -17 + i * 17;
+        const fold = rbox(pw, ph, 20, i % 2 ? C : 0x413D38, 5);
+        put(fold, px3, -ph / 2 + 4, i % 2 ? 2 : -2);
+        fold.rotation.z = (i - 1) * 0.05;
+        g.add(fold);
+      }
+      const sleeve = rbox(13, 40, 16, C, 5);
+      put(sleeve, -26, -14, 6);
+      sleeve.rotation.z = 0.22;
+      g.add(sleeve);
       g.position.y += 96;   // cuelga del respaldo, no del asiento
     } else if (pr.kind === 'portrait') {
       // un retrato: en pie, o boca abajo — la diferencia es toda la historia
@@ -1701,9 +1850,20 @@ export function createRenderer3D(canvas) {
     const ak = 1 - Math.pow(0.006, dt);
     camAnchor += (camAnchorGoal - camAnchor) * ak;
 
-    const panX = Math.max(0, W2 / 2 - halfViewW + 30);
+    // ---- encuadre vertical: la habitación LLENA la pantalla ----
+    // El ancla quiere poner la superficie pisada en el tercio bajo, pero el
+    // encuadre nunca baja del canto del suelo ni sube del techo: antes se veía
+    // medio metro de vacío bajo la losa y media pantalla de pared desnuda.
+    const loY = FRAME_BOTTOM + ORTHO_HALF_H;
+    const hiY = FRAME_TOP + tY(CY) - ORTHO_HALF_H;
+    let eyeY = camAnchor + ORTHO_HALF_H * 0.56;
+    eyeY = hiY >= loY ? Math.max(loY, Math.min(hiY, eyeY)) : (loY + hiY) / 2;
+
+    // ---- paneo horizontal: el gato nunca toca el borde ----
+    // Se permite asomar un poco más allá de la pared (la sala se dibuja más
+    // ancha que el mundo jugable justo para eso).
+    const panX = Math.max(0, W2 / 2 - halfViewW * 0.45);
     const cx = Math.max(-panX, Math.min(panX, px));
-    const eyeY = Math.max(viewH * 0.28, camAnchor + EYE);
     const ck = 1 - Math.pow(0.008, dt);
     camera.position.x += (cx - camera.position.x) * ck;
     camera.position.y += (eyeY - camera.position.y) * ck;
@@ -1776,7 +1936,7 @@ export function createRenderer3D(canvas) {
       g.add(oct);
       if (m.label) {
         const spr = devLabel(m.label, m.color ?? 0xF0C987);
-        spr.position.y = 30;
+        spr.position.y = 30 + (i % 2) * 17;   // escalonadas: no se pisan entre sí
         spr.renderOrder = 99;
         g.add(spr);
       }
