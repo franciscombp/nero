@@ -1,4 +1,4 @@
-// Renderer «garabato»: Nero dibujado a mano sobre papel.
+// Renderer «tinta y acuarela»: Nero dibujado a plumilla y lavado con acuarela.
 //
 // Sustituye al renderer 3D cumpliendo EXACTAMENTE su contrato (resize,
 // loadScene, update, render, screenToWorld, setCatVisible, setDevMarkers),
@@ -20,12 +20,12 @@ const WW = CONFIG.WORLD_W, FY = CONFIG.FLOOR_Y, CY = CONFIG.CEILING_Y;
 const VIEW_H = 700;                   // unidades de mundo que caben en vertical
 
 const C = {
-  ink: '#2b211d', chalk: '#ece6f5',
+  ink: '#3a2f28', chalk: '#3a2f28',
   coral: '#f08a6c', red: '#e05a4a', butter: '#f6c85f', mustard: '#e3a83a',
   sage: '#9cc28a', green: '#6aa66a', sky: '#86c0e0', blue: '#5a8fd0',
   lilac: '#b7a2dd', purple: '#8a6cc4', blush: '#f6b3a7', pink: '#ee8fa8',
   wood: '#d8a066', woodDk: '#a86a3c', cream: '#fff5e0', white: '#ffffff',
-  grey: '#a39d95', dark: '#3b3432', cat: '#1c1818', teal: '#56b3a5',
+  grey: '#a39d95', dark: '#3b3432', cat: '#4f5864', teal: '#56b3a5',
   card: '#c99a66', cardDk: '#a3764a', skin: '#e9b99a'
 };
 
@@ -48,13 +48,15 @@ function lum(c) { const [r, g, b] = rgb(c); return (0.299 * r + 0.587 * g + 0.11
 function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
 
 // ---------- paletas por momento del día ----------
+// Tinta y acuarela: pigmentos apagados sobre papel crema, como un cuaderno
+// de viaje. Los colores vivos del garabato se lavan hacia el papel.
 const DAY = {
-  morning:   { wall: '#fde9b6', band: '#9fd3c2', rail: '#5f9c89', skirt: '#f08a6c', floor: '#dba469', plank: '#b77c45', ceil: '#b98a5c', paper: '#fdf3de', motif: 'flower', motifCol: '#e58f6f', overlay: 0, glow: 0.16 },
-  afternoon: { wall: '#d5e9c6', band: '#f0b67f', rail: '#c98752', skirt: '#86b3d9', floor: '#d49a62', plank: '#a86d42', ceil: '#a8845e', paper: '#f4f1df', motif: 'dot', motifCol: '#7fae70', overlay: 0, glow: 0.2 },
-  evening:   { wall: '#f9cba6', band: '#c9a0d6', rail: '#8f6bb0', skirt: '#f0c35a', floor: '#c98b58', plank: '#9d6538', ceil: '#9b7250', paper: '#f8e3d2', motif: 'zig', motifCol: '#e07f5f', overlay: 0.16, glow: 0.42 },
-  night:     { wall: '#cfc4ee', band: '#a797d6', rail: '#6d5cae', skirt: '#f2a7b8', floor: '#b88a6a', plank: '#8a6245', ceil: '#6f5a86', paper: '#e8e2f3', motif: 'star', motifCol: '#8a78c8', overlay: 0.3, glow: 0.55 }
+  morning:   { wall: '#f1e6cf', band: '#c9d3cc', rail: '#8b9a94', skirt: '#c98f6e', floor: '#d3b28c', plank: '#a9835f', ceil: '#cdbba0', paper: '#f3ead6', motif: 'flower', motifCol: '#c9a58f', overlay: 0, glow: 0.14 },
+  afternoon: { wall: '#ece5d0', band: '#d9c3a6', rail: '#a68b6b', skirt: '#9fb3c2', floor: '#cfab85', plank: '#a07b58', ceil: '#c5b398', paper: '#f1ead8', motif: 'dot', motifCol: '#a9b59a', overlay: 0, glow: 0.18 },
+  evening:   { wall: '#eddcc6', band: '#c7b8c4', rail: '#8f7f95', skirt: '#cfae7a', floor: '#c9a27e', plank: '#977253', ceil: '#b9a28a', paper: '#f0e3d2', motif: 'zig', motifCol: '#c29a86', overlay: 0.12, glow: 0.36 },
+  night:     { wall: '#d6d4dc', band: '#aeb0c2', rail: '#7c7f98', skirt: '#c7a5ad', floor: '#b39a86', plank: '#8a7461', ceil: '#9a97aa', paper: '#e6e2dc', motif: 'star', motifCol: '#9a9db6', overlay: 0.22, glow: 0.45 }
 };
-const CHALK = { wall: '#2e3350', band: '#262a45', rail: '#4b5185', skirt: '#5a4f7c', floor: '#3a3448', plank: '#2a2536', ceil: '#1f2238', paper: '#1b1d30', motif: 'star', motifCol: '#6c73b8', overlay: 0, glow: 0.6 };
+const CHALK = { wall: '#aab3bd', band: '#8f9aa6', rail: '#6d7886', skirt: '#9a8f86', floor: '#a9998a', plank: '#857666', ceil: '#7e8793', paper: '#e9e3d4', motif: 'star', motifCol: '#7d8898', overlay: 0, glow: 0.45 };
 
 export function createDoodleRenderer(canvas) {
   const ctx = canvas.getContext('2d');
@@ -143,41 +145,70 @@ export function createDoodleRenderer(canvas) {
     const seed = o.seed ?? (pts[0][0] * 0.131 + pts[0][1] * 0.719);
     const closed = o.closed !== false;
     if (fill && closed) {
-      const f = o.raw ? fill : fl(fill);
+      const f = o.raw ? mix(fill, '#f3ead6', lum(fill) < 0.25 ? 0.04 : 0.15) : fl(fill);
+      const b = bounds(pts), big = b.w * b.h > 900;
       ctx.save();
-      if (!o.noOff) ctx.translate(2.4, 1.8);
-      trace(wob(pts, true, seed + 40, 1.0), true);
-      ctx.globalAlpha = o.alpha ?? 1;
+      // la mancha se sale un poco de la línea, hacia un lado distinto en cada forma
+      if (!o.noOff) ctx.translate((hash(seed) - 0.5) * 7, (hash(seed + 2) - 0.2) * 6);
+      trace(wob(pts, true, seed + 40, big ? 3.2 : 1.2), true);
+      ctx.globalAlpha = (o.alpha ?? 1) * 0.86;
       ctx.fillStyle = f;
       ctx.fill();
-      ctx.globalAlpha = 1;
-      if (o.hatch !== false) {
-        const b = bounds(pts);
-        if (b.w * b.h > 900 && b.w * b.h < 900000) {
-          ctx.clip();
-          hatchIn(b, o.hatchColor ?? (pal.chalk ? shade(f, 1.35) : shade(f, 0.78)), o.hatchGap ?? 9, seed);
-        }
+      // pigmento acumulado en el borde de la mancha
+      ctx.globalAlpha = (o.alpha ?? 1) * 0.35;
+      ctx.strokeStyle = shade(f, 0.8);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      // segunda capa más oscura, solo en la parte baja: la sombra de acuarela
+      if (big && o.hatch !== false) {
+        ctx.clip();
+        const g = ctx.createLinearGradient(0, b.y, 0, b.y + b.h);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, shade(f, 0.72));
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = g;
+        ctx.fillRect(b.x - 10, b.y + b.h * 0.35, b.w + 20, b.h * 0.7);
       }
+      ctx.globalAlpha = 1;
       ctx.restore();
     }
     if (o.line !== false) {
-      const lw = o.lw ?? 2.6;
+      const lw = (o.lw ?? 2.6) * 0.5;
       ctx.strokeStyle = o.ink ?? ink;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.lineWidth = lw;
-      trace(wob(pts, closed, seed, o.amp ?? 1.3), closed);
+      ctx.globalAlpha = 0.9;
+      trace(wob(pts, closed, seed, (o.amp ?? 1.3) * 0.7), closed);
       ctx.stroke();
-      if (!o.single) {
-        ctx.globalAlpha = 0.4;
-        ctx.lineWidth = lw * 0.55;
-        trace(wob(pts, closed, seed + 13.7, (o.amp ?? 1.3) * 1.3), closed);
+      // líneas de construcción: aristas rectas que se pasan de largo
+      if (!o.single && pts.length <= 6) {
+        ctx.lineWidth = lw * 0.7;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        const n = pts.length, segs = closed ? n : n - 1;
+        for (let i = 0; i < segs; i++) {
+          const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % n];
+          const len = Math.hypot(x2 - x1, y2 - y1);
+          if (len < 40) continue;
+          const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+          const e1 = 4 + hash(seed + i) * 14, e2 = 4 + hash(seed + i + 9) * 14;
+          const nx = -uy * (hash(seed + i * 3) - 0.5) * 3, ny = ux * (hash(seed + i * 3) - 0.5) * 3;
+          ctx.moveTo(x1 - ux * e1 + nx, y1 - uy * e1 + ny);
+          ctx.lineTo(x2 + ux * e2 + nx, y2 + uy * e2 + ny);
+        }
         ctx.stroke();
-        ctx.globalAlpha = 1;
       }
+      ctx.globalAlpha = 1;
     }
   }
   // en modo tiza los colores de rotulador se apagan hacia el azul noche
-  function fl(c) { return pal.chalk ? mix(c, '#262a4a', 0.5) : c; }
+  function fl(c) {
+    // acuarela: el pigmento se desatura y se aclara hacia el papel
+    const [r, g, b] = rgb(c), m = (r + g + b) / 3;
+    let d = `rgb(${(r + (m - r) * 0.45) | 0},${(g + (m - g) * 0.45) | 0},${(b + (m - b) * 0.45) | 0})`;
+    d = mix(d, '#f3ead6', lum(c) < 0.25 ? 0.05 : 0.22);
+    return pal.dusk ? mix(d, '#6f7c8f', 0.3) : d;
+  }
 
   const rectPts = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
   function ellPts(cx, cy, rx, ry, n, rot = 0) {
@@ -359,26 +390,26 @@ export function createDoodleRenderer(canvas) {
     const x0 = view.l - 60, w = view.r - view.l + 120;
     // cielo de madrugada: noche arriba, un amago de amanecer sobre los tejados
     const g = ctx.createLinearGradient(0, FY - 1100, 0, FY);
-    g.addColorStop(0, '#171a33'); g.addColorStop(0.65, '#2f3159'); g.addColorStop(1, '#6a5577');
+    g.addColorStop(0, '#8f9bab'); g.addColorStop(0.6, '#b9bec4'); g.addColorStop(1, '#e3cdb8');
     ctx.fillStyle = g;
     ctx.fillRect(x0, view.t - 40, w, FY - view.t + 60);
     // skyline por todo el ancho
     for (let bx = Math.floor(x0 / 230) * 230; bx < x0 + w; bx += 230) {
       const hh = 380 + hash(bx) * 560, bw = 180 + hash(bx + 7) * 70;
-      const col = ['#262a4a', '#2f3358', '#373c66'][Math.floor(hash(bx + 3) * 3)];
+      const col = ['#8a8f98', '#9a948c', '#a8a39a'][Math.floor(hash(bx + 3) * 3)];
       R(bx, FY - hh, bw, hh, col, { raw: true, hatchGap: 26, lw: 2 });
       R(bx - 8, FY - hh - 12, bw + 16, 14, col, { raw: true, hatch: false, lw: 1.8 });
       for (let wy = FY - hh + 50; wy < FY - 120; wy += 92) {
         for (let wx = bx + 26; wx < bx + bw - 40; wx += 62) {
           const on = hash(wx * 1.7 + wy) > 0.55;
-          R(wx, wy, 30, 40, on ? C.butter : '#1b1e36', { raw: true, hatch: false, lw: 1.6 });
+          R(wx, wy, 30, 40, on ? '#e8c77e' : '#6d7480', { raw: true, hatch: false, lw: 1.6 });
         }
       }
     }
     // asfalto mojado con charcos que reflejan la farola
-    R(x0, FY, w, 280, '#34343f', { raw: true, hatchGap: 16, lw: 3 });
+    R(x0, FY, w, 280, '#8c8a88', { raw: true, hatchGap: 16, lw: 3 });
     for (let px = Math.floor(x0 / 330) * 330 + 60; px < x0 + w; px += 330) {
-      E(px + hash(px) * 90, FY + 60 + hash(px + 1) * 70, 70 + hash(px + 2) * 50, 12, '#5a6a92', { raw: true, hatch: false, lw: 1.6, alpha: 0.7 });
+      E(px + hash(px) * 90, FY + 60 + hash(px + 1) * 70, 70 + hash(px + 2) * 50, 12, '#a9bccb', { raw: true, hatch: false, lw: 1.6, alpha: 0.7 });
     }
     // farola
     const sx = 760;
@@ -472,7 +503,7 @@ export function createDoodleRenderer(canvas) {
         const glass = L.time === 'night' ? '#2c3a66' : (L.time === 'evening' ? '#f7b58a' : '#bfe3f2');
         R(x + 20, wy + 14, w - 40, 202, glass, { hatch: false, lw: 1.8, raw: pal.chalk });
         if (L.time === 'night') {
-          ctx.strokeStyle = 'rgba(200,215,255,0.5)'; ctx.lineWidth = 1.6;
+          ctx.strokeStyle = 'rgba(70,85,105,0.4)'; ctx.lineWidth = 1.2;
           ctx.beginPath();
           for (let i = 0; i < 18; i++) {
             const rx = x + 26 + hash(i * 3.1) * (w - 52), ry = wy + 20 + ((hash(i) * 200 + time * 260) % 190);
@@ -1040,8 +1071,8 @@ export function createDoodleRenderer(canvas) {
     if (walking) gait += dt * (6 + Math.abs(cat.vx) * 0.03);
     const sw = walking ? Math.sin(gait) * 0.45 : 0;
 
-    const outline = pal.chalk ? C.chalk : '#0c0a0a';
-    const body = { raw: true, hatchColor: '#433a3a', hatchGap: 5, ink: outline, lw: 2.4 };
+    const outline = '#2a2522';
+    const body = { raw: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 };
     const lg = pp.lg;
     const legStroke = (x0, y0, a, len) => {
       const x1 = x0 + Math.sin(a) * len, y1 = y0 + Math.cos(a) * len;
@@ -1105,8 +1136,8 @@ export function createDoodleRenderer(canvas) {
   // colgado de un canto: manos arriba, cuerpo vertical, patas traseras que
   // patalean a ráfagas y cola de péndulo
   function drawHanging(cat, dt) {
-    const outline = pal.chalk ? C.chalk : '#0c0a0a';
-    const body = { raw: true, hatchColor: '#433a3a', hatchGap: 5, ink: outline, lw: 2.4 };
+    const outline = '#2a2522';
+    const body = { raw: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 };
     scrT -= dt;
     if (scrT <= 0) { scrB = 0.55; scrT = 1.2 + hash(time) * 1.4; }
     scrB = Math.max(0, scrB - dt);
@@ -1137,8 +1168,8 @@ export function createDoodleRenderer(canvas) {
   // el gato vertido en un recipiente: un charco feliz con cabeza
   function drawLiquid(cat, c) {
     const w = c.w ?? 90, h = c.rim ?? 34, x = c.x, y = c.y;
-    const outline = pal.chalk ? C.chalk : '#0c0a0a';
-    const body = { raw: true, hatchColor: '#433a3a', hatchGap: 5, ink: outline, lw: 2.4 };
+    const outline = '#2a2522';
+    const body = { raw: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 };
     const f = cat.facing;
     const bob = Math.sin(time * 2) * 1.5;
     E(x, y - h * 0.9 + bob, w * 0.44, h * 0.5, C.cat, body);
@@ -1163,7 +1194,7 @@ export function createDoodleRenderer(canvas) {
   // ======================================================================
   function drawWeather() {
     if (pal.domestic) return;
-    ctx.strokeStyle = 'rgba(200,210,255,0.35)';
+    ctx.strokeStyle = 'rgba(70,80,95,0.3)';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     const n = 90;
@@ -1259,8 +1290,8 @@ export function createDoodleRenderer(canvas) {
     const exterior = L.time === 'dawn';
     const dark = !exterior && lum(bg) < 0.3;
     const base = exterior || dark ? CHALK : (DAY[L.time] ?? DAY.morning);
-    pal = { ...base, ...(L.palette ?? {}), domestic: !exterior, chalk: exterior || dark };
-    ink = pal.chalk ? C.chalk : C.ink;
+    pal = { ...base, ...(L.palette ?? {}), domestic: !exterior, chalk: false, dusk: exterior || dark };
+    ink = C.ink;
 
     // orden de dibujo: pared → muebles de suelo grandes → muebles con patas
     const order = ['window', 'starshelf', 'frameshelf', 'shelf', 'landing', 'top', 'mirror', 'boxstack', 'counter', 'dresser', 'bed',
@@ -1309,7 +1340,7 @@ export function createDoodleRenderer(canvas) {
 
   function update(dt, state) {
     time += dt;
-    boil = Math.floor(time * 6) % 3;
+    boil = 0;
     st = state;
     const cat = state.cat;
     st._dt = dt;
@@ -1362,10 +1393,23 @@ export function createDoodleRenderer(canvas) {
     drawDust();
     drawDev();
 
+    // salpicaduras de tinta fijas al mundo
+    ctx.fillStyle = ink;
+    for (let gx = Math.floor(l / 140) * 140; gx < l + viewW + 140; gx += 140) {
+      for (let gy = Math.floor(t / 140) * 140; gy < t + VIEW_H + 140; gy += 140) {
+        const h1 = hash(gx * 0.37 + gy * 1.13);
+        if (h1 > 0.55) continue;
+        ctx.globalAlpha = 0.25 + h1;
+        ctx.beginPath();
+        ctx.arc(gx + hash(gx + gy) * 140, gy + hash(gy - gx) * 140, 0.8 + h1 * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
     // grano de papel por encima de todo
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (!grainPat) grainPat = ctx.createPattern(grain, 'repeat');
-    ctx.globalAlpha = pal.chalk ? 0.06 : 0.09;
+    ctx.globalAlpha = 0.14;
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = grainPat;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
