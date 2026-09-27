@@ -670,7 +670,7 @@ document.getElementById('exportBtn').onclick = () => {
   download('scenes.json', scenes);
   setTimeout(() => download('stories.json', stories), 300);
 };
-document.getElementById('play2d').onclick = () => { saveDraft(); window.open('index.html?draft=1', 'nero'); };
+document.getElementById('play2d').onclick = () => { saveDraft(); window.open('2d.html?draft=1', 'nero2d'); };
 document.getElementById('play3d').onclick = () => { saveDraft(); window.open('index.html?draft=1', 'nero3d'); };
 
 function renderAll() { renderTabs(); renderPanel(); draw(); }

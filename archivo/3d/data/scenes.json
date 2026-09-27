@@ -988,14 +988,7 @@
         "host": 0,
         "offset": 1520
       }
-    ],
-    "palette": {
-      "wall": "#e6ddd0",
-      "band": "#c7b8a5",
-      "rail": "#8f7f6c",
-      "motif": "dot",
-      "motifCol": "#a8998a"
-    }
+    ]
   },
   {
     "name": "La tormenta",
@@ -1058,7 +1051,7 @@
     "knock": {
       "platform": 1,
       "offset": 420,
-      "type": "pot",
+      "type": "mug",
       "memoryId": "e8_olla"
     },
     "yarn": false,

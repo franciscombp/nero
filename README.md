@@ -234,3 +234,12 @@ git push origin main
 ```
 
 Configurado en `.github/workflows/pages.yml`
+
+## Rediseño 2D "garabato"
+
+El juego se dibuja ahora en plano con `js/doodle.js` (Canvas 2D): trazo que
+"hierve", relleno de rotulador desplazado, sombreado a cera y modo tiza para la
+calle y las noches. La lógica, los niveles y la historia no cambian.
+Tipografías Patrick Hand y Caveat (OFL) en `fonts/`.
+
+La versión 3D anterior queda archivada y jugable en `archivo/3d/`.

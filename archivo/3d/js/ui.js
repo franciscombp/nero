@@ -5,21 +5,6 @@
 // y antes de cada episodio NO hay modal: el título aparece sobre la escena y el
 // juego arranca solo. Los modales se reservan para el inicio, las cinemáticas y
 // el final, que son los tres momentos en los que sí queremos detener al jugador.
-// Nero sentado, de espaldas a medias, dibujado con trazo de rotulador
-const CAT_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="#2b211d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M30 88 C18 86 16 70 26 62 C30 50 34 40 42 36 C40 26 42 18 46 12 L52 24 C56 22 62 22 66 24 L72 12 C76 20 76 30 72 38 C80 46 80 60 76 72 C74 82 68 88 58 88 Z" fill="#1c1818"/>
-  <path d="M30 88 C18 90 8 82 12 72 C14 66 22 66 22 72" />
-  <circle cx="52" cy="32" r="4" fill="#fff" stroke-width="1.5"/><circle cx="64" cy="32" r="4" fill="#fff" stroke-width="1.5"/>
-  <circle cx="53" cy="33" r="1.6" fill="#111" stroke="none"/><circle cx="65" cy="33" r="1.6" fill="#111" stroke="none"/>
-  <path d="M57 40 l2 2 l2 -2" stroke="#ee8fa8" stroke-width="2.2"/>
-  <path d="M8 94 C30 90 70 96 94 92" stroke-width="2.4"/>
-</svg>`;
-const MOON_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="#2b211d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M62 14 C40 18 28 38 34 58 C40 76 60 86 80 78 C60 76 46 62 46 44 C46 30 52 20 62 14 Z" fill="#f6c85f"/>
-  <path d="M20 26 l3 6 l6 1 l-5 4 l2 6 l-6 -3 l-6 3 l2 -6 l-5 -4 l6 -1 Z" fill="#fdf3de" stroke-width="2"/>
-  <path d="M78 34 l2 4 l4 1 l-3 3 l1 4 l-4 -2 l-4 2 l1 -4 l-3 -3 l4 -1 Z" fill="#fdf3de" stroke-width="2"/>
-</svg>`;
-
 export function createUI() {
   const $ = id => document.getElementById(id);
   const elements = {
@@ -67,12 +52,8 @@ export function createUI() {
       // el título grande se retira y deja una etiqueta mínima en la esquina
       labelTimer = setTimeout(() => elements.epLabel?.classList.add('show'), 500);
     }, 2400);
-    // la intro es de ESTE episodio: si se cambia de episodio antes de que
-    // salga, se cancela (antes se colaba la del anterior)
-    clearTimeout(introTimer);
-    if (intro) introTimer = setTimeout(() => showMemory(intro, 6200, null, 0), 900);
+    if (intro) setTimeout(() => showMemory(intro, 6200, null, 0), 900);
   }
-  let introTimer = null;
 
   // ---------- Subtítulo narrativo ----------
   // Un RASTRO no es un recuerdo: es lo que queda de alguien en un sitio. Lo
@@ -98,11 +79,6 @@ export function createUI() {
       clearTimeout(subTimer);
       subQueue = subQueue.filter(it => it.prio > 0);
     }
-    // un texto ambiental nuevo sustituye al ambiental viejo, no se pone detrás
-    if (prio === 0 && subQueue.some(it => it.prio === 0)) {
-      if (subQueue[0]?.prio === 0) clearTimeout(subTimer);
-      subQueue = subQueue.filter(it => it.prio > 0);
-    }
     subQueue.push({ html, ms, age, prio });
     if (subQueue.length === 1) playNextMemory();
   }
@@ -122,7 +98,6 @@ export function createUI() {
   }
   function hideMemory() {
     clearTimeout(subTimer);
-    clearTimeout(introTimer);
     subQueue = [];
     elements.subtitle?.classList.remove('show');
   }
@@ -151,11 +126,7 @@ export function createUI() {
 
   // ---------- Modales (inicio, cinemáticas, final) ----------
   function showCard(cfg) {
-    if (elements.oface) {
-      // el gato (o la luna del final) dibujado a mano, no un emoji
-      const f = cfg.face ?? 'cat';
-      elements.oface.innerHTML = f === '' ? '' : (f === '🌙' ? MOON_SVG : CAT_SVG);
-    }
+    if (elements.oface) elements.oface.textContent = cfg.face ?? '🐈‍⬛';
     if (elements.okicker) elements.okicker.textContent = cfg.kicker ?? '';
     if (elements.otitle) {
       elements.otitle.textContent = cfg.title ?? '';

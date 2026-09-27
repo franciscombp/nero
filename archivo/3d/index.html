@@ -8,24 +8,17 @@
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preload" href="fonts/caveat-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/patrick-hand-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles/main.css">
 <style>
   /* el cronómetro del callejón no debe pisar los pills del HUD */
   #level-timer { top: 64px !important; }
 </style>
-<meta name="theme-color" content="#fdf3de">
+<meta name="theme-color" content="#F4ECE3">
+<script type="importmap">
+{ "imports": { "three": "./js/vendor/three.module.min.js" } }
+</script>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="2" result="n">
-      <animate attributeName="seed" values="2;5;8" dur="0.5s" calcMode="discrete" repeatCount="indefinite"/>
-    </feTurbulence>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/>
-  </filter>
-</svg>
 <canvas id="game"></canvas>
 <div id="vignette"></div>
 <div id="hud">
@@ -46,13 +39,14 @@
 </div></div>
 
 <script type="module">
-// Nero: orquestador del juego. Toda la lógica (física, historia, mecánicas)
-// vive aquí y en js/core|physics|actions|ui; el dibujo lo hace js/doodle.js.
+// Nero en el motor 3D: mismo contenido y mecánicas que el juego 2D (data/scenes.json),
+// renderizado como diorama 2.5D. La lógica de gameplay replica index.html.
 import { CONFIG, createCat, createLevelState, loadLevel, resetCat, createPushable, checkMemoryTriggers, checkKnockTrigger, checkGoalTrigger, checkPuzzleCondition, createInteractives, canOpenInteractive, createCarryables, nearCarryable, landedOnPan, createContainers, nearContainer } from './js/core.js';
 import { createPhysics } from './js/physics.js';
 import { createUI } from './js/ui.js';
-import { createDoodleRenderer } from './js/doodle.js';
+import { createRenderer3D } from './js/renderer3d.js';
 import { doJump as jumpAction, tryTargetJump as targetJumpAction, doDrop as dropAction, applySneak } from './js/actions.js';
+import { registerParts } from './js/parts3d.js';
 import { initPWA } from './js/pwa.js';
 
 initPWA();
@@ -65,19 +59,23 @@ async function main() {
   const devOn = new URLSearchParams(location.search).has('dev');
   const draftScenes = useDraft ? localStorage.getItem('nero-draft-scenes') : null;
   const draftStory = useDraft ? localStorage.getItem('nero-draft-stories') : null;
-  const [levelsRes, storiesRes] = await Promise.all([
+  const draftParts = useDraft ? localStorage.getItem('nero-draft-parts') : null;
+  const [levelsRes, storiesRes, partsRes] = await Promise.all([
     fetch('data/scenes.json'),
-    fetch('data/stories.json')
+    fetch('data/stories.json'),
+    fetch('data/parts.json')
   ]);
   const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
   const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
+  // piezas 3D declarativas: primero las publicadas, encima el borrador del builder
+  registerParts(partsRes.ok ? await partsRes.json() : {});
+  if (draftParts) registerParts(JSON.parse(draftParts));
 
   const physics = createPhysics(CONFIG);
   const ui = createUI();
   const cat = createCat();
   const levelState = createLevelState();
-  // el mundo se dibuja a mano: mismo contrato que el renderer 3D archivado
-  const r3d = createDoodleRenderer(canvas);
+  const r3d = createRenderer3D(canvas);
 
   let W = window.innerWidth, H = window.innerHeight;
   function resize() {
@@ -284,9 +282,7 @@ async function main() {
       const cin = cinematics[levelState.level];
       levelState.levelDone = true;   // sin gameplay
       ui.showCinematic(cin?.text ?? L.intro, cin?.duration ?? 4000);
-      const token = actToken;
       setTimeout(() => {
-        if (token !== actToken) return;   // ya se cambió de episodio
         const gm = levelState.memories.find(m => m.trigger === 'goal');
         if (gm) collect(gm.id);
         completeLevel();
@@ -344,14 +340,12 @@ async function main() {
 
   // Sin modal entre episodios: el título aparece sobre la habitación, la
   // introducción baja como subtítulo y el jugador ya tiene el control.
-  let actToken = 0;
   function showAct() {
     levelState.mode = 'ui';
     startLevel(levelState.level);
     const L = curLevel();
     ui.showEpisode(L.kicker, L.name, L.intro);
-    const token = ++actToken;
-    setTimeout(() => { if (token === actToken) enterPlay(); }, 650);
+    setTimeout(enterPlay, 650);
   }
 
   // Los interactivos abiertos se añaden AL FINAL de la lista de plataformas:
@@ -815,7 +809,7 @@ async function main() {
 main().catch(err => {
   console.error(err);
   document.body.insertAdjacentHTML('beforeend',
-    `<div style="position:fixed;inset:auto 10px 10px;background:#FBF6EE;border-radius:12px;padding:12px;color:#4A4139;font-size:13px">Error al cargar Nero: ${err.message}</div>`);
+    `<div style="position:fixed;inset:auto 10px 10px;background:#FBF6EE;border-radius:12px;padding:12px;color:#4A4139;font-size:13px">Error al cargar Nero 3D: ${err.message}</div>`);
 });
 </script>
 </body>
