@@ -44,20 +44,24 @@ const cat = createCat();
 loadLevel(levelState, levelData);
 ```
 
-### `renderer.js`
-Contiene todos los sistemas de rendering:
-- **drawBackground()**: Cielo, sol/luna, decoraciones
-- **drawPlatform()**: Renderizado de plataformas (15+ tipos)
-- **drawCat()**: 6 poses distintas del gato (idle, air, hang, slide, sneak, land)
-- **drawKnock()**: Objetos rompibles (taza, ratón)
-- **drawProps()**: Accesorios (ovillo de lana, libros)
-- **catTail(), catEars(), catFace()**: Helpers de animación del gato
+### `doodle.js`
+El renderer actual: tinta y acuarela sobre papel, en Canvas 2D. Cumple el
+mismo contrato que tenía el renderer 3D archivado (`resize`, `loadScene`,
+`update`, `render`, `screenToWorld`, `setCatVisible`, `setDevMarkers`), así
+que `index.html` no distingue uno de otro.
+- **sketch()**: la primitiva de todo: mancha de acuarela desplazada + trazo
+  fino + líneas de construcción que se pasan de largo
+- **drawRoom() / drawStreet()**: pared, friso, techo, suelo o calle
+- **drawPlat()**: cada tipo de plataforma (encimera, sofá, cama, cajas…)
+- **drawInteractives() / drawProps() / drawContainer()**: cajones, contrapesos,
+  contestador, atrezo y recipientes
+- **drawCat()**: esqueleto procedimental. Cada estado del juego fija objetivos
+  (caderas, hombros, almohadillas) y las patas se resuelven por cinemática
+  inversa de dos huesos; la cola es una cadena con inercia en coordenadas de
+  mundo (llega tarde al saltar, sube al caer). La marcha avanza con la
+  distancia recorrida, no con el tiempo, para que las patas no patinen.
 
-**Características:**
-- Mantiene TODA la calidad visual original
-- Sin simplificaciones
-- Animaciones fluidas
-- Escalable a nuevos tipos de plataformas
+La versión 3D anterior sigue completa y jugable en `archivo/3d/`.
 
 ### `physics.js`
 Motor de física completo:

@@ -38,12 +38,11 @@ let partKinds = [];
 
 // ---------- carga / persistencia ----------
 async function load() {
-  // piezas del builder: se ofrecen como tipos de plataforma (el juego las
-  // dibuja desde data/parts.json, con prioridad sobre los muebles de código)
+  // piezas del builder 3D archivado: solo las que queden en un borrador local
+  // (el juego 2D ya no las dibuja; se conservan para no romper escenas viejas)
   try {
-    const pj = await fetch('data/parts.json').then(r => r.ok ? r.json() : {});
     const pd = JSON.parse(localStorage.getItem('nero-draft-parts') || '{}');
-    partKinds = Object.keys({ ...pj, ...pd }).sort();
+    partKinds = Object.keys(pd).sort();
   } catch (e) { /* sin piezas: el editor funciona igual */ }
 
   const draftS = localStorage.getItem('nero-draft-scenes');

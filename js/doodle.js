@@ -149,9 +149,9 @@ export function createDoodleRenderer(canvas) {
       const b = bounds(pts), big = b.w * b.h > 900;
       ctx.save();
       // la mancha se sale un poco de la línea, hacia un lado distinto en cada forma
-      if (!o.noOff) ctx.translate((hash(seed) - 0.5) * 7, (hash(seed + 2) - 0.2) * 6);
+      if (!o.noOff && !o.solid) ctx.translate((hash(seed) - 0.5) * 7, (hash(seed + 2) - 0.2) * 6);
       trace(wob(pts, true, seed + 40, big ? 3.2 : 1.2), true);
-      ctx.globalAlpha = (o.alpha ?? 1) * 0.86;
+      ctx.globalAlpha = o.solid ? 1 : (o.alpha ?? 1) * 0.86;
       ctx.fillStyle = f;
       ctx.fill();
       // pigmento acumulado en el borde de la mancha
@@ -1023,146 +1023,388 @@ export function createDoodleRenderer(canvas) {
   }
 
   // ======================================================================
-  //  El gato
+  //  El gato: esqueleto procedimental
   // ======================================================================
-  const POSE = {
-    idle:   { lg: 20, crouch: 0,   rot: 0,    fa: 0,    ba: 0,    tail: 1,    sit: 0 },
-    sit:    { lg: 20, crouch: 0,   rot: 0,    fa: 0,    ba: 0,    tail: 0.2,  sit: 1 },
-    charge: { lg: 11, crouch: 1,   rot: -0.05, fa: 0.25, ba: -0.25, tail: 0.4, sit: 0 },
-    land:   { lg: 13, crouch: 0.8, rot: 0,    fa: 0.3,  ba: -0.3, tail: 0.6,  sit: 0 },
-    air:    { lg: 20, crouch: 0,   rot: 0,    fa: -1.0, ba: 0.95, tail: 0.7,  sit: 0 },
-    fall:   { lg: 22, crouch: 0,   rot: 0,    fa: 0.2,  ba: -0.2, tail: 1.3,  sit: 0 },
-    sneak:  { lg: 12, crouch: 0.7, rot: 0.04, fa: 0,    ba: 0,    tail: 0.15, sit: 0 }
+  // Un gato no es una elipse con cuatro palos. Es una columna que se arquea y
+  // se estira, cuatro patas con codo, rodilla y corvejón, y una cola que va
+  // siempre un poco tarde. Cada estado del juego fija OBJETIVOS (dónde van
+  // las caderas, los hombros y cada almohadilla); el dibujo se acerca a ellos
+  // con un muelle, y las patas se resuelven por cinemática inversa. Así las
+  // transiciones (agacharse → saltar → estirarse → recoger → aterrizar) salen
+  // solas, sin fotogramas dibujados a mano.
+  //
+  // Coordenadas locales: origen en las almohadillas (cat.x, cat.y), +x es
+  // hacia donde mira el gato, +y hacia abajo.
+  const CAT = {
+    thigh: 16, shank: 15, meta: 10,   // trasera: muslo, pierna, metatarso (el corvejón queda alto)
+    arm: 17, fore: 16, paw: 6,        // delantera: brazo, antebrazo, mano
+    half: 14                          // medio grosor del tronco
   };
-  const pp = { lg: 20, crouch: 0, rot: 0, fa: 0, ba: 0, tail: 1, sit: 0 };
-  let idleAge = 0, gait = 0, blinkT = 0, blink = 0, scrT = 0, scrB = 0, tailPh = 0;
+  const POSES = {
+    //         caderas      hombros      arco  patas traseras (lejos, cerca)  delanteras            cabeza      inclin.
+    idle:   { hip: [-20, -31], sh: [18, -32], arch: 0,  hind: [[-26, 0], [-16, 0]], front: [[14, 0], [26, 0]], head: [36, -46], pitch: 0 },
+    sit:    { hip: [-10, -16], sh: [10, -46], arch: 1,  hind: [[-14, 0], [-4, 0]],  front: [[6, 0], [18, 0]],  head: [18, -70], pitch: 0.05 },
+    charge: { hip: [-26, -16], sh: [14, -18], arch: 7,  hind: [[-32, 0], [-22, 0]], front: [[16, 0], [30, 0]], head: [32, -30], pitch: 0.2 },
+    rise:   { hip: [-30, -24], sh: [26, -32], arch: -7, hind: [[-58, -4], [-50, 0]], front: [[42, -36], [48, -28]], head: [46, -50], pitch: -0.15 },
+    fall:   { hip: [-20, -34], sh: [20, -32], arch: 9,  hind: [[-18, -10], [-8, -6]], front: [[28, -4], [36, 0]], head: [40, -42], pitch: 0.4 },
+    land:   { hip: [-22, -18], sh: [16, -16], arch: 10, hind: [[-32, 0], [-22, 0]], front: [[12, 0], [26, 0]], head: [30, -28], pitch: 0.35 },
+    sneak:  { hip: [-24, -21], sh: [18, -22], arch: 2,  hind: [[-26, 0], [-16, 0]], front: [[14, 0], [26, 0]], head: [38, -32], pitch: 0.12 }
+  };
+  // direcciones de reposo de la cola, por segmento (la punta es la última)
+  const TAILS = {
+    idle:   [[-1, 0.35], [-1, -0.1], [-0.8, -0.6], [-0.35, -1], [0.1, -1], [0.4, -0.9]],
+    sit:    [[-1, 0.5], [-0.9, 0.9], [-0.3, 1], [0.5, 0.9], [1, 0.3], [1, 0]],
+    charge: [[-1, 0.3], [-1, 0.1], [-1, -0.05], [-1, -0.2], [-0.95, -0.3], [-0.85, -0.5]],
+    rise:   [[-1, 0.4], [-1, 0.3], [-1, 0.2], [-1, 0.1], [-1, 0], [-1, -0.05]],
+    fall:   [[-0.9, -0.4], [-0.8, -0.6], [-0.6, -0.8], [-0.4, -0.95], [-0.3, -1], [-0.2, -1]],
+    land:   [[-1, 0.2], [-1, 0], [-1, -0.15], [-1, -0.3], [-0.9, -0.45], [-0.8, -0.6]],
+    sneak:  [[-1, 0.25], [-1, 0.05], [-1, -0.05], [-1, -0.15], [-1, -0.25], [-0.9, -0.35]],
+    hang:   [[-0.3, 1], [-0.1, 1], [0, 1], [0.05, 1], [0.1, 1], [0.1, 1]]
+  };
+  const TSEG = 6, TLEN = 10.5;
+  const cur = JSON.parse(JSON.stringify(POSES.idle));   // pose actual (se acerca a la objetivo)
+  let poseKey = 'idle', idleAge = 0, gait = 0, lastX = null, blinkT = 0, blink = 0;
+  let scrT = 0, scrB = 0, earT = 0, earF = 0, tailPts = null, lookT = 0, lookA = 0;
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function lerpPose(a, b, t) {
+    return {
+      hip: [lerp(a.hip[0], b.hip[0], t), lerp(a.hip[1], b.hip[1], t)],
+      sh: [lerp(a.sh[0], b.sh[0], t), lerp(a.sh[1], b.sh[1], t)],
+      arch: lerp(a.arch, b.arch, t),
+      hind: a.hind.map((p, i) => [lerp(p[0], b.hind[i][0], t), lerp(p[1], b.hind[i][1], t)]),
+      front: a.front.map((p, i) => [lerp(p[0], b.front[i][0], t), lerp(p[1], b.front[i][1], t)]),
+      head: [lerp(a.head[0], b.head[0], t), lerp(a.head[1], b.head[1], t)],
+      pitch: lerp(a.pitch, b.pitch, t)
+    };
+  }
+  function approach(target, k) {
+    cur.hip[0] += (target.hip[0] - cur.hip[0]) * k; cur.hip[1] += (target.hip[1] - cur.hip[1]) * k;
+    cur.sh[0] += (target.sh[0] - cur.sh[0]) * k; cur.sh[1] += (target.sh[1] - cur.sh[1]) * k;
+    cur.arch += (target.arch - cur.arch) * k;
+    cur.pitch += (target.pitch - cur.pitch) * k;
+    cur.head[0] += (target.head[0] - cur.head[0]) * k; cur.head[1] += (target.head[1] - cur.head[1]) * k;
+    for (let i = 0; i < 2; i++) {
+      cur.hind[i][0] += (target.hind[i][0] - cur.hind[i][0]) * k; cur.hind[i][1] += (target.hind[i][1] - cur.hind[i][1]) * k;
+      cur.front[i][0] += (target.front[i][0] - cur.front[i][0]) * k; cur.front[i][1] += (target.front[i][1] - cur.front[i][1]) * k;
+    }
+  }
+  // cinemática inversa de dos huesos: devuelve la articulación intermedia
+  function ik2(ax, ay, tx, ty, l1, l2, bend) {
+    let dx = tx - ax, dy = ty - ay;
+    let d = Math.hypot(dx, dy) || 0.001;
+    const max = l1 + l2 - 0.5;
+    if (d > max) { dx *= max / d; dy *= max / d; d = max; }
+    const cosA = Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)));
+    const ang = Math.atan2(dy, dx) + bend * Math.acos(cosA);
+    return [ax + Math.cos(ang) * l1, ay + Math.sin(ang) * l1, ax + dx, ay + dy];
+  }
+  // una pata: polilínea gruesa con contorno y almohadilla al final
+  function limb(pts, near, outline) {
+    const fill = near ? C.cat : shade(C.cat, 0.82);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const [w, col] of [[9.6, outline], [6.6, fill]]) {
+      ctx.strokeStyle = col; ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+    const p = pts[pts.length - 1];
+    ctx.fillStyle = fill; ctx.strokeStyle = outline; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(p[0] + 1.5, p[1] - 0.5, 5.2, 3.6, 0, 0, 6.3); ctx.fill(); ctx.stroke();
+  }
+  // trasera: cadera → rodilla (hacia delante) → corvejón (hacia atrás) → almohadilla
+  function hindLeg(hip, paw, near, outline, crouch) {
+    const hock = [paw[0] - 5 - crouch * 6, paw[1] - CAT.meta * (1 - crouch * 0.35)];
+    const [kx, ky, hx, hy] = ik2(hip[0], hip[1], hock[0], hock[1], CAT.thigh, CAT.shank, -1);
+    limb([[hip[0], hip[1]], [kx, ky], [hx, hy], paw], near, outline);
+  }
+  // delantera: hombro → codo (hacia atrás) → muñeca → mano
+  function frontLeg(sh, paw, near, outline) {
+    const wrist = [paw[0] - CAT.paw * 0.7, paw[1] - CAT.paw];
+    const [ex, ey, wx, wy] = ik2(sh[0], sh[1], wrist[0], wrist[1], CAT.arm, CAT.fore, 1);
+    limb([[sh[0], sh[1]], [ex, ey], [wx, wy], paw], near, outline);
+  }
+  // tronco: lomo arqueado por arriba, pecho y vientre por abajo, perpendicular
+  // al eje caderas-hombros (vale igual para el gato sentado, casi vertical)
+  function bodyPts(hip, sh, arch, t) {
+    let ux = sh[0] - hip[0], uy = sh[1] - hip[1];
+    const len = Math.hypot(ux, uy) || 1; ux /= len; uy /= len;
+    const nx = uy, ny = -ux;                                 // normal hacia arriba
+    const mx = (hip[0] + sh[0]) / 2, my = (hip[1] + sh[1]) / 2;
+    const pt = (bx, by, u, n) => [bx + ux * u + nx * n, by + uy * u + ny * n];
+    return [
+      pt(hip[0], hip[1], -15, 2), pt(hip[0], hip[1], -8, t - 1), pt(mx, my, 0, t + arch),
+      pt(sh[0], sh[1], 4, t), pt(sh[0], sh[1], 14, 5),
+      pt(sh[0], sh[1], 14, -9), pt(sh[0], sh[1], 0, -t), pt(mx, my, 0, -t - 1 + arch * 0.35),
+      pt(hip[0], hip[1], -5, -t), pt(hip[0], hip[1], -15, -7)
+    ];
+  }
+  // la cola vive en coordenadas de MUNDO para que tenga inercia de verdad:
+  // cuando Nero salta, la cola llega tarde; cuando cae, sube a hacer de
+  // contrapeso, como en los gatos de verdad
+  function stepTail(baseW, rest, f, rot, dt, onGround, groundY) {
+    if (!tailPts || Math.hypot(tailPts[0][0] - baseW[0], tailPts[0][1] - baseW[1]) > 120) {
+      tailPts = Array.from({ length: TSEG + 1 }, (_, i) => [baseW[0] - f * i * TLEN, baseW[1]]);
+    }
+    tailPts[0] = baseW;
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    for (let i = 1; i <= TSEG; i++) {
+      const prev = tailPts[i - 1], c = tailPts[i];
+      let dx = c[0] - prev[0], dy = c[1] - prev[1];
+      const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+      const r = rest[i - 1];
+      const rx = f * (r[0] * cr - r[1] * sr), ry = r[0] * sr + r[1] * cr;
+      const k = 1 - Math.exp(-dt * (10 - i * 1.1));         // la punta llega más tarde
+      dx += (rx - dx) * k; dy += (ry - dy) * k;
+      const n = Math.hypot(dx, dy) || 1;
+      c[0] = prev[0] + dx / n * TLEN; c[1] = prev[1] + dy / n * TLEN;
+      if (onGround && c[1] > groundY) c[1] = groundY;      // no atraviesa el suelo
+    }
+  }
+  function drawTail(outline, scale) {
+    if (!tailPts) return;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const pass of [0, 1]) {
+      for (let i = 1; i <= TSEG; i++) {
+        const w = (8.4 - i * 0.45) * scale;
+        ctx.lineWidth = pass ? w - 3 : w;
+        ctx.strokeStyle = pass ? C.cat : outline;
+        ctx.beginPath();
+        ctx.moveTo(tailPts[i - 1][0], tailPts[i - 1][1]);
+        ctx.lineTo(tailPts[i][0], tailPts[i][1]);
+        ctx.stroke();
+      }
+    }
+  }
 
   function drawCat(cat, dt) {
     if (!catVisible) return;
-    if (cat.state === 'contain' && cat.containRef) { drawLiquid(cat, cat.containRef); return; }
-    idleAge = cat.state === 'idle' ? idleAge + dt : 0;
-    let key = cat.state;
-    if (key === 'idle' && idleAge > 7) key = 'sit';
-    if (key === 'air' && cat.vy > 260) key = 'fall';
-    blinkT += dt;
-    if (blinkT > 3.4) { blinkT = 0; blink = 0.14; }
-    blink = Math.max(0, blink - dt);
-    tailPh += dt * (cat.state === 'idle' ? 2 : 3.4);
+    if (cat.state === 'contain' && cat.containRef) { drawLiquid(cat, cat.containRef); tailPts = null; return; }
+    const f = cat.facing || 1;
+    const base = st.baby ? 0.78 : 1;
+    const outline = '#2a2522';
 
-    const base = st.baby ? 0.8 : 1;
-    ctx.save();
-    ctx.translate(cat.x, cat.y);
-    ctx.scale(base, base);
-    if (cat.state === 'hang' || cat.state === 'slide') {
-      ctx.scale(cat.state === 'hang' ? (cat.hangSide ?? cat.facing) : cat.facing, 1);
-      drawHanging(cat, dt);
+    // --- qué pose toca ---
+    idleAge = cat.state === 'idle' ? idleAge + dt : 0;
+    blinkT += dt;
+    if (blinkT > 3.1 + hash(time | 0) * 2) { blinkT = 0; blink = 0.13; }
+    blink = Math.max(0, blink - dt);
+    earT -= dt; if (earT <= 0) { earT = 2 + hash(time * 3) * 5; earF = 0.18; }
+    earF = Math.max(0, earF - dt);
+    lookT -= dt; if (lookT <= 0) { lookT = 1.5 + hash(time * 7) * 4; lookA = (hash(time * 11) - 0.5) * 0.5; }
+
+    // andar: la fase de la marcha avanza con la distancia recorrida, no con el
+    // tiempo, así las almohadillas no patinan sobre el suelo
+    const moved = lastX == null ? 0 : cat.x - lastX;
+    lastX = cat.x;
+    const walking = cat.onGround && cat.state === 'sneak' && Math.abs(moved) > 0.05;
+    if (walking) gait += Math.abs(moved) / 44;
+
+    let key = cat.state;
+    if (key === 'idle' && idleAge > 6) key = 'sit';
+    if (key === 'slide') key = 'hang';
+    let target;
+    if (key === 'air') {
+      // subiendo: estirado como una flecha; cayendo: patas por delante y lomo
+      // arqueado, preparando el aterrizaje
+      const t = Math.max(0, Math.min(1, (cat.vy + 260) / 560));
+      target = lerpPose(POSES.rise, POSES.fall, t);
+      key = t < 0.5 ? 'rise' : 'fall';
+    } else if (key === 'hang') {
+      target = null;
+    } else {
+      target = POSES[key] ?? POSES.idle;
+    }
+    poseKey = key;
+
+    if (key === 'hang') {
+      ctx.save();
+      ctx.translate(cat.x, cat.y);
+      ctx.scale(base, base);
+      const hs = cat.state === 'hang' ? (cat.hangSide ?? f) : f;
+      ctx.scale(hs, 1);
+      drawHanging(cat, dt, outline, hs, base);
       ctx.restore();
       return;
     }
-    ctx.scale(cat.facing, 1);
-    const t = POSE[key] ?? POSE.idle;
-    const k = 1 - Math.exp(-(key === 'land' ? 18 : 8) * dt);
-    for (const f in pp) pp[f] += ((t[f] ?? 0) - pp[f]) * k;
-    const sq = 1 + (cat.squash - 1) * 0.6;
-    ctx.scale(2 - sq, sq);
-    if (cat.state === 'air') ctx.rotate(-Math.max(-0.5, Math.min(0.5, -cat.vy * 0.0005)));
 
-    const walking = cat.onGround && Math.abs(cat.vx) > 12;
-    if (walking) gait += dt * (6 + Math.abs(cat.vx) * 0.03);
-    const sw = walking ? Math.sin(gait) * 0.45 : 0;
+    const fast = key === 'land' || key === 'charge' ? 16 : key === 'rise' || key === 'fall' ? 11 : 7;
+    approach(target, 1 - Math.exp(-fast * dt));
 
-    const outline = '#2a2522';
-    const body = { raw: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 };
-    const lg = pp.lg;
-    const legStroke = (x0, y0, a, len) => {
-      const x1 = x0 + Math.sin(a) * len, y1 = y0 + Math.cos(a) * len;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = outline; ctx.lineWidth = 9.2;
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-      ctx.strokeStyle = C.cat; ctx.lineWidth = 6.4;
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-      return [x1, y1];
-    };
-    const drawTail = (bx, by, up, curlDir = 1) => {
-      const sway = Math.sin(tailPh) * 6;
-      const pts = [[bx, by], [bx - 16, by + 4 - 6 * up], [bx - 26 + sway * 0.4, by - 26 * up], [bx - 16 + sway, by - 46 * up], [bx - 6 + sway * 1.2 * curlDir, by - 52 * up]];
-      Ln(pts, { lw: 9.4, ink: outline, single: true, amp: 0.8 });
-      Ln(pts, { lw: 6.4, ink: C.cat, single: true, amp: 0.8 });
-    };
-
-    if (pp.sit > 0.5) {
-      // sentado: ancas plantadas, pecho alto, manos rectas y cola enroscada
-      drawTail(-18, -8, 0.15);
-      E(-12, -18, 20, 17, C.cat, body);
-      E(-2, -40, 15, 24, C.cat, { ...body, rot: -0.35 });
-      legStroke(8, -30, 0, 30);
-      legStroke(14, -30, 0, 30);
-      drawHead(12, -64, outline);
-    } else {
-      const bodyY = -lg - 12 + pp.crouch * 4;
-      drawTail(-28, bodyY - 2, pp.tail);
-      // patas del fondo primero
-      legStroke(-14, bodyY + 6, pp.ba - sw * 0.8, lg + 4);
-      legStroke(16, bodyY + 6, pp.fa + sw * 0.8, lg + 4);
-      E(-4, bodyY, 28, 14.5, C.cat, { ...body, rot: pp.rot });
-      legStroke(-22, bodyY + 6, pp.ba + sw, lg + 4);
-      legStroke(10, bodyY + 6, pp.fa - sw, lg + 4);
-      drawHead(22, bodyY - 16 + pp.crouch * 6, outline);
+    // --- sombra: ancla al gato al suelo aunque esté en el aire ---
+    let gy = FY;
+    for (const p of (ls?.platforms ?? [])) {
+      if (p.kind === 'block' || p.kind === 'wall') continue;
+      if (p.y >= cat.y - 2 && p.y < gy && cat.x > p.x - 10 && cat.x < p.x + p.w + 10) gy = p.y;
     }
+    const hgt = Math.max(0, gy - cat.y);
+    const sh = Math.max(0.25, 1 - hgt / 420);
+    ctx.fillStyle = `rgba(40,30,25,${0.16 * sh})`;
+    ctx.beginPath(); ctx.ellipse(cat.x, gy - 1, 30 * base * sh + 6, 5 * base, 0, 0, 6.3); ctx.fill();
+
+    // --- rotación del cuerpo en el aire: morro arriba al subir, abajo al caer ---
+    const rot = cat.onGround ? 0 : Math.max(-0.5, Math.min(0.55, cat.vy * 0.00055));
+    const sq = 1 + (cat.squash - 1) * 0.35;
+
+    ctx.save();
+    ctx.translate(cat.x, cat.y);
+    ctx.scale(base, base);
+    ctx.scale(f, 1);
+    ctx.rotate(rot);
+    ctx.scale(2 - sq, sq);
+
+    // pose de trabajo: la actual + respiración, marcha, meneo de caza
+    const hip = cur.hip.slice(), shd = cur.sh.slice();
+    const hind = cur.hind.map(p => p.slice()), front = cur.front.map(p => p.slice());
+    const head = cur.head.slice();
+    const breath = Math.sin(time * 2.1) * (key === 'sit' ? 1.1 : 0.7);
+    shd[1] += breath * 0.6; hip[1] += breath * 0.3;
+    if (key === 'charge') hip[0] += Math.sin(time * 34) * 1.6;        // meneo de grupa antes del salto
+    const crouch = key === 'charge' || key === 'land' ? 1 : key === 'sneak' ? 0.5 : 0;
+    if (walking) {
+      // marcha lateral: trasera-cerca, delantera-cerca, trasera-lejos, delantera-lejos
+      const stride = 24, legs = [[hind[1], 0], [front[1], 0.25], [hind[0], 0.5], [front[0], 0.75]];
+      for (const [paw, ph] of legs) {
+        const c = (gait + ph) % 1;
+        if (c < 0.62) { paw[0] += stride / 2 - (c / 0.62) * stride; }
+        else { const s = (c - 0.62) / 0.38; paw[0] += -stride / 2 + s * stride; paw[1] -= Math.sin(s * Math.PI) * 8; }
+      }
+      head[1] += Math.sin(gait * Math.PI * 4) * 1.2;
+      shd[1] += Math.sin(gait * Math.PI * 4) * 0.8;
+    }
+
+    const sitting = key === 'sit' && cur.sh[1] < -40;
+    // orden: patas lejanas, cola, tronco, patas cercanas, cabeza
+    if (sitting) {
+      // sentado: anca redonda plantada, pata trasera plegada, manos rectas
+      E(hip[0] + 4, hip[1] + 2, 15, 13, shade(C.cat, 0.82), { raw: true, solid: true, hatch: false, ink: outline, lw: 2.2, single: true });
+      frontLeg(shd, front[0], false, outline);
+    } else {
+      hindLeg(hip, hind[0], false, outline, crouch);
+      frontLeg(shd, front[0], false, outline);
+    }
+    // la cola se dibuja en mundo (fuera de esta transformación) → se guarda la base
+    ctx.restore();
+    const tb = [hip[0] - 14, hip[1] - 1];
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    const tbw = [cat.x + f * (tb[0] * cr - tb[1] * sr) * base, cat.y + (tb[0] * sr + tb[1] * cr) * base];
+    let rest = TAILS[key] ?? TAILS.idle;
+    if (key === 'idle' || key === 'sit') {
+      const sw = Math.sin(time * 1.4) * 0.35, sw2 = Math.sin(time * 3.7) * 0.25;
+      rest = rest.map((d, i) => i < 3 ? d : [d[0] * Math.cos(sw + sw2 * (i - 2)) - d[1] * Math.sin(sw), d[0] * Math.sin(sw) + d[1] * Math.cos(sw + sw2 * (i - 2))]);
+    }
+    if (key === 'charge') rest = rest.map((d, i) => i < 4 ? d : [d[0], d[1] + Math.sin(time * 22) * 0.5]);
+    stepTail(tbw, rest, f, rot, dt, cat.onGround, cat.y + 1);
+    drawTail(outline, base);
+
+    ctx.save();
+    ctx.translate(cat.x, cat.y);
+    ctx.scale(base, base);
+    ctx.scale(f, 1);
+    ctx.rotate(rot);
+    ctx.scale(2 - sq, sq);
+    if (sitting) {
+      // tronco erguido: de las ancas al pecho, con la pata plegada por delante
+      P(bodyPts(hip, shd, cur.arch, CAT.half), C.cat, { raw: true, solid: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 });
+      E(hip[0] + 6, hip[1] + 3, 15, 13, C.cat, { raw: true, solid: true, hatch: false, ink: outline, lw: 2.2, single: true });
+      limb([[hip[0] - 2, hip[1] + 10], [hind[1][0] - 2, hind[1][1]], hind[1]], true, outline);
+      frontLeg(shd, front[1], true, outline);
+    } else {
+      P(bodyPts(hip, shd, cur.arch, CAT.half), C.cat, { raw: true, solid: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 });
+      hindLeg(hip, hind[1], true, outline, crouch);
+      frontLeg(shd, front[1], true, outline);
+    }
+    // cabeza: mira a donde va; en reposo, de vez en cuando gira un poco
+    const look = key === 'idle' || key === 'sit' ? lookA : 0;
+    const alert = key === 'charge' || key === 'rise' || key === 'fall';
+    drawHead(head[0], head[1], outline, cur.pitch + look * 0.3, alert, st.baby ? 1.18 : 1);
     ctx.restore();
   }
 
-  function drawHead(hx, hy, outline) {
-    const body = { raw: true, hatchColor: '#433a3a', hatchGap: 5, ink: outline, lw: 2.4 };
-    P([[hx - 11, hy - 6], [hx - 8, hy - 24], [hx + 1, hy - 10]], C.cat, { ...body, hatch: false });
-    P([[hx + 3, hy - 11], [hx + 11, hy - 25], [hx + 13, hy - 5]], C.cat, { ...body, hatch: false });
-    E(hx, hy, 14, 12.5, C.cat, body);
-    const eo = blink > 0 ? 0.6 : 4.4;
-    E(hx + 1, hy - 1, 3.4, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true });
-    E(hx + 8.5, hy - 1, 3.4, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true });
+  function drawHead(hx, hy, outline, pitch = 0, alert = false, hs = 1) {
+    const body = { raw: true, solid: true, hatchColor: '#433a3a', hatchGap: 5, ink: outline, lw: 2.4 };
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(pitch);
+    ctx.scale(hs, hs);
+    // cuello
+    ctx.strokeStyle = C.cat; ctx.lineWidth = 16; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-14, 10); ctx.lineTo(-4, 2); ctx.stroke();
+    // orejas (una se gira de vez en cuando: el gato escucha la casa)
+    const flick = earF > 0 ? Math.sin(earF / 0.18 * Math.PI) * 0.5 : 0;
+    P([[-11, -6], [-9 - flick * 6, -25], [1, -10]], C.cat, { ...body, hatch: false });
+    P([[3, -11], [11, -25], [13, -5]], C.cat, { ...body, hatch: false });
+    // interior de la oreja
+    ctx.fillStyle = 'rgba(238,143,168,0.55)';
+    ctx.beginPath(); ctx.moveTo(-8, -8); ctx.lineTo(-8 - flick * 5, -20); ctx.lineTo(-2, -10); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(5, -11); ctx.lineTo(10, -21); ctx.lineTo(11, -8); ctx.closePath(); ctx.fill();
+    // cráneo + hocico
+    E(0, 0, 14.5, 12.5, C.cat, body);
+    E(8, 4, 8, 6, C.cat, { ...body, hatch: false, line: false });
+    // ojos almendrados; la pupila se dilata cuando está en tensión
+    const eo = blink > 0 ? 0.5 : 4.2;
+    E(1, -1, 3.6, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true, rot: 0.2 });
+    E(8.8, -1.5, 3.6, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true, rot: 0.2 });
     if (blink <= 0) {
+      const pr = alert ? 2.5 : 1.5;
       ctx.fillStyle = '#111';
-      ctx.beginPath(); ctx.arc(hx + 2.2, hy, 1.7, 0, 6.3); ctx.arc(hx + 9.7, hy, 1.7, 0, 6.3); ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(2.2, -0.6, pr * 0.75, pr, 0, 0, 6.3);
+      ctx.ellipse(10, -1.1, pr * 0.75, pr, 0, 0, 6.3);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.beginPath(); ctx.arc(1.4, -1.6, 0.7, 0, 6.3); ctx.arc(9.2, -2.1, 0.7, 0, 6.3); ctx.fill();
     }
-    P([[hx + 12, hy + 4], [hx + 16, hy + 4], [hx + 14, hy + 7]], C.pink, { raw: true, hatch: false, lw: 1, single: true, ink: outline });
-    ctx.strokeStyle = pal.chalk ? 'rgba(236,230,245,0.8)' : 'rgba(255,255,255,0.75)';
+    // nariz y boca
+    P([[11, 3.5], [15.5, 3.5], [13.3, 6.5]], C.pink, { raw: true, hatch: false, lw: 1, single: true, ink: outline });
+    ctx.strokeStyle = outline; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.moveTo(13.3, 6.5); ctx.lineTo(13, 8.5); ctx.moveTo(10.5, 9); ctx.quadraticCurveTo(13, 10.5, 15.5, 8.6); ctx.stroke();
+    // bigotes
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(hx + 14, hy + 6); ctx.lineTo(hx + 26, hy + 3);
-    ctx.moveTo(hx + 14, hy + 7); ctx.lineTo(hx + 26, hy + 9);
+    ctx.moveTo(12, 5); ctx.lineTo(26, 1.5);
+    ctx.moveTo(12, 6.5); ctx.lineTo(27, 7);
+    ctx.moveTo(12, 8); ctx.lineTo(25, 12);
+    ctx.moveTo(-4, 6); ctx.lineTo(-12, 4);
     ctx.stroke();
+    ctx.restore();
   }
 
-  // colgado de un canto: manos arriba, cuerpo vertical, patas traseras que
-  // patalean a ráfagas y cola de péndulo
-  function drawHanging(cat, dt) {
-    const outline = '#2a2522';
-    const body = { raw: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 };
+  // colgado de un canto: manos agarradas arriba, cuerpo vertical, patas
+  // traseras que patalean a ráfagas buscando apoyo, y cola de péndulo
+  function drawHanging(cat, dt, outline, hs, base) {
     scrT -= dt;
     if (scrT <= 0) { scrB = 0.55; scrT = 1.2 + hash(time) * 1.4; }
     scrB = Math.max(0, scrB - dt);
-    const kick = scrB > 0 ? Math.sin(time * 26) * 0.5 : 0;
-    const leg = (x0, y0, a, len) => {
-      const x1 = x0 + Math.sin(a) * len, y1 = y0 + Math.cos(a) * len;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = outline; ctx.lineWidth = 9.2;
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-      ctx.strokeStyle = C.cat; ctx.lineWidth = 6.4;
-      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    };
-    const sway = Math.sin(time * 2.4) * 8;
-    Ln([[2, 20], [0, 36], [-6 + sway, 52], [-2 + sway * 1.4, 64]], { lw: 9.4, ink: outline, single: true });
-    Ln([[2, 20], [0, 36], [-6 + sway, 52], [-2 + sway * 1.4, 64]], { lw: 6.4, ink: C.cat, single: true });
-    leg(-2, 16, kick, 22);
-    leg(8, 16, -kick, 22);
-    E(4, 0, 13, 24, C.cat, body);
-    drawHead(4, -16, outline);
-    // brazos a los lados de la cabeza y almohadillas sobre el canto
-    leg(-6, -8, Math.PI - 0.35, 30);
-    leg(16, -8, Math.PI + 0.12, 28);
+    const kick = scrB > 0 ? Math.sin(time * 26) * 9 : 0;
+    const sway = Math.sin(time * 2.4) * 0.12;
+    const hip = [2, 18], sh = [4, -9];
+    // patas traseras: cuelgan, con las rodillas recogidas cuando patalea
+    const hindPaw = (ox, k) => [hip[0] + ox + k, hip[1] + 30 - Math.abs(k) * 0.6];
+    hindLeg(hip, hindPaw(-4, kick), false, outline, 0.3);
+    // cola en mundo
+    const tbw = [cat.x + hs * (hip[0] - 8) * base, cat.y + (hip[1] + 2) * base];
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.restore();
+    // (la cola se dibuja en coordenadas locales aquí: el cuelgue es estático)
+    const rest = TAILS.hang.map(d => [d[0] + sway, d[1]]);
+    ctx.save();
+    ctx.scale(1 / base, 1 / base); ctx.scale(hs, 1); ctx.translate(-cat.x, -cat.y);
+    stepTail(tbw, rest, hs, 0, dt, false, 0);
+    drawTail(outline, base);
+    ctx.restore();
+    P(bodyPts(hip, sh, 2, CAT.half), C.cat, { raw: true, solid: true, hatchColor: '#3d444e', hatchGap: 5, ink: outline, lw: 2.4 });
+    hindLeg(hip, hindPaw(6, -kick), true, outline, 0.3);
+    drawHead(6, -24, outline, -0.3, true, st.baby ? 1.18 : 1);
+    // brazos a los lados de la cabeza, manos agarradas al canto
     const grip = scrB > 0 ? 0 : Math.sin(time * 0.9) * 1.2;
-    E(5, -36 + grip, 6, 3.5, C.cat, { ...body, hatch: false, lw: 1.8 });
-    E(13, -36, 6, 3.5, C.cat, { ...body, hatch: false, lw: 1.8 });
+    for (const [sx, px, near] of [[-6, -3, false], [14, 17, true]]) {
+      const wrist = [px, -41 + grip];
+      const [ex, ey, wx, wy] = ik2(sx, sh[1] - 2, wrist[0], wrist[1], CAT.arm, CAT.fore, near ? 1 : -1);
+      limb([[sx, sh[1] - 2], [ex, ey], [wx, wy], [px + 3, -43 + grip]], near, outline);
+    }
   }
 
   // el gato vertido en un recipiente: un charco feliz con cabeza
@@ -1425,7 +1667,7 @@ export function createDoodleRenderer(canvas) {
   function setDevMarkers(list) { devMarkers = list ?? []; }
 
   if (typeof window !== 'undefined') {
-    window.__doodle = { get pal() { return pal; }, get view() { return view; } };
+    window.__doodle = { get pal() { return pal; }, get view() { return view; }, render };
   }
   return { resize, loadScene, update, render, screenToWorld, setCatVisible, setDevMarkers };
 }

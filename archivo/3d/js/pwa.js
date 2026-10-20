@@ -8,7 +8,9 @@
 // sw.js), este módulo la deja "en espera" y avisa con una barra discreta en
 // vez de recargar la página sola a medio juego.
 export function initPWA() {
-  if (!('serviceWorker' in navigator)) return;
+  // El archivo 3D no se instala como app: el service worker vive en la raíz
+  // del juego actual, y aquí no hay sw.js que registrar.
+  if (!('serviceWorker' in navigator) || location.pathname.includes('/archivo/')) return;
 
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
