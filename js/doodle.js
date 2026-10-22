@@ -95,9 +95,15 @@ export function createDoodleRenderer(canvas) {
     return out;
   }
   // trazado suave por puntos medios: rotulador, no polilínea
-  function trace(p, closed) {
+  function trace(p, closed, smooth = true) {
     const n = p.length;
     ctx.beginPath();
+    if (n < 3 || !smooth) {
+      ctx.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < n; i++) ctx.lineTo(p[i][0], p[i][1]);
+      if (closed) ctx.closePath();
+      return;
+    }
     if (n < 3) { ctx.moveTo(p[0][0], p[0][1]); for (let i = 1; i < n; i++) ctx.lineTo(p[i][0], p[i][1]); return; }
     if (closed) {
       const m0 = [(p[n - 1][0] + p[0][0]) / 2, (p[n - 1][1] + p[0][1]) / 2];
@@ -144,21 +150,25 @@ export function createDoodleRenderer(canvas) {
   function sketch(pts, fill, o = {}) {
     const seed = o.seed ?? (pts[0][0] * 0.131 + pts[0][1] * 0.719);
     const closed = o.closed !== false;
+    // los muebles tienen esquinas: solo se suaviza lo que es curvo de verdad
+    const smooth = o.smooth ?? pts.length > 6;
     if (fill && closed) {
       const f = o.raw ? mix(fill, '#f3ead6', lum(fill) < 0.25 ? 0.04 : 0.15) : fl(fill);
       const b = bounds(pts), big = b.w * b.h > 900;
       ctx.save();
       // la mancha se sale un poco de la línea, hacia un lado distinto en cada forma
       if (!o.noOff && !o.solid) ctx.translate((hash(seed) - 0.5) * 7, (hash(seed + 2) - 0.2) * 6);
-      trace(wob(pts, true, seed + 40, big ? 3.2 : 1.2), true);
+      trace(wob(pts, true, seed + 40, big ? 2.4 : 1.0), true, smooth);
       ctx.globalAlpha = o.solid ? 1 : (o.alpha ?? 1) * 0.86;
       ctx.fillStyle = f;
       ctx.fill();
       // pigmento acumulado en el borde de la mancha
-      ctx.globalAlpha = (o.alpha ?? 1) * 0.35;
-      ctx.strokeStyle = shade(f, 0.8);
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
+      if (o.edge !== false) {
+        ctx.globalAlpha = (o.alpha ?? 1) * 0.35;
+        ctx.strokeStyle = shade(f, 0.8);
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+      }
       // segunda capa más oscura, solo en la parte baja: la sombra de acuarela
       if (big && o.hatch !== false) {
         ctx.clip();
@@ -178,20 +188,20 @@ export function createDoodleRenderer(canvas) {
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.lineWidth = lw;
       ctx.globalAlpha = 0.9;
-      trace(wob(pts, closed, seed, (o.amp ?? 1.3) * 0.7), closed);
+      trace(wob(pts, closed, seed, (o.amp ?? 1.3) * (smooth ? 0.7 : 0.45)), closed, smooth || !closed);
       ctx.stroke();
       // líneas de construcción: aristas rectas que se pasan de largo
       if (!o.single && pts.length <= 6) {
-        ctx.lineWidth = lw * 0.7;
-        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = lw * 0.6;
+        ctx.globalAlpha = 0.32;
         ctx.beginPath();
         const n = pts.length, segs = closed ? n : n - 1;
         for (let i = 0; i < segs; i++) {
           const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % n];
           const len = Math.hypot(x2 - x1, y2 - y1);
-          if (len < 40) continue;
+          if (len < 70 || hash(seed * 1.3 + i * 7.1) < 0.55) continue;
           const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
-          const e1 = 4 + hash(seed + i) * 14, e2 = 4 + hash(seed + i + 9) * 14;
+          const e1 = 3 + hash(seed + i) * 8, e2 = 3 + hash(seed + i + 9) * 8;
           const nx = -uy * (hash(seed + i * 3) - 0.5) * 3, ny = ux * (hash(seed + i * 3) - 0.5) * 3;
           ctx.moveTo(x1 - ux * e1 + nx, y1 - uy * e1 + ny);
           ctx.lineTo(x2 + ux * e2 + nx, y2 + uy * e2 + ny);
@@ -277,8 +287,16 @@ export function createDoodleRenderer(canvas) {
     if (!pal.domestic) { drawStreet(); return; }
     // pared
     R(x0, CY - 20, w, FY - CY + 20, pal.wall, { line: false, hatch: false, noOff: true, raw: true });
-    // papel pintado: un motivo dibujado a mano cada 90 unidades
-    ctx.globalAlpha = pal.chalk ? 0.35 : 0.28;
+    // la pared no es un color plano: lleva aguadas irregulares, como un
+    // papel mojado que se secó a trozos
+    for (let bx = Math.floor(x0 / 420) * 420; bx < x0 + w + 420; bx += 420) {
+      const cx = bx + hash(bx) * 200, cy = CY + 160 + hash(bx + 3) * 300;
+      const blob = ellPts(cx, cy, 170 + hash(bx + 5) * 90, 120 + hash(bx + 7) * 80, 12)
+        .map(([px, py], i) => [px + (hash(bx + i * 3.7) - 0.5) * 70, py + (hash(bx + i * 5.1) - 0.5) * 50]);
+      P(blob, shade(pal.wall, 0.95), { line: false, alpha: 0.3, raw: true, noOff: true, hatch: false, edge: false, smooth: true });
+    }
+    // papel pintado: un motivo dibujado a mano cada 90 unidades, apenas visible
+    ctx.globalAlpha = 0.11;
     const gx0 = Math.floor(x0 / 90) * 90;
     for (let gx = gx0; gx < x0 + w; gx += 90) {
       for (let gy = CY + 60; gy < FY - 360; gy += 90) {
@@ -301,11 +319,13 @@ export function createDoodleRenderer(canvas) {
     ctx.globalAlpha = 1;
     Ln([[x0, FY - 334], [x0 + w, FY - 334]], { lw: 5, ink: pal.rail, single: true, amp: 1.6 });
     R(x0, FY - 28, w, 28, pal.skirt, { hatch: false, lw: 2.2, raw: pal.chalk });
-    // techo de vigas
-    R(x0, CY - 160, w, 150, pal.ceil, { hatchGap: 12, raw: true });
-    for (let bx = Math.floor(x0 / 210) * 210; bx < x0 + w; bx += 210) {
-      R(bx, CY - 12, 34, 30, pal.ceil, { hatch: false, raw: true, lw: 2 });
-    }
+    // techo y cornisa: una moldura de dos listones, no cajas colgando
+    R(x0, CY - 160, w, 150, pal.ceil, { hatch: false, raw: true, line: false, noOff: true });
+    R(x0, CY - 14, w, 22, shade(pal.ceil, 1.12), { hatch: false, raw: true, lw: 1.8, noOff: true });
+    Ln([[x0, CY + 14], [x0 + w, CY + 14]], { lw: 1.6, single: true, ink: shade(pal.ceil, 0.7) });
+    const cg = ctx.createLinearGradient(0, CY + 8, 0, CY + 60);
+    cg.addColorStop(0, 'rgba(60,45,35,0.16)'); cg.addColorStop(1, 'rgba(60,45,35,0)');
+    ctx.fillStyle = cg; ctx.fillRect(x0, CY + 8, w, 52);
     // lámparas colgantes
     for (const { x: lx, y: ly } of lamps) {
       if (!inView(lx - 60, lx + 60)) continue;
@@ -320,10 +340,14 @@ export function createDoodleRenderer(canvas) {
       R(f.x - f.w / 2 + 8, f.y - f.h / 2 + 8, f.w - 16, f.h - 16, f.bg, { hatch: false, lw: 1.6 });
       drawing(f.kind, f.x, f.y, f.w - 16, f.h - 16);
     }
-    // suelo de tablones
-    R(x0, FY, w, 280, pal.floor, { hatch: false, noOff: true, raw: true, lw: 3 });
-    ctx.strokeStyle = pal.chalk ? shade(pal.plank, 1.7) : pal.plank;
-    ctx.lineWidth = 2;
+    // suelo de tablones: más claro junto a la pared, donde llega la luz
+    R(x0, FY, w, 280, pal.floor, { hatch: false, noOff: true, raw: true, line: false });
+    const fg = ctx.createLinearGradient(0, FY, 0, FY + 280);
+    fg.addColorStop(0, 'rgba(255,248,232,0.10)'); fg.addColorStop(1, 'rgba(60,40,25,0.22)');
+    ctx.fillStyle = fg; ctx.fillRect(x0, FY, w, 280);
+    ctx.strokeStyle = pal.plank;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
     for (const [py, off] of [[FY + 34, 0], [FY + 78, 120], [FY + 130, 60], [FY + 190, 170]]) {
       ctx.moveTo(x0, py + jit(py) * 2);
@@ -333,6 +357,50 @@ export function createDoodleRenderer(canvas) {
       }
     }
     ctx.stroke();
+    ctx.globalAlpha = 1;
+    // sombra de contacto donde la pared toca el suelo
+    const sg = ctx.createLinearGradient(0, FY, 0, FY + 30);
+    sg.addColorStop(0, 'rgba(50,35,25,0.22)'); sg.addColorStop(1, 'rgba(50,35,25,0)');
+    ctx.fillStyle = sg; ctx.fillRect(x0, FY, w, 30);
+    Ln([[x0, FY], [x0 + w, FY]], { lw: 2.2, single: true });
+    // alfombra: le da al suelo un sitio, no solo tablas
+    if (L?.rug !== false) {
+      const rx = L?.rug?.x ?? WW * 0.5, rw = L?.rug?.w ?? 620, col = L?.rug?.col ?? pal.rug ?? '#a8604c';
+      if (inView(rx - rw / 2, rx + rw / 2, 0)) {
+        const ry = FY + 40, rh = 54;
+        P([[rx - rw / 2 + 26, ry], [rx + rw / 2 - 26, ry], [rx + rw / 2, ry + rh], [rx - rw / 2, ry + rh]], col, { hatch: false, lw: 1.6, alpha: 0.75 });
+        P([[rx - rw / 2 + 46, ry + 9], [rx + rw / 2 - 46, ry + 9], [rx + rw / 2 - 22, ry + rh - 9], [rx - rw / 2 + 22, ry + rh - 9]], shade(col, 1.3), { hatch: false, line: false, alpha: 0.5, edge: false });
+        ctx.strokeStyle = shade(col, 0.75); ctx.lineWidth = 1.1; ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        for (let k = 0; k < 7; k++) {
+          const t = (k + 0.5) / 7, mx = rx - rw / 2 + 60 + t * (rw - 120);
+          ctx.moveTo(mx - 8, ry + rh / 2); ctx.lineTo(mx, ry + rh / 2 - 6); ctx.lineTo(mx + 8, ry + rh / 2); ctx.lineTo(mx, ry + rh / 2 + 6); ctx.closePath();
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        Ln([[rx - rw / 2 - 2, ry + rh + 2], [rx + rw / 2 + 2, ry + rh + 2]], { lw: 1.2, single: true, ink: shade(col, 0.6) });
+        ctx.strokeStyle = shade(col, 0.8); ctx.lineWidth = 0.8; ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        for (let fx = rx - rw / 2 + 4; fx < rx + rw / 2; fx += 10) { ctx.moveTo(fx, ry + rh); ctx.lineTo(fx - 1.5, ry + rh + 8); }
+        ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
+  }
+  // sombras de contacto: cada mueble pisa el suelo
+  const GROUNDED = new Set(['chair', 'table', 'desk', 'counter', 'sofa', 'armchair', 'dresser', 'bed', 'top', 'boxstack', 'block', 'crate', 'trashbag']);
+  function drawContactShadows() {
+    for (const p of furniture) {
+      if (!GROUNDED.has(p.kind) || !inView(p.x, p.x + p.w, 60)) continue;
+      const cx = p.x + p.w / 2, rx = p.w * 0.6 + 20;
+      ctx.save();
+      ctx.translate(cx, FY + 4);
+      ctx.scale(1, 12 / rx);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+      g.addColorStop(0, 'rgba(45,32,24,0.26)'); g.addColorStop(1, 'rgba(45,32,24,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
   }
 
   function motif(x, y, seed) {
@@ -434,10 +502,18 @@ export function createDoodleRenderer(canvas) {
         break;
       }
       case 'chair': {
-        const col = pal.accent ?? C.coral;
-        R(x + 12, y - 96, w - 24, 88, shade(col, 0.9), { hatchGap: 8 });
-        for (const lx of [x + 12, x + w - 20]) R(lx, y + 12, 8, FY - y - 12, C.woodDk, { hatch: false, lw: 2 });
-        R(x - 2, y, w + 4, 14, col, { hatch: false });
+        // silla de madera de verdad: postes, travesaño, barrotes y cojín
+        const col = pal.accent ?? C.coral, wood = '#9c6b48', bt = y - 104;
+        for (const px of [x + 12, x + w - 20]) R(px, bt, 8, y - bt, wood, { hatch: false, lw: 1.8 });
+        R(x + 6, bt - 4, w - 12, 15, shade(wood, 1.08), { hatch: false, lw: 1.8 });
+        for (let i = 1; i <= 3; i++) {
+          const sx = x + 16 + i * (w - 32) / 4;
+          R(sx - 3, bt + 11, 6, y - bt - 11, shade(wood, 1.12), { hatch: false, lw: 1.2, line: true, single: true });
+        }
+        for (const lx of [x + 12, x + w - 20]) R(lx, y + 12, 8, FY - y - 12, wood, { hatch: false, lw: 1.8 });
+        Ln([[x + 18, FY - 52], [x + w - 18, FY - 52]], { lw: 2.6, single: true, ink: wood });
+        R(x - 4, y, w + 8, 14, shade(wood, 1.05), { hatch: false, lw: 1.8 });
+        R(x + 6, y - 9, w - 12, 11, col, { hatch: false, lw: 1.4, smooth: true });
         break;
       }
       case 'table':
@@ -658,7 +734,7 @@ export function createDoodleRenderer(canvas) {
         R(x - 4, top, p.w + 8, 14, shade(C.grey, 0.8), { hatch: false });
         for (let i = 1; i < 4; i++) Ln([[x + 10 + i * (p.w - 20) / 4, top + 20], [x + 12 + i * (p.w - 24) / 4, FY - 8]], { lw: 1.4, single: true });
         R(x + p.w * 0.3, FY - 10, p.w * 0.4, 10, C.dark, { hatch: false, lw: 1.4 });
-        if (h > 60) txt('♻', x + p.w / 2, top + h * 0.5, 22, pal.chalk ? C.chalk : C.ink);
+        R(x + p.w / 2 - 12, top - 8, 24, 8, shade(C.grey, 0.7), { hatch: false, lw: 1.2 });
         break;
       }
       case 'wall': {
@@ -723,33 +799,57 @@ export function createDoodleRenderer(canvas) {
   let crouchP = 0;
   function drawPerson(cx, fy) {
     const near = st?.cat && Math.abs(st.cat.x - cx) < 130 && Math.abs(st.cat.y - fy) < 30;
-    crouchP += ((near ? 1 : 0) - crouchP) * Math.min(1, (st?._dt ?? 0.016) * 3);
-    const c = crouchP, lean = c * 24;
-    const hipY = fy - 112 + c * 46, shY = fy - 236 + c * 80;
+    crouchP += ((near ? 1 : 0) - crouchP) * Math.min(1, (st?._dt ?? 0.016) * 2.5);
+    const c = crouchP;
+    // al agacharse baja la cadera y se doblan las rodillas; el torso se
+    // inclina un poco hacia el gato, sin deformarse
+    const drop = c * 58, lean = c * 14;
+    const hipY = fy - 118 + drop, shY = fy - 250 + drop + c * 10;
+    const coat = '#66778c', coatDk = '#55657a', skin = '#e3b597', hair = '#4e3d33';
     // maleta a su lado
-    R(cx + 26, fy - 78, 56, 74, C.coral, { hatchGap: 8 });
-    Ln([[cx + 42, fy - 78], [cx + 42, fy - 90], [cx + 66, fy - 90], [cx + 66, fy - 78]], { lw: 3 });
-    // piernas (se doblan al agacharse)
-    for (const ox of [-12, 8]) {
-      const kx = cx + ox - c * 22, ky = fy - 56 + c * 4;
-      Ln([[cx + ox, hipY], [kx, ky], [cx + ox, fy - 6]], { lw: 11, single: true, ink: '#3d3a40' });
-      E(cx + ox - 6, fy - 4, 13, 5, '#2e2a2a', { hatch: false, lw: 1.2 });
+    R(cx + 30, fy - 76, 54, 72, '#b0705a', { hatchGap: 8 });
+    Ln([[cx + 46, fy - 76], [cx + 46, fy - 88], [cx + 68, fy - 88], [cx + 68, fy - 76]], { lw: 3 });
+    R(cx + 30, fy - 46, 54, 6, shade('#b0705a', 0.8), { hatch: false, lw: 1, line: false });
+    // piernas: muslo y espinilla, la rodilla sale hacia delante al agacharse
+    for (const [ox, dk] of [[6, true], [-8, false]]) {
+      const hx = cx + ox, kx = hx - 6 - c * 30, ky = fy - 58 - c * 6;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 12.5;
+      ctx.beginPath(); ctx.moveTo(hx, hipY); ctx.lineTo(kx, ky); ctx.lineTo(hx - 2, fy - 8); ctx.stroke();
+      ctx.strokeStyle = dk ? '#3b3840' : '#47434c'; ctx.lineWidth = 10;
+      ctx.beginPath(); ctx.moveTo(hx, hipY); ctx.lineTo(kx, ky); ctx.lineTo(hx - 2, fy - 8); ctx.stroke();
+      P([[hx - 16, fy - 10], [hx + 6, fy - 10], [hx + 7, fy], [hx - 18, fy]], '#2e2a2a', { hatch: false, lw: 1.4, raw: true });
     }
-    // abrigo
-    P([[cx - 30 - lean * 0.2, hipY + 18], [cx + 28, hipY + 18], [cx + 20 - lean, shY], [cx - 22 - lean, shY]], '#6f7f94', { hatchGap: 8 });
-    R(cx - 24 - lean, shY - 4, 46, 13, C.butter, { hatch: false, lw: 1.4 });
-    // brazo con la llave, que baja hacia el gato cuando se agacha
-    const hx = cx - 42 - lean - c * 20, hy = shY + 82 + c * 40;
-    Ln([[cx - 16 - lean, shY + 10], [cx - 34 - lean, shY + 50], [hx, hy]], { lw: 9, single: true, ink: '#5f6e82' });
-    E(hx - 2, hy + 3, 6, 6, C.skin, { hatch: false, lw: 1.2 });
-    if (c < 0.5) Ln([[hx - 4, hy + 8], [hx - 6, hy + 20], [hx - 2, hy + 22]], { lw: 1.8, single: true, ink: '#b8a061' });
-    // cabeza de perfil, mirando abajo a la izquierda
-    const hdx = cx - 4 - lean * 1.2, hdy = shY - 30;
-    E(hdx, hdy, 21, 25, C.skin, { hatch: false, lw: 1.8 });
-    E(hdx + 6, hdy - 12, 24, 17, '#5a463a', { hatch: false, lw: 1.6 });
-    E(hdx + 22, hdy - 18, 9, 9, '#5a463a', { hatch: false, lw: 1.4 });
-    Ln([[hdx - 14, hdy + 1], [hdx - 9, hdy + 3]], { lw: 1.8, single: true });
-    Ln([[hdx - 12, hdy + 13], [hdx - 7, hdy + 13]], { lw: 1.4, single: true });
+    // abrigo largo con cinturón y solapa
+    const tl = cx - 22 - lean, tr = cx + 22 - lean * 0.6;
+    P([[tl, shY], [tr, shY], [cx + 30, hipY + 26], [cx - 32, hipY + 26]], coat, { hatchGap: 8, raw: true });
+    Ln([[cx - 30 + lean * 0.2, hipY - 12], [cx + 28, hipY - 12]], { lw: 3, single: true, ink: coatDk });
+    Ln([[tl + 12, shY + 4], [cx - 6, shY + 54], [cx - 2, hipY + 22]], { lw: 1.4, single: true, ink: coatDk });
+    // bufanda
+    P([[tl + 2, shY - 6], [tr + 2, shY - 6], [tr, shY + 8], [tl, shY + 8]], C.butter, { hatch: false, lw: 1.4 });
+    Ln([[tl + 8, shY + 6], [tl + 2, shY + 40]], { lw: 6, single: true, ink: shade(C.butter, 0.9) });
+    // brazo: hombro, codo y mano con la llave; al agacharse, la mano baja hacia Nero
+    const sx = tl + 10, sy = shY + 12;
+    const ex = sx - 10 - c * 14, ey = sy + 44 - c * 4;
+    const hx = ex - 4 - c * 22, hy = ey + 40 + c * 8;
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 11.5;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = coatDk; ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+    E(hx - 2, hy + 5, 6, 6.5, skin, { hatch: false, lw: 1.2, raw: true });
+    if (c < 0.5) Ln([[hx - 3, hy + 10], [hx - 5, hy + 22], [hx - 1, hy + 24]], { lw: 1.8, single: true, ink: '#a88f55' });
+    // cabeza de perfil mirando a la izquierda (hacia la escalera), y al gato
+    const hdx = cx - 4 - lean * 1.4, hdy = shY - 30 + c * 4, tilt = 0.08 + c * 0.25;
+    ctx.save();
+    ctx.translate(hdx, hdy); ctx.rotate(-tilt);
+    R(-6, 14, 12, 14, skin, { hatch: false, lw: 1.2, raw: true });
+    P([[-4, -22], [10, -24], [18, -10], [18, 10], [8, 22], [-8, 22], [-14, 12], [-17, 4], [-14, 0], [-16, -10]], skin, { hatch: false, lw: 1.6, raw: true, smooth: true });
+    P([[-12, -18], [4, -30], [20, -22], [24, -4], [18, 10], [12, -4], [2, -14], [-14, -10]], hair, { hatch: false, lw: 1.4, raw: true, smooth: true });
+    E(22, -18, 9, 9, hair, { hatch: false, lw: 1.2, raw: true });
+    Ln([[-9, -2], [-4, 0]], { lw: 1.6, single: true });
+    Ln([[-12, 12], [-7, 12]], { lw: 1.2, single: true });
+    E(6, 2, 3, 4.5, shade(skin, 0.92), { hatch: false, lw: 1, raw: true });
+    ctx.restore();
   }
 
   // ======================================================================
@@ -1188,30 +1288,33 @@ export function createDoodleRenderer(canvas) {
     return [ax + Math.cos(ang) * l1, ay + Math.sin(ang) * l1, ax + dx, ay + dy];
   }
   // una pata: polilínea gruesa con contorno y almohadilla al final
-  function limb(pts, near, outline) {
+  // una pata: segmentos que se afinan hacia la mano, con contorno fino
+  function limb(pts, near, outline, widths = [8.4, 6.2, 5]) {
     const fill = near ? C.cat : shade(C.cat, 0.82);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const [w, col] of [[9.6, outline], [6.6, fill]]) {
-      ctx.strokeStyle = col; ctx.lineWidth = w;
-      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-      ctx.stroke();
+    for (const pass of [0, 1]) {
+      for (let i = 1; i < pts.length; i++) {
+        const w = widths[Math.min(i - 1, widths.length - 1)];
+        ctx.strokeStyle = pass ? fill : outline;
+        ctx.lineWidth = pass ? w : w + 2.2;
+        ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+      }
     }
     const p = pts[pts.length - 1];
-    ctx.fillStyle = fill; ctx.strokeStyle = outline; ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.ellipse(p[0] + 1.5, p[1] - 0.5, 5.2, 3.6, 0, 0, 6.3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = fill; ctx.strokeStyle = outline; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.ellipse(p[0] + 1.5, p[1] - 0.6, 4.4, 2.9, 0, 0, 6.3); ctx.fill(); ctx.stroke();
   }
   // trasera: cadera → rodilla (hacia delante) → corvejón (hacia atrás) → almohadilla
   function hindLeg(hip, paw, near, outline, crouch) {
     const hock = [paw[0] - 5 - crouch * 6, paw[1] - CAT.meta * (1 - crouch * 0.35)];
     const [kx, ky, hx, hy] = ik2(hip[0], hip[1], hock[0], hock[1], CAT.thigh, CAT.shank, -1);
-    limb([[hip[0], hip[1]], [kx, ky], [hx, hy], paw], near, outline);
+    limb([[hip[0], hip[1]], [kx, ky], [hx, hy], paw], near, outline, [9.4, 6.4, 4.8]);
   }
   // delantera: hombro → codo (hacia atrás) → muñeca → mano
   function frontLeg(sh, paw, near, outline) {
     const wrist = [paw[0] - CAT.paw * 0.7, paw[1] - CAT.paw];
     const [ex, ey, wx, wy] = ik2(sh[0], sh[1], wrist[0], wrist[1], CAT.arm, CAT.fore, 1);
-    limb([[sh[0], sh[1]], [ex, ey], [wx, wy], paw], near, outline);
+    limb([[sh[0], sh[1]], [ex, ey], [wx, wy], paw], near, outline, [7.8, 5.8, 5]);
   }
   // tronco: lomo arqueado por arriba, pecho y vientre por abajo, perpendicular
   // al eje caderas-hombros (vale igual para el gato sentado, casi vertical)
@@ -1255,8 +1358,8 @@ export function createDoodleRenderer(canvas) {
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const pass of [0, 1]) {
       for (let i = 1; i <= TSEG; i++) {
-        const w = (8.4 - i * 0.45) * scale;
-        ctx.lineWidth = pass ? w - 3 : w;
+        const w = (7.6 - i * 0.55) * scale;
+        ctx.lineWidth = pass ? w : w + 2.2;
         ctx.strokeStyle = pass ? C.cat : outline;
         ctx.beginPath();
         ctx.moveTo(tailPts[i - 1][0], tailPts[i - 1][1]);
@@ -1430,19 +1533,26 @@ export function createDoodleRenderer(canvas) {
     // cráneo + hocico
     E(0, 0, 14.5, 12.5, C.cat, body);
     E(8, 4, 8, 6, C.cat, { ...body, hatch: false, line: false });
-    // ojos almendrados; la pupila se dilata cuando está en tensión
-    const eo = blink > 0 ? 0.5 : 4.2;
-    E(1, -1, 3.6, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true, rot: 0.2 });
-    E(8.8, -1.5, 3.6, eo, C.white, { raw: true, hatch: false, lw: 1.2, ink: outline, single: true, rot: 0.2 });
-    if (blink <= 0) {
-      const pr = alert ? 2.5 : 1.5;
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.ellipse(2.2, -0.6, pr * 0.75, pr, 0, 0, 6.3);
-      ctx.ellipse(10, -1.1, pr * 0.75, pr, 0, 0, 6.3);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.beginPath(); ctx.arc(1.4, -1.6, 0.7, 0, 6.3); ctx.arc(9.2, -2.1, 0.7, 0, 6.3); ctx.fill();
+    // ojos de gato: almendra ámbar, pupila en rendija que se abre cuando
+    // está en tensión; el ojo lejano, más pequeño (la cabeza está de tres cuartos)
+    for (const [ex, ey, k] of [[0.8, -1.2, 0.82], [9.4, -1.8, 1]]) {
+      ctx.save();
+      ctx.translate(ex, ey); ctx.rotate(-0.18); ctx.scale(k, k);
+      if (blink > 0) {
+        ctx.strokeStyle = outline; ctx.lineWidth = 1.1;
+        ctx.beginPath(); ctx.moveTo(-3.8, 0.4); ctx.quadraticCurveTo(0, 2, 3.8, 0.4); ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(-3.9, 0.2); ctx.quadraticCurveTo(-0.4, -3.9, 3.9, -0.4); ctx.quadraticCurveTo(0.4, 3.4, -3.9, 0.2);
+        ctx.closePath();
+        ctx.fillStyle = '#d9a640'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = outline; ctx.stroke();
+        ctx.fillStyle = '#1a1512';
+        ctx.beginPath(); ctx.ellipse(0.4, -0.1, alert ? 1.7 : 0.75, 2.5, 0, 0, 6.3); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(-0.9, -1.3, 0.6, 0, 6.3); ctx.fill();
+      }
+      ctx.restore();
     }
     // nariz y boca
     P([[11, 3.5], [15.5, 3.5], [13.3, 6.5]], C.pink, { raw: true, hatch: false, lw: 1, single: true, ink: outline });
@@ -1561,11 +1671,13 @@ export function createDoodleRenderer(canvas) {
     ctx.globalCompositeOperation = 'source-over';
   }
   function drawDust() {
-    ctx.fillStyle = pal.chalk ? 'rgba(236,230,245,0.35)' : 'rgba(80,60,40,0.18)';
-    for (let i = 0; i < 26; i++) {
+    // motas de polvo: pocas, pequeñas y solo donde hay luz de lámpara
+    if (!pal.domestic) return;
+    ctx.fillStyle = 'rgba(255,240,210,0.5)';
+    for (let i = 0; i < 10; i++) {
       const dx = view.l + ((hash(i * 3.3) * (view.r - view.l) + time * (6 + i % 5)) % (view.r - view.l));
       const dy = view.t + ((hash(i * 7.1) * VIEW_H + Math.sin(time * 0.6 + i) * 20) % VIEW_H);
-      ctx.beginPath(); ctx.arc(dx, dy, 1.6 + (i % 3) * 0.6, 0, 6.3); ctx.fill();
+      ctx.beginPath(); ctx.arc(dx, dy, 0.9 + (i % 3) * 0.4, 0, 6.3); ctx.fill();
     }
   }
   function drawDev() {
@@ -1711,6 +1823,7 @@ export function createDoodleRenderer(canvas) {
     ctx.setTransform(s, 0, 0, s, -l * s, -t * s);
 
     drawRoom();
+    if (pal.domestic) drawContactShadows();
     for (const p of furniture) if (inView(p.x, p.x + p.w, 260)) drawPlat(p);
     drawInteractives();
     drawProps();
@@ -1730,13 +1843,13 @@ export function createDoodleRenderer(canvas) {
 
     // salpicaduras de tinta fijas al mundo
     ctx.fillStyle = ink;
-    for (let gx = Math.floor(l / 140) * 140; gx < l + viewW + 140; gx += 140) {
-      for (let gy = Math.floor(t / 140) * 140; gy < t + VIEW_H + 140; gy += 140) {
+    for (let gx = Math.floor(l / 260) * 260; gx < l + viewW + 260; gx += 260) {
+      for (let gy = Math.floor(t / 260) * 260; gy < t + VIEW_H + 260; gy += 260) {
         const h1 = hash(gx * 0.37 + gy * 1.13);
-        if (h1 > 0.55) continue;
-        ctx.globalAlpha = 0.25 + h1;
+        if (h1 > 0.3) continue;
+        ctx.globalAlpha = 0.2 + h1;
         ctx.beginPath();
-        ctx.arc(gx + hash(gx + gy) * 140, gy + hash(gy - gx) * 140, 0.8 + h1 * 2.2, 0, Math.PI * 2);
+        ctx.arc(gx + hash(gx + gy) * 260, gy + hash(gy - gx) * 260, 0.6 + h1 * 2.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }

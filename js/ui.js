@@ -6,13 +6,18 @@
 // juego arranca solo. Los modales se reservan para el inicio, las cinemáticas y
 // el final, que son los tres momentos en los que sí queremos detener al jugador.
 // Nero sentado, de espaldas a medias, dibujado con trazo de rotulador
-const CAT_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="#2b211d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M30 88 C18 86 16 70 26 62 C30 50 34 40 42 36 C40 26 42 18 46 12 L52 24 C56 22 62 22 66 24 L72 12 C76 20 76 30 72 38 C80 46 80 60 76 72 C74 82 68 88 58 88 Z" fill="#1c1818"/>
-  <path d="M30 88 C18 90 8 82 12 72 C14 66 22 66 22 72" />
-  <circle cx="52" cy="32" r="4" fill="#fff" stroke-width="1.5"/><circle cx="64" cy="32" r="4" fill="#fff" stroke-width="1.5"/>
-  <circle cx="53" cy="33" r="1.6" fill="#111" stroke="none"/><circle cx="65" cy="33" r="1.6" fill="#111" stroke="none"/>
-  <path d="M57 40 l2 2 l2 -2" stroke="#ee8fa8" stroke-width="2.2"/>
-  <path d="M8 94 C30 90 70 96 94 92" stroke-width="2.4"/>
+const CAT_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="#2b211d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M66 86 C80 90 90 80 83 70" stroke-width="7.5"/>
+  <path d="M66 86 C80 90 90 80 83 70" stroke="#4f5864" stroke-width="4.2"/>
+  <path d="M30 88 C24 70 31 53 50 50 C69 53 76 70 70 88 Z" fill="#4f5864"/>
+  <path d="M37.5 33 L38.5 16 L48 25 Z" fill="#4f5864"/>
+  <path d="M52 25 L61.5 16 L62.5 33 Z" fill="#4f5864"/>
+  <path d="M40.5 21 L41 27 L44.5 25 Z" fill="#d99aa6" stroke="none"/>
+  <path d="M55.5 25 L59 21 L59.5 27 Z" fill="#d99aa6" stroke="none"/>
+  <circle cx="50" cy="37" r="14.5" fill="#4f5864"/>
+  <path d="M36 42 l-10 -1.5 M36 45 l-10 2 M64 42 l10 -1.5 M64 45 l10 2" stroke="#2b211d" stroke-width="1" opacity="0.7"/>
+  <path d="M43 62 l3 9 M57 62 l-3 9" stroke="#ffffff" stroke-width="1" opacity="0.25"/>
+  <path d="M12 91 C34 88 66 93 88 90" stroke-width="1.6"/>
 </svg>`;
 const MOON_SVG = `<svg viewBox="0 0 100 100" fill="none" stroke="#2b211d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M62 14 C40 18 28 38 34 58 C40 76 60 86 80 78 C60 76 46 62 46 44 C46 30 52 20 62 14 Z" fill="#f6c85f"/>
