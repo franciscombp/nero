@@ -31,7 +31,33 @@
 <div id="hud">
   <div id="epLabel"><b id="epNum"></b><span id="epName"></span></div>
   <div id="dots"></div>
-  <button id="reset" title="Reiniciar episodio">↺</button>
+  <button id="home" class="hudbtn" title="Volver a la portada" aria-label="Volver a la portada">⌂</button>
+  <button id="reset" title="Reiniciar episodio" aria-label="Reiniciar episodio">↺</button>
+</div>
+<div id="cover">
+  <div class="cv-head">
+    <div class="cv-kicker" id="cvKicker"></div>
+    <h1 class="cv-title" id="cvTitle">Nero</h1>
+    <p class="cv-tag" id="cvTag"></p>
+  </div>
+  <div class="cv-menu">
+    <button id="cvContinue" class="cv-btn cv-main"></button>
+    <button id="cvStart" class="cv-btn"></button>
+    <div class="cv-row">
+      <button id="cvEpisodes" class="cv-link">Episodios</button>
+      <button id="cvHow" class="cv-link">Cómo se juega</button>
+    </div>
+  </div>
+  <div id="cvPanel"><div class="cv-sheet">
+    <h3 id="cvPanelTitle"></h3>
+    <div id="cvPanelBody"></div>
+    <button id="cvBack" class="cv-btn">Volver</button>
+  </div></div>
+</div>
+<div id="story">
+  <button id="storySkip">saltar ›</button>
+  <p id="storyText"></p>
+  <span id="storyNext">toca para seguir</span>
 </div>
 <div id="titlecard"><b id="tcNum"></b><span id="tcName"></span></div>
 <div id="subtitle"></div>
@@ -54,6 +80,7 @@ import { createUI } from './js/ui.js';
 import { createDoodleRenderer } from './js/doodle.js';
 import { doJump as jumpAction, tryTargetJump as targetJumpAction, doDrop as dropAction, applySneak } from './js/actions.js';
 import { initPWA } from './js/pwa.js';
+import { loadSave, writeSave, markFound, countFound } from './js/save.js';
 
 initPWA();
 
@@ -71,6 +98,12 @@ async function main() {
   ]);
   const levels = draftScenes ? JSON.parse(draftScenes) : await levelsRes.json();
   const story = draftStory ? JSON.parse(draftStory) : await storiesRes.json();
+
+  const save = loadSave();
+  const persist = () => writeSave(save);
+  const $ = id => document.getElementById(id);
+  // qué capa manda: la portada, una página de historia o el juego
+  const setScreen = mode => { document.body.dataset.screen = mode; };
 
   const physics = createPhysics(CONFIG);
   const ui = createUI();
@@ -233,6 +266,7 @@ async function main() {
   function startLevel(idx) {
     levelState.level = idx;
     resetCat(cat, levels[idx].spawn);
+    if (levels[idx].spawnY) cat.y = levels[idx].spawnY;   // el epílogo empieza arriba
     loadLevel(levelState, levels[idx]);
 
     const L = levels[idx];
@@ -300,7 +334,8 @@ async function main() {
         if (levelState.levelDone) return;
         recordBranch('branch_b');
         levelState.levelDone = true;
-        setTimeout(() => completeLevel(2), 900);   // nivel 2 = cinemática de la Rama B
+        const tok = actToken;
+        setTimeout(() => { if (tok === actToken) completeLevel(2); }, 900);   // nivel 2 = cinemática de la Rama B
       });
     }
   }
@@ -317,36 +352,189 @@ async function main() {
     // anunciado pero con la sala anterior todavía cargada
     levelState.mode = 'ui';
     const next = target ?? levelState.level + 1;
+    const token = actToken;
     if (next < levels.length) {
       levelState.level = next;
-      setTimeout(showAct, 1400);
+      save.level = next; persist();
+      setTimeout(() => { if (token === actToken) showAct(); }, 1400);
     } else {
-      const total = levels.reduce((sum, s) => sum + s.memories.length, 0);
-      setTimeout(() => ui.showCard({
-        face: '🌙', kicker: 'fin', sub: 'La casa llena',
-        text: `${story?.ui?.final ?? 'La casa nunca estuvo vacía: estaba llena de ellos.'}<br><br>🐾 Recuerdos encontrados: <b>${levelState.totalFound} / ${total}</b>`,
-        btn: 'Jugar otra vez',
-        then: () => { levelState.totalFound = 0; levelState.level = 0; showAct(); }
-      }), 1400);
+      // deja que se lean los últimos rastros antes de pasar la página
+      const t0 = performance.now();
+      const wait = () => {
+        if (token !== actToken) return;
+        const idle = ui.isMemoryIdle() || performance.now() - t0 > 20000;
+        if (performance.now() - t0 > 2500 && idle) runEnding();
+        else setTimeout(wait, 300);
+      };
+      setTimeout(wait, 300);
     }
   }
 
-  function showTitle() {
+  // ---------- Inicio y fin ----------
+  // La temporada empieza y acaba en la misma ventana. Portada: Nero sentado
+  // en el alféizar, de espaldas. Prólogo: el alféizar vacío bajo la lluvia,
+  // porque todavía no ha llegado. Final: Nero otra vez ahí, al sol, con dos
+  // tazas al lado.
+  const branchOf = () => {
+    try { return JSON.parse(localStorage.getItem('nero_branches') || '{}').origin ?? null; }
+    catch (e) { return null; }
+  };
+  const HOWTO = `<ul class="howto">
+      <li><b>Saltar</b><span>desliza ↑ · tecla ↑ (con ← → para dirigirlo)</span></li>
+      <li><b>Salto largo</b><span>desliza fuerte · Shift + ↑</span></li>
+      <li><b>Saltar a un sitio</b><span>toca el mueble al que quieres llegar</span></li>
+      <li><b>Andar a escondidas</b><span>arrastra ← → · Shift + ← →</span></li>
+      <li><b>Bajar</b><span>desliza ↓ · tecla ↓</span></li>
+      <li><b>Coger, soltar, abrir, meterse</b><span>toca la cosa con Nero cerca</span></li>
+    </ul>
+    <p class="howto-note">Nero no sabe cuándo pasó cada cosa. Tú sí: cada rastro lleva su edad escrita encima.</p>`;
+
+  function showCover() {
+    actToken++;
+    ui.stopLevelTimer(); ui.hideMemory(); ui.hideHint(); ui.hideCinematic();
     levelState.mode = 'ui';
-    ui.showCard({
-      kicker: story?.title?.kicker ?? 'una historia de gato',
-      title: story?.title?.title ?? 'N E R O',
-      text: story?.title?.body ?? '',
-      btn: 'Empezar',
-      then: showAct
+    storyPages = null;
+    r3d.setCover('title');
+    setScreen('cover');
+    $('cvPanel').classList.remove('show');
+    $('cvKicker').innerHTML = story?.title?.kicker ?? '';
+    $('cvTitle').textContent = story?.title?.title ?? 'Nero';
+    $('cvTag').innerHTML = story?.title?.tagline ?? '';
+    const cont = $('cvContinue'), start = $('cvStart');
+    const L = save.level != null ? levels[save.level] : null;
+    if (L && save.level > 0) {
+      cont.style.display = '';
+      cont.innerHTML = `Continuar <small>${L.kicker} · ${L.name}</small>`;
+      start.textContent = 'Empezar de nuevo';
+      start.classList.remove('cv-main');
+    } else {
+      cont.style.display = 'none';
+      start.textContent = save.finished ? 'Volver a empezar' : 'Empezar';
+      start.classList.add('cv-main');
+    }
+    $('cvEpisodes').style.display = save.unlocked > 0 || save.finished ? '' : 'none';
+  }
+
+  function startNewGame() {
+    save.level = 0; save.finished = false; persist();
+    playStory(story?.prologue ?? [], 'prologue', () => {
+      if (!save.howto) {
+        save.howto = true; persist();
+        setScreen('story-card');
+        ui.showCard({ face: 'cat', kicker: 'antes de empezar', title: '', sub: 'Cómo se mueve Nero', text: HOWTO, btn: 'A la caja', then: () => beginEpisode(0) });
+      } else beginEpisode(0);
     });
   }
+  function beginEpisode(i) {
+    levelState.level = i;
+    showAct();
+  }
+
+  // Páginas de historia sobre la ventana: se pasan con un toque
+  let storyPages = null, storyIdx = 0, storyThen = null, storyLock = 0;
+  function playStory(pages, mode, then) {
+    actToken++;
+    levelState.mode = 'ui';
+    ui.hideMemory(); ui.hideHint(); ui.stopLevelTimer();
+    r3d.setCover(mode);
+    setScreen('story');
+    if (!pages.length) { then?.(); return; }
+    storyPages = pages; storyIdx = 0; storyThen = then;
+    showStoryPage();
+  }
+  function showStoryPage() {
+    const el = $('storyText');
+    el.classList.remove('in');
+    void el.offsetWidth;            // reinicia la transición
+    el.innerHTML = storyPages[storyIdx];
+    el.classList.add('in');
+    $('storyNext').textContent = storyIdx === storyPages.length - 1 ? 'toca para terminar' : 'toca para seguir';
+    storyLock = performance.now() + 650;   // un doble toque no se salta dos páginas
+  }
+  function advanceStory() {
+    if (!storyPages || performance.now() < storyLock) return;
+    storyIdx++;
+    if (storyIdx >= storyPages.length) finishStory();
+    else showStoryPage();
+  }
+  function finishStory() {
+    if (!storyPages) return;
+    const t = storyThen;
+    storyPages = null; storyThen = null;
+    t?.();
+  }
+  $('story').addEventListener('click', e => { if (e.target.id !== 'storySkip') advanceStory(); });
+  $('storySkip').addEventListener('click', finishStory);
+  window.addEventListener('keydown', e => {
+    if (!storyPages) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); advanceStory(); }
+    else if (e.key === 'Escape') finishStory();
+  });
+
+  function runEnding() {
+    save.finished = true; save.level = null; persist();
+    playStory(story?.ending ?? [], 'ending', showFinalCard);
+  }
+  function showFinalCard() {
+    const total = levels.reduce((n, L) => n + L.memories.length, 0);
+    const got = countFound(save, levels);
+    const rows = levels.map((L, i) => {
+      const ids = new Set(save.found[i] ?? []);
+      const dots = L.memories.map(m => `<i class="${ids.has(m.id) ? 'on' : ''}"></i>`).join('');
+      return `<li><span>${L.kicker.replace('Episodio ', 'Ep ')}</span><b>${L.name}</b><em>${dots}</em></li>`;
+    }).join('');
+    const br = story?.branches?.[branchOf()] ?? '';
+    const missing = total - got;
+    setScreen('story-card');
+    ui.showCard({
+      face: 'cat', kicker: 'fin de la temporada', title: 'Fin', sub: '',
+      text: `<ul class="fin-list">${rows}</ul>
+        <span class="fin-total">${got} de ${total} rastros</span>
+        ${br ? `<span class="fin-branch">${br}</span>` : ''}
+        ${missing ? `<span class="fin-more">Te faltan ${missing}. Están en la lista de episodios, esperando.</span>` : '<span class="fin-more">Los has leído todos.</span>'}
+        <span class="fin-credits">Nero · una historia de gato<br>tipografías Caveat y Patrick Hand (SIL OFL)</span>`,
+      btn: 'Volver al inicio',
+      then: showCover
+    });
+  }
+
+  // panel de la portada: lista de episodios o controles
+  function openPanel(title, html) {
+    $('cvPanelTitle').textContent = title;
+    $('cvPanelBody').innerHTML = html;
+    $('cvPanel').classList.add('show');
+  }
+  function showEpisodes() {
+    const rows = levels.map((L, i) => {
+      if (i > save.unlocked) return `<li class="locked"><span>${L.kicker}</span><b>· · ·</b></li>`;
+      const ids = new Set(save.found[i] ?? []);
+      const dots = L.memories.map(m => `<i class="${ids.has(m.id) ? 'on' : ''}"></i>`).join('');
+      const alt = i === 2 && branchOf() === 'branch_a' ? '<small>la otra rama</small>' : '';
+      return `<li><button data-ep="${i}"><span>${L.kicker}</span><b>${L.name}</b>${alt}<em>${dots}</em></button></li>`;
+    }).join('');
+    openPanel('Episodios', `<ul class="eplist">${rows}</ul>`);
+    for (const b of $('cvPanelBody').querySelectorAll('button[data-ep]')) {
+      b.onclick = () => { $('cvPanel').classList.remove('show'); beginEpisode(+b.dataset.ep); };
+    }
+  }
+  $('cvContinue').onclick = () => beginEpisode(save.level);
+  $('cvStart').onclick = startNewGame;
+  $('cvEpisodes').onclick = showEpisodes;
+  $('cvHow').onclick = () => openPanel('Cómo se mueve Nero', HOWTO);
+  $('cvBack').onclick = () => $('cvPanel').classList.remove('show');
+  $('home').onclick = () => showCover();
 
   // Sin modal entre episodios: el título aparece sobre la habitación, la
   // introducción baja como subtítulo y el jugador ya tiene el control.
   let actToken = 0;
   function showAct() {
     levelState.mode = 'ui';
+    r3d.setCover(null);
+    setScreen('game');
+    ui.hideCard();
+    save.level = levelState.level;
+    save.unlocked = Math.max(save.unlocked, levelState.level);
+    persist();
     startLevel(levelState.level);
     const L = curLevel();
     ui.showEpisode(L.kicker, L.name, L.intro);
@@ -551,6 +739,8 @@ async function main() {
     idleT = 0;
     levelState.found[id] = true;
     levelState.totalFound++;
+    markFound(save, levelState.level, id);
+    persist();
     const m = levelState.memories.find(m => m.id === id);
     if (m) ui.showMemory(m.text, 5600, m.age);
     ui.updatePaws(levelState.memories, levelState.found);
@@ -669,7 +859,8 @@ async function main() {
           }
         }
         levelState.levelDone = true;
-        setTimeout(() => completeLevel(target), 1800);
+        const tok = actToken;
+        setTimeout(() => { if (tok === actToken) completeLevel(target); }, 1800);
       }
     } else {
       cat.tailT += dt;
@@ -715,7 +906,7 @@ async function main() {
   }
 
   startLevel(0);
-  showTitle();
+  showCover();
   requestAnimationFrame(frame);
 
   // ---------- Modo dev (?dev=1): navegar niveles y VER dónde está cada cosa ----------
@@ -810,6 +1001,9 @@ async function main() {
   window.__showAct = showAct;
   window.__tryContain = tryContain;
   window.__tryInteract = tryInteract;
+  window.__showCover = showCover;
+  window.__runEnding = runEnding;
+  window.__save = save;
 }
 
 main().catch(err => {

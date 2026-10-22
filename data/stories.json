@@ -1,11 +1,28 @@
 {
   "title": {
     "kicker": "temporada 1 · la casa que no estaba vacía",
-    "title": "N E R O",
-    "body": "Un gato no recuerda cuándo. Recuerda <b>dónde</b>.<br><br>Nero lee esta casa buscando lo que queda de la gente que la usó: un hueco en una manta, dos marcas en la madera, una caja que habla y que nadie escucha.<br><br><b>Él no sabe qué pasó aquí. Tú lo vas a saber antes que él.</b>"
+    "title": "Nero",
+    "tagline": "Un gato no recuerda cuándo. Recuerda <b>dónde</b>."
   },
   "ui": {
     "hint": "Saltar: desliza ↑ · o mantén ← → y pulsa ↑<br>Salto largo: desliza fuerte · o Shift + ↑<br>Toca un mueble para saltar justo ahí",
-    "final": "Abajo suena una llave en la cerradura. Uma levanta la cabeza: <b>nadie más tiene llave</b>.<br><br>El olor que entra con el frío no lo conoce, pero se parece al de Aldo y al de la voz de la caja. Se para en la puerta del cuarto sin atreverse a entrar.<br><br>Nero baja y se le enrosca en los pies, que es su manera de firmar.<br><br><b>La casa nunca estuvo vacía. Estaba llena de rastros esperando a que alguien volviera a leerlos.</b>"
+    "final": "<b>La casa nunca estuvo vacía.<br>Estaba llena de rastros esperando a que alguien volviera a leerlos.</b>"
+  },
+  "prologue": [
+    "Un gato no recuerda cuándo.<br><b>Recuerda dónde.</b>",
+    "Esta es la historia de una casa que parecía vacía,<br>y del gato que aprendió a leerla.",
+    "Él no sabe lo que pasó aquí.<br><b>Tú lo vas a saber antes que él.</b>",
+    "Empieza una noche de lluvia,<br>dentro de una caja."
+  ],
+  "ending": [
+    "Sara no deshace la maleta la primera noche.<br><b>La segunda, sí.</b>",
+    "Por la mañana hay dos tazas en la encimera, sobre las dos marcas gastadas de la madera.<br><b>Una pone «PAPÁ». Sara bebe de esa.</b>",
+    "Uma abre las cajas de la marca naranja y va poniendo cada cosa donde estaba.<br><b>Sara le dice dónde estaba.</b>",
+    "Nero sube a la ventana a la hora en que da el sol, y se queda mirando la calle.",
+    "<b>La casa nunca estuvo vacía.<br>Estaba llena de rastros esperando a que alguien volviera a leerlos.</b>"
+  ],
+  "branches": {
+    "branch_a": "Tu Nero subió solo al camión. Nadie lo recogió: llegó.",
+    "branch_b": "A tu Nero lo recogieron del barro unas manos que venían de soltar algo."
   }
 }

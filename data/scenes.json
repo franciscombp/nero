@@ -1390,5 +1390,166 @@
         "offset": 1660
       }
     ]
+  },
+  {
+    "name": "La llave",
+    "kicker": "Epílogo",
+    "time": "night",
+    "tint": {
+      "bg": "#E7E3F0",
+      "band": "#DBD6E9"
+    },
+    "intro": "Abajo suena una llave en la cerradura. Uma levanta la cabeza de la almohada: nadie más tiene llave. Por primera vez, lo que Nero busca no está arriba.",
+    "hint": "Ahora toca bajar · arrastra → para ir escalón a escalón, o desliza ↓ para dejarte caer",
+    "mechanics": {
+      "wallSlide": true
+    },
+    "platforms": [
+      {
+        "x": 0,
+        "y": 1690,
+        "w": 1700,
+        "h": 60,
+        "kind": "floor"
+      },
+      {
+        "x": 40,
+        "y": 1020,
+        "w": 340,
+        "h": 20,
+        "kind": "landing"
+      },
+      {
+        "x": 380,
+        "y": 1110,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90
+      },
+      {
+        "x": 530,
+        "y": 1200,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90
+      },
+      {
+        "x": 680,
+        "y": 1290,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90
+      },
+      {
+        "x": 830,
+        "y": 1380,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90,
+        "creak": true
+      },
+      {
+        "x": 980,
+        "y": 1470,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90
+      },
+      {
+        "x": 1130,
+        "y": 1560,
+        "w": 150,
+        "h": 90,
+        "kind": "stair",
+        "rise": 90
+      },
+      {
+        "x": 1440,
+        "y": 1690,
+        "w": 230,
+        "h": 10,
+        "kind": "doorway"
+      }
+    ],
+    "goalKind": "doorway",
+    "knock": null,
+    "yarn": false,
+    "bookShelf": -1,
+    "memories": [
+      {
+        "id": "e10_llave",
+        "trigger": "start",
+        "age": "hoy",
+        "text": "El olor que sube por la escalera trae el frío de la calle.<br><b>No lo conoce, pero se parece al de Aldo y al de la voz de la caja.</b>"
+      },
+      {
+        "id": "e10_pared",
+        "trigger": "platform",
+        "pi": 3,
+        "age": "viejo",
+        "text": "En la pared de la escalera hay una franja más oscura, a la altura de una mano.<br><b>Cuarenta años de alguien bajando despacio, apoyándose siempre en el mismo sitio.</b>"
+      },
+      {
+        "id": "e10_cruje",
+        "trigger": "platform",
+        "pi": 5,
+        "age": "hoy",
+        "text": "El cuarto escalón cruje. Nero lo esquiva desde el invierno.<br><b>Esta noche lo pisa a propósito. Quiere que abajo sepan que alguien baja.</b>"
+      },
+      {
+        "id": "e10_zapatillas",
+        "trigger": "contain",
+        "cid": "zapatillas",
+        "age": "dias",
+        "text": "Junto a la puerta, las zapatillas de Aldo, una encima de otra, como él las dejaba.<br><b>Nero se tumba entre ellas. Todavía tienen la forma de sus pies.</b>"
+      },
+      {
+        "id": "e10_pies",
+        "trigger": "goal",
+        "age": "hoy",
+        "text": "Nero se le enrosca en los pies, una vuelta y otra, que es su manera de firmar.<br><b>Sara se agacha despacio. Es la primera persona de esta casa que lo ve llegar.</b>"
+      }
+    ],
+    "spawn": 200,
+    "spawnY": 1020,
+    "containers": [
+      {
+        "id": "zapatillas",
+        "kind": "slippers",
+        "x": 1340,
+        "y": 1690,
+        "w": 80,
+        "rim": 16
+      }
+    ],
+    "props": [
+      {
+        "kind": "notes",
+        "wall": true,
+        "x": 1330,
+        "y": 1300,
+        "n": 1,
+        "words": [
+          "LLAVES"
+        ]
+      },
+      {
+        "kind": "wallclock",
+        "wall": true,
+        "x": 1150,
+        "y": 1080
+      },
+      {
+        "kind": "catbed",
+        "host": 0,
+        "offset": 700
+      }
+    ],
+    "camLook": "down"
   }
 ]

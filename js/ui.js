@@ -255,6 +255,7 @@ export function createUI() {
     showHint, hideHint, resetHint, setHintText, getHintText,
     onResetClick,
     isHintShown: () => hintShown,
+    isMemoryIdle: () => subQueue.length === 0,
     startLevelTimer, stopLevelTimer, getLevelTimer,
     showCinematic, hideCinematic
   };

@@ -104,11 +104,15 @@ export function doDrop(cat, platforms) {
 // Andar sigiloso sobre la plataforma actual; se cae del borde si deja de haber soporte.
 export function applySneak(cat, platforms, sneakDir, dt, speedMod = 1) {
   if (!cat.onGround || sneakDir === 0) return;
+  const was = platforms.find(p =>
+    cat.y === p.y && cat.x + cat.w * 0.35 > p.x && cat.x - cat.w * 0.35 < p.x + p.w);
   cat.x += sneakDir * 115 * speedMod * dt;
   cat.x = Math.max(cat.w / 2, Math.min(WORLD_W - cat.w / 2, cat.x));
   cat.facing = sneakDir;
   cat.state = 'sneak';
   const supported = platforms.some(p =>
     cat.y === p.y && cat.x + cat.w * 0.35 > p.x && cat.x - cat.w * 0.35 < p.x + p.w);
-  if (!supported) { cat.onGround = false; cat.state = 'air'; }
+  // al bajarse andando de un mueble, no se agarra al canto que acaba de dejar
+  // (antes se quedaba colgado del mismo borde y había que soltarlo con ↓)
+  if (!supported) { cat.onGround = false; cat.state = 'air'; cat.ledgeSkip = was ?? null; }
 }

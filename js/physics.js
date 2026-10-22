@@ -66,7 +66,7 @@ export function createPhysics(config) {
         cat.onGround = true;
         break;
       }
-      if (!cat.onGround && cat.vy > -80 && p.kind !== 'floor') {
+      if (!cat.onGround && cat.vy > -80 && p.kind !== 'floor' && p !== cat.ledgeSkip) {
         const front = cat.x + cat.w/2, back = cat.x - cat.w/2;
         const nearL = front > p.x - 26 && front < p.x + 14;
         const nearR = back < p.x + p.w + 26 && back > p.x + p.w - 14;
@@ -85,6 +85,7 @@ export function createPhysics(config) {
     }
 
     if (cat.onGround) {
+      cat.ledgeSkip = null;
       cat.landAge += dt;
       if (cat.state === 'land') {
         cat.landT += dt;

@@ -245,3 +245,20 @@ rodilla y corvejón resueltas por cinemática inversa, y cola con inercia.
 Tipografías Patrick Hand y Caveat (OFL) en `fonts/`.
 
 La versión 3D anterior queda archivada y jugable en `archivo/3d/`.
+
+## Inicio y fin
+
+La temporada empieza y acaba en la misma ventana:
+
+- **Portada**: Nero sentado en el alféizar, de espaldas, mirando el cielo.
+  Desde ahí se empieza, se continúa la partida guardada o se elige episodio.
+- **Prólogo**: cuatro páginas sobre la ventana vacía bajo la lluvia (Nero aún
+  no ha llegado) y, la primera vez, una hoja con los controles.
+- **Epílogo «La llave»**: el único episodio que se juega hacia abajo. Nero
+  baja la escalera, pisa a propósito el escalón que cruje y se enrosca en los
+  pies de Sara, que acaba de llegar.
+- **Final**: páginas sobre la misma ventana al sol, con dos tazas al lado, y
+  una tarjeta con los rastros encontrados en cada episodio.
+
+El progreso (episodio actual, episodios desbloqueados y rastros encontrados
+en todas las partidas) se guarda en el navegador (`js/save.js`).

@@ -665,10 +665,91 @@ export function createDoodleRenderer(canvas) {
         R(x, y, w, p.h ?? (FY - y), pal.band, { raw: true, hatchGap: 12 });
         break;
       }
+      case 'stair': {
+        // escalera de perfil: peldaño en diente de sierra sobre una zanca
+        // diagonal, con hueco debajo (se puede pasar por debajo)
+        const rise = p.rise ?? 90;
+        // la pared gastada a la altura de la mano: cuarenta años apoyándose
+        P([[x, y - 118], [x + w, y - 118 + rise], [x + w, y - 96 + rise], [x, y - 96]], '#8a7464', { line: false, alpha: 0.28, raw: true, noOff: true });
+        P([[x, y + rise], [x + w, y + 2 * rise], [x + w, y + 2 * rise + 34], [x, y + rise + 34]], C.woodDk, { hatch: false, lw: 2 });
+        R(x, y, w, rise, C.wood, { hatch: false, lw: 2.2 });
+        R(x - 4, y, w + 8, 12, shade(C.wood, 1.12), { hatch: false, lw: 1.8 });
+        Ln([[x + 18, y], [x + 18, y - 92]], { lw: 3, single: true });
+        Ln([[x + 18, y - 92], [x + w + 18, y - 92 + rise]], { lw: 4.5 });
+        if (p.creak) {
+          // el escalón que cruje: grietas y unas rayitas de sonido cuando se pisa
+          Ln([[x + w * 0.3, y + 16], [x + w * 0.42, y + 34], [x + w * 0.36, y + 52]], { lw: 1.4, single: true });
+          const on = st?.cat && st.cat.onGround && st.cat.y === y && st.cat.x > x && st.cat.x < x + w;
+          if (on) for (let i = 0; i < 3; i++) {
+            const a = 0.8 + i * 0.6 + Math.sin(time * 18) * 0.05;
+            Ln([[x + w / 2 + Math.cos(a) * 30, y + 6 - Math.sin(a) * 18], [x + w / 2 + Math.cos(a) * 44, y + 6 - Math.sin(a) * 26]], { lw: 1.6, single: true });
+          }
+        }
+        break;
+      }
+      case 'doorway': {
+        // la puerta de la calle abierta de madrugada, y alguien en ella
+        const dx = x + 20, dw = 160, dh = 340, top = FY - dh;
+        R(dx - 18, top - 18, dw + 36, dh + 18, C.woodDk, { hatch: false, lw: 2.6 });
+        R(dx, top, dw, dh, '#d3dce3', { hatch: false, lw: 1.8, raw: true });
+        ctx.save();
+        ctx.beginPath(); ctx.rect(dx, top, dw, dh); ctx.clip();
+        // fuera: farola lejana y llovizna fría
+        R(dx + 104, top + 60, 6, dh, '#7a828c', { hatch: false, lw: 1.4, raw: true });
+        glow(dx + 107, top + 60, 70, '#ffe3a0', 0.5);
+        ctx.strokeStyle = 'rgba(70,85,105,0.35)'; ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let i = 0; i < 16; i++) {
+          const rx = dx + hash(i * 2.3) * dw, ry = top + ((hash(i * 1.7) * dh + time * 300) % dh);
+          ctx.moveTo(rx, ry); ctx.lineTo(rx - 4, ry + 14);
+        }
+        ctx.stroke();
+        ctx.restore();
+        // hoja de la puerta abierta hacia dentro
+        P([[dx + dw, top], [dx + dw + 54, top - 26], [dx + dw + 54, FY + 12], [dx + dw, FY]], C.woodDk, { hatchGap: 8 });
+        E(dx + dw + 42, FY - dh / 2, 5, 5, C.butter, { hatch: false, lw: 1.2 });
+        R(x - 6, FY - 8, w + 12, 10, '#b5876b', { hatch: false, lw: 1.6 });
+        drawPerson(dx + dw * 0.48, FY - 4);
+        break;
+      }
       default: {
         R(x, y, w, Math.max(14, p.h ?? 14), C.wood, { hatch: false });
       }
     }
+  }
+
+  // Sara, de pie en la puerta con la maleta y la llave: mira hacia la
+  // escalera (hacia la izquierda). Cuando Nero llega, se agacha.
+  let crouchP = 0;
+  function drawPerson(cx, fy) {
+    const near = st?.cat && Math.abs(st.cat.x - cx) < 130 && Math.abs(st.cat.y - fy) < 30;
+    crouchP += ((near ? 1 : 0) - crouchP) * Math.min(1, (st?._dt ?? 0.016) * 3);
+    const c = crouchP, lean = c * 24;
+    const hipY = fy - 112 + c * 46, shY = fy - 236 + c * 80;
+    // maleta a su lado
+    R(cx + 26, fy - 78, 56, 74, C.coral, { hatchGap: 8 });
+    Ln([[cx + 42, fy - 78], [cx + 42, fy - 90], [cx + 66, fy - 90], [cx + 66, fy - 78]], { lw: 3 });
+    // piernas (se doblan al agacharse)
+    for (const ox of [-12, 8]) {
+      const kx = cx + ox - c * 22, ky = fy - 56 + c * 4;
+      Ln([[cx + ox, hipY], [kx, ky], [cx + ox, fy - 6]], { lw: 11, single: true, ink: '#3d3a40' });
+      E(cx + ox - 6, fy - 4, 13, 5, '#2e2a2a', { hatch: false, lw: 1.2 });
+    }
+    // abrigo
+    P([[cx - 30 - lean * 0.2, hipY + 18], [cx + 28, hipY + 18], [cx + 20 - lean, shY], [cx - 22 - lean, shY]], '#6f7f94', { hatchGap: 8 });
+    R(cx - 24 - lean, shY - 4, 46, 13, C.butter, { hatch: false, lw: 1.4 });
+    // brazo con la llave, que baja hacia el gato cuando se agacha
+    const hx = cx - 42 - lean - c * 20, hy = shY + 82 + c * 40;
+    Ln([[cx - 16 - lean, shY + 10], [cx - 34 - lean, shY + 50], [hx, hy]], { lw: 9, single: true, ink: '#5f6e82' });
+    E(hx - 2, hy + 3, 6, 6, C.skin, { hatch: false, lw: 1.2 });
+    if (c < 0.5) Ln([[hx - 4, hy + 8], [hx - 6, hy + 20], [hx - 2, hy + 22]], { lw: 1.8, single: true, ink: '#b8a061' });
+    // cabeza de perfil, mirando abajo a la izquierda
+    const hdx = cx - 4 - lean * 1.2, hdy = shY - 30;
+    E(hdx, hdy, 21, 25, C.skin, { hatch: false, lw: 1.8 });
+    E(hdx + 6, hdy - 12, 24, 17, '#5a463a', { hatch: false, lw: 1.6 });
+    E(hdx + 22, hdy - 18, 9, 9, '#5a463a', { hatch: false, lw: 1.4 });
+    Ln([[hdx - 14, hdy + 1], [hdx - 9, hdy + 3]], { lw: 1.8, single: true });
+    Ln([[hdx - 12, hdy + 13], [hdx - 7, hdy + 13]], { lw: 1.4, single: true });
   }
 
   // ======================================================================
@@ -789,7 +870,7 @@ export function createDoodleRenderer(canvas) {
         P([[x + 30, y], [x + 64, y - 4], [x + 62, y - 12], [x + 30, y - 8]], C.white, { hatch: false, lw: 1.2 });
         break;
       case 'notes': {
-        const words = ['GAS', 'LLAVES', 'CENA DE NERO', 'PASTILLAS'];
+        const words = pr.words ?? ['GAS', 'LLAVES', 'CENA DE NERO', 'PASTILLAS'];
         for (let i = 0; i < (pr.n ?? 3); i++) {
           const nx = x + i * 70, ny = y + (i % 2 ? 12 : -8);
           R(nx - 30, ny - 30, 60, 60, C.butter, { hatch: false, lw: 1.6, raw: true });
@@ -883,6 +964,13 @@ export function createDoodleRenderer(canvas) {
           ctx.strokeStyle = ink; ctx.lineWidth = 2.6;
           ctx.beginPath(); ctx.arc(x + s * w * 0.5, y - h * 0.6, 10, -Math.PI / 2, Math.PI / 2, s < 0); ctx.stroke();
         }
+      }
+    } else if (c.kind === 'slippers') {
+      // las zapatillas de Aldo, una encima de otra junto a la puerta
+      if (!front) return;
+      for (const [ox, oy, r] of [[-w * 0.2, 0, -0.04], [w * 0.16, -8, 0.06]]) {
+        E(x + ox, y - 8 + oy, w * 0.36, 10, '#8a6a58', { hatch: false, lw: 1.8, rot: r });
+        E(x + ox + w * 0.12, y - 12 + oy, w * 0.16, 6, '#b28a74', { hatch: false, lw: 1.2, rot: r });
       }
     } else if (c.kind === 'box') {
       if (!front) {
@@ -1536,7 +1624,7 @@ export function createDoodleRenderer(canvas) {
     ink = C.ink;
 
     // orden de dibujo: pared → muebles de suelo grandes → muebles con patas
-    const order = ['window', 'starshelf', 'frameshelf', 'shelf', 'landing', 'top', 'mirror', 'boxstack', 'counter', 'dresser', 'bed',
+    const order = ['window', 'doorway', 'stair', 'starshelf', 'frameshelf', 'shelf', 'landing', 'top', 'mirror', 'boxstack', 'counter', 'dresser', 'bed',
       'truckbed', 'crate', 'trashbag', 'floor', 'sofa', 'armchair', 'block', 'desk', 'table', 'chair'];
     const base0 = (state.basePlatforms ?? state.platforms).filter(p => !p.ref);
     furniture = base0.slice().sort((a, b) => {
@@ -1578,11 +1666,14 @@ export function createDoodleRenderer(canvas) {
       });
     }
     snapCam = true;
+    veil = Math.max(veil, 0.85);
+    crouchP = 0;
   }
 
   function update(dt, state) {
     time += dt;
     boil = 0;
+    veil = Math.max(0, veil - dt * 1.6);
     st = state;
     const cat = state.cat;
     st._dt = dt;
@@ -1591,7 +1682,8 @@ export function createDoodleRenderer(canvas) {
     if (state.focus) camAnchorGoal = state.focus.y;
     else if (cat.onGround || cat.state === 'hang' || cat.state === 'contain') camAnchorGoal = cat.y;
     const viewW = W / scale;
-    let bottom = camAnchorGoal + VIEW_H * 0.33;
+    // en el epílogo se baja: la cámara mira hacia abajo, a donde va Nero
+    let bottom = camAnchorGoal + VIEW_H * (L?.camLook === 'down' ? 0.6 : 0.33);
     const maxBottom = FY + 230;
     const minTop = pal.domestic ? CY - 90 : FY - 1400;
     bottom = Math.min(bottom, maxBottom);
@@ -1607,6 +1699,7 @@ export function createDoodleRenderer(canvas) {
   }
 
   function render() {
+    if (cover) { drawCover(cover); paperFinish(); return; }
     if (!L) return;
     const s = scale * DPR;
     const viewW = W / scale;
@@ -1649,6 +1742,167 @@ export function createDoodleRenderer(canvas) {
     }
     ctx.globalAlpha = 1;
     // grano de papel por encima de todo
+    paperFinish();
+  }
+
+  // ======================================================================
+  //  Portada, prólogo y final: la misma ventana, tres veces
+  // ======================================================================
+  // El juego empieza y acaba en el mismo sitio: una ventana. En la portada
+  // Nero está sentado en el alféizar, de espaldas, mirando el cielo. En el
+  // prólogo el alféizar está vacío y llueve: todavía no ha llegado. En el
+  // final vuelve a estar ahí, con sol, y junto a él hay dos tazas.
+  let cover = null, veil = 0;
+  function setCover(mode) {
+    if (mode === cover) return;
+    cover = mode;
+    veil = 1;
+  }
+  function drawCatBack(x, by) {
+    const outline = '#2a2522';
+    const br = Math.sin(time * 2) * 1.2;
+    const flick = (time % 5.3) < 0.18 ? Math.sin((time % 5.3) / 0.18 * Math.PI) : 0;
+    P([[x - 30, by], [x - 35, by - 18], [x - 29, by - 40], [x - 18, by - 58 + br], [x, by - 63 + br],
+       [x + 18, by - 58 + br], [x + 28, by - 40], [x + 34, by - 18], [x + 30, by]], C.cat,
+      { raw: true, solid: true, ink: outline, lw: 2.4 });
+    Ln([[x - 12, by - 50 + br], [x - 6, by - 36 + br]], { lw: 1.2, single: true, ink: 'rgba(255,255,255,0.25)' });
+    Ln([[x + 12, by - 50 + br], [x + 6, by - 36 + br]], { lw: 1.2, single: true, ink: 'rgba(255,255,255,0.25)' });
+    const hy = by - 80 + br;
+    P([[x - 16, hy - 6], [x - 13 - flick * 4, hy - 30], [x - 2, hy - 15]], C.cat, { raw: true, solid: true, ink: outline, lw: 2.2 });
+    P([[x + 6, hy - 15], [x + 16, hy - 30], [x + 20, hy - 6]], C.cat, { raw: true, solid: true, ink: outline, lw: 2.2 });
+    E(x + 2, hy, 19, 17, C.cat, { raw: true, solid: true, ink: outline, lw: 2.4 });
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - 16, hy + 6); ctx.lineTo(x - 32, hy + 3); ctx.moveTo(x - 16, hy + 9); ctx.lineTo(x - 31, hy + 11);
+    ctx.moveTo(x + 20, hy + 6); ctx.lineTo(x + 36, hy + 3); ctx.moveTo(x + 20, hy + 9); ctx.lineTo(x + 35, hy + 11);
+    ctx.stroke();
+    // cola: cuelga por delante del alféizar y se mece despacio
+    const sw = Math.sin(time * 1.2) * 9, sw2 = Math.sin(time * 2.3 + 1) * 5;
+    const tail = [[x + 18, by - 4], [x + 28, by + 10], [x + 28 + sw * 0.3, by + 34], [x + 22 + sw * 0.7, by + 58], [x + 30 + sw + sw2 * 0.4, by + 74], [x + 42 + sw + sw2, by + 70]];
+    Ln(tail, { lw: 20, single: true, ink: outline, amp: 0.4 });
+    Ln(tail, { lw: 13.4, single: true, ink: C.cat, amp: 0.4 });
+  }
+  function drawCup(x, y, col, steamPh) {
+    R(x - 14, y - 30, 28, 30, col, { hatch: false, lw: 2 });
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(x + 16, y - 16, 7, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(90,80,70,0.35)'; ctx.lineWidth = 1.4;
+    for (let i = 0; i < 2; i++) {
+      const t = (time * 0.35 + steamPh + i * 0.5) % 1;
+      ctx.globalAlpha = Math.sin(t * Math.PI);
+      ctx.beginPath();
+      for (let k = 0; k <= 10; k++) {
+        const yy = y - 34 - t * 26 - k * 3, xx = x - 3 + i * 6 + Math.sin(k * 0.9 + time * 2 + i) * 3;
+        if (k) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawCover(mode) {
+    const keepPal = pal, keepInk = ink;
+    pal = { ...DAY.morning, domestic: true, chalk: false, dusk: false };
+    ink = C.ink;
+    const night = mode === 'prologue', sunny = mode === 'ending';
+    // en la portada la ventana deja sitio al título arriba y al menú abajo;
+    // en las páginas de historia sube para dejar sitio al texto
+    const title = mode === 'title';
+    const u = title ? Math.min(W / 440, H / 940) : Math.min(W / 380, H / 760);
+    const cy = H * (title ? 0.5 : 0.42);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#f3ead6';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(u * DPR, 0, 0, u * DPR, W / 2 * DPR, cy * DPR);
+    view = { l: -W / 2 / u, t: -cy / u, r: W / 2 / u, b: (H - cy) / u };
+
+    // la pared: una mancha de acuarela que se sale por todos lados
+    const blob = ellPts(4, 20, 190, 235, 16).map(([px, py], i) => [px + (hash(i * 3.7) - 0.5) * 60, py + (hash(i * 5.1) - 0.5) * 70]);
+    P(blob, night ? '#8f99ab' : sunny ? '#e2c9a4' : '#c4c3bb', { line: false, alpha: 0.5, raw: true });
+    // ladrillos insinuados alrededor del marco
+    for (const [bx, by2] of [[-170, -120], [-180, 60], [-160, 170], [140, -200], [160, 30], [150, 190], [-120, 230], [70, 240]]) {
+      Ln([[bx, by2], [bx + 34, by2]], { lw: 1.6, single: true, alpha: 0.6 });
+      Ln([[bx + 34, by2], [bx + 34, by2 + 16]], { lw: 1.4, single: true });
+      Ln([[bx - 6, by2 + 16], [bx + 40, by2 + 16]], { lw: 1.2, single: true });
+    }
+
+    // marco de madera y hueco de la ventana
+    const wood = '#c98f6e';
+    R(-122, -182, 244, 322, wood, { lw: 2.6, hatch: false });
+    const sky = night ? '#4f5d78' : sunny ? '#f1d9ad' : '#a9c7cc';
+    R(-98, -160, 196, 284, sky, { lw: 2, raw: true, hatch: false });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(-98, -160, 196, 284); ctx.clip();
+    if (night) {
+      for (const [bx, bw, bh] of [[-98, 70, 150], [-20, 60, 200], [44, 70, 120]]) {
+        R(bx, 124 - bh, bw, bh, '#3d465a', { hatch: false, lw: 1.4, raw: true });
+        for (let wy = 124 - bh + 20; wy < 110; wy += 40) for (let wx = bx + 12; wx < bx + bw - 14; wx += 24) {
+          if (hash(wx * 3.1 + wy) > 0.6) R(wx, wy, 10, 14, '#e8c77e', { hatch: false, line: false, raw: true });
+        }
+      }
+      ctx.strokeStyle = 'rgba(220,228,240,0.45)'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < 40; i++) {
+        const rx = -100 + hash(i * 1.37) * 210, ry = -160 + ((hash(i * 2.11) * 300 + time * 380) % 300);
+        ctx.moveTo(rx, ry); ctx.lineTo(rx - 5, ry + 16);
+      }
+      ctx.stroke();
+    } else {
+      if (sunny) {
+        glow(-30, -70, 150, '#fff1c8', 0.9);
+        E(-30, -70, 26, 26, '#f6c85f', { hatch: false, lw: 1.6, raw: true });
+        for (let i = 0; i < 2; i++) {
+          const bx = ((time * 14 + i * 90) % 260) - 120, byy = -110 + i * 26 + Math.sin(time * 2 + i) * 4;
+          Ln([[bx - 7, byy - 4], [bx, byy], [bx + 7, byy - 4]], { lw: 1.4, single: true });
+        }
+      }
+      const d = Math.sin(time * 0.12) * 14;
+      for (const [cx2, cy2, rx, ry] of [[40, 70, 70, 44], [-10, 96, 60, 36], [90, 30, 46, 40], [70, 104, 66, 30], [-60, 120, 50, 26]]) {
+        E(cx2 + d, cy2, rx, ry, '#fbf7ee', { hatch: false, lw: 1.2, single: true, raw: true, alpha: 0.95 });
+      }
+    }
+    ctx.restore();
+    if (night) {
+      // ventana cerrada: cruceta y gotas resbalando por el cristal
+      Ln([[0, -160], [0, 124]], { lw: 4.5, single: true });
+      Ln([[-98, -20], [98, -20]], { lw: 4.5, single: true });
+      ctx.fillStyle = 'rgba(230,236,245,0.6)';
+      for (let i = 0; i < 14; i++) {
+        const gx = -90 + hash(i * 7.7) * 180, gy = -150 + ((hash(i * 3.3) * 270 + time * (8 + hash(i) * 20)) % 270);
+        ctx.beginPath(); ctx.ellipse(gx, gy, 2, 3, 0, 0, 6.3); ctx.fill();
+      }
+    } else {
+      // hoja abierta hacia fuera, como en un cuaderno de viaje
+      P([[98, -160], [154, -198], [154, 150], [98, 124]], wood, { lw: 2.2, hatch: false });
+      P([[108, -146], [144, -172], [144, 132], [108, 112]], night ? '#4f5d78' : '#d9e6e6', { lw: 1.4, hatch: false, raw: true, alpha: 0.7 });
+      Ln([[108, -20], [144, -26]], { lw: 3, single: true });
+    }
+    // alféizar con su goteo de acuarela
+    P([[-150, 146], [150, 146], [138, 230], [60, 260], [-40, 236], [-130, 250]], '#9e9a92', { line: false, alpha: 0.32, raw: true });
+    R(-146, 124, 292, 20, '#d8b48f', { lw: 2.4, hatch: false });
+    R(-136, 144, 272, 9, '#a9835f', { lw: 1.8, hatch: false });
+    if (!night) drawCatBack(-24, 126);
+    if (sunny) {
+      drawCup(52, 124, '#efe6d2', 0);
+      drawCup(98, 124, C.coral, 0.4);
+    }
+    if (night) {
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgba(70,80,120,0.25)';
+      ctx.fillRect(view.l, view.t, view.r - view.l, view.b - view.t);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // salpicaduras de tinta
+    ctx.fillStyle = ink;
+    for (let i = 0; i < 26; i++) {
+      ctx.globalAlpha = 0.25 + hash(i * 9.1) * 0.5;
+      ctx.beginPath();
+      ctx.arc(-180 + hash(i * 4.3) * 360, -300 + hash(i * 6.7) * 640, 0.8 + hash(i) * 2, 0, 6.3);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    pal = keepPal; ink = keepInk;
+  }
+  function paperFinish() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (!grainPat) grainPat = ctx.createPattern(grain, 'repeat');
     ctx.globalAlpha = 0.14;
@@ -1656,6 +1910,12 @@ export function createDoodleRenderer(canvas) {
     ctx.fillStyle = grainPat;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalCompositeOperation = 'source-over';
+    // velo de papel: cada cambio de escena es una página que se pasa
+    if (veil > 0.002) {
+      ctx.globalAlpha = Math.min(1, veil);
+      ctx.fillStyle = '#f3ead6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -1667,7 +1927,7 @@ export function createDoodleRenderer(canvas) {
   function setDevMarkers(list) { devMarkers = list ?? []; }
 
   if (typeof window !== 'undefined') {
-    window.__doodle = { get pal() { return pal; }, get view() { return view; }, render };
+    window.__doodle = { get pal() { return pal; }, get view() { return view; }, get cover() { return cover; }, render };
   }
-  return { resize, loadScene, update, render, screenToWorld, setCatVisible, setDevMarkers };
+  return { resize, loadScene, update, render, screenToWorld, setCatVisible, setDevMarkers, setCover };
 }

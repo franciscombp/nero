@@ -2,7 +2,7 @@
 // que el navegador note que sw.js cambió y arranque el ciclo de actualización
 // (instala en segundo plano, se queda "en espera" y js/pwa.js avisa al
 // jugador con una barra en vez de recargar la página a medio nivel).
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 const CACHE_NAME = 'nero-pwa-' + APP_VERSION;
 const ASSETS = [
   './',
@@ -18,6 +18,7 @@ const ASSETS = [
   './js/editor.js',
   './js/pwa.js',
   './js/doodle.js',
+  './js/save.js',
   './fonts/patrick-hand-latin-400-normal.woff2',
   './fonts/caveat-latin-400-normal.woff2',
   './fonts/caveat-latin-700-normal.woff2',
