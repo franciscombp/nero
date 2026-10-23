@@ -12,6 +12,9 @@
     --line: rgba(74,65,57,.18);
   }
   * { box-sizing: border-box; }
+  /* sin zoom por doble toque: "manipulation" quita el doble toque y deja el
+     pellizco; :where(*) pesa cero, así que cualquier touch-action: none gana */
+  :where(*) { touch-action: manipulation; }
   html, body { margin: 0; height: 100%; font-family: Georgia, serif; background: var(--bg); color: var(--ink); }
   body { display: flex; flex-direction: column; overflow: hidden; }
 
