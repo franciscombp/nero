@@ -15,6 +15,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Sin zoom por doble toque: tocar rápido el mismo botón (HUD, portada)
+   ampliaba la página y no había cómo volver. "manipulation" quita solo el
+   doble toque y deja el pellizco (accesibilidad). :where(*) pesa cero, así
+   que lo que ya pide touch-action: none (html, body, abajo) gana sin tocarlo. */
+:where(*) {
+  touch-action: manipulation;
+}
+
 html, body {
   margin: 0;
   padding: 0;
